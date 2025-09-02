@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login & Register</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="styles.css">
+    <script type="module" src="script.js" defer></script>
+</head>
+<body>
+    <header>
+        <a href="index.html"><img src="images/Logo.png" alt="Toronto Primary School Logo"></a>
+        <input type="checkbox" id="menu-bar">
+        <label for="menu-bar"><i class="fas fa-bars"></i></label>
+        <nav>
+            <ul>
+                <li><a href="index.html">Home</a></li>
+                <li><a href="about.html">About</a></li>
+                <li>
+                    <a href="#">Academics <i class="fas fa-caret-down"></i></a>
+                    <ul>
+                        <li><a href="academics.html#curriculum">Curriculum</a></li>
+                        <li><a href="academics.html#departments">Departments</a></li>
+                        <li><a href="academics.html#subjects">Subjects</a></li>
+                        <li><a href="academics.html#assessments">Assessments</a></li>
+                    </ul>
+                </li>
+                <li>
+                    <a href="#">Activities <i class="fas fa-caret-down"></i></a>
+                    <ul>
+                        <li><a href="activities.html#extracurricular">Extracurricular Activities</a></li>
+                        <li><a href="activities.html#sports">Sports</a></li>
+                        <li><a href="activities.html#clubs">Clubs</a></li>
+                        <li><a href="activities.html#events">Events</a></li>
+                    </ul>
+                </li>
+                <li>
+                    <a href="#">Admission <i class="fas fa-caret-down"></i></a>
+                    <ul>
+                        <li><a href="admission.html#how-to-apply">How to Apply</a></li>
+                        <li><a href="application-form.html">Application Form</a></li>
+                        <li><a href="admission.html#requirements">Admission Requirements</a></li>
+                    </ul>
+                </li>
+                <li>
+                    <a href="#">Parents <i class="fas fa-caret-down"></i></a>
+                    <ul>
+                        <li><a href="parents.html#sgb">SGB</a></li>
+                        <li><a href="parents.html#resources">Resources for Parents</a></li>
+                    </ul>
+                </li>
+                <li><a href="announcement.html">Announcements</a></li>
+                <li><a href="contact.html">Contacts</a></li>
+            </ul>
+        </nav>
+        <div class="auth-buttons">
+            <a href="auth.html" class="btn-login active">Register/Login</a>
+        </div>
+    </header>
+
+    <div class="form-container">
+        
+        <div id="register-form" class="form active-form">
+            <h2>Register</h2>
+            <form action="#" method="post">
+                <input type="email" name="email" placeholder="Email" id="registerEmail" required>
+                <input type="password" name="password" placeholder="Password" id="registerPassword" required>
+                <button id="registerSubmit" type="submit">Register</button>
+            </form>
+        </div>
+
+        <div id="login-form" class="form">
+            <h2>Log In</h2>
+            <form action="#" method="post">
+                <input type="email" name="email" placeholder="Email" id="loginEmail">
+                <input type="password" name="password" placeholder="Password" id="loginPassword" required>
+                <button id="loginSubmit" type="submit">Log In</button>
+            </form>
+        </div>
+
+        <div class="form-links">
+            <a id="show-register">Register</a>
+            <span>|</span>
+            <a id="show-login">Log In</a>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2023 Toronto Primary School. All rights reserved.</p>
+        <a href="#"><i class="fa-brands fa-x-twitter"></i></a>
+        <a href="#"><i class="fa-brands fa-facebook-f"></i></a>
+        <a href="#"><i class="fa-brands fa-instagram"></i></a>
+        <a href="#"><i class="fa-brands fa-linkedin-in"></i></a>
+        <a href="#"><i class="fa-brands fa-square-youtube"></i></a>
+    </footer>
+    <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,726 @@
+@import 'https://fonts.googleapis.com/css?family=Montserrat:300, 400, 700&display=swap';
+
+/* ========== Global Styles ========== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Montserrat', sans-serif;
+}
+
+/* ========== Body ========== */
+body {
+    background-image: url(images/4.jpg);
+    width: 100%;
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+}
+
+/* ========== Links & Lists ========== */
+a {
+    text-decoration: none;
+    font-size: 20px;
+    color: #fff;
+    transition: color 0.3s;
+}
+
+ul {
+    list-style: none;
+}
+
+/* ========== Header ========== */
+header {
+    width: 100%;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1000;
+    height: 100px;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 20px;
+}
+
+header img {
+    height: 80px;
+}
+
+header nav ul {
+    display: flex;
+    justify-content: center;
+}
+
+header nav ul li {
+    padding: 10px 20px;
+    position: relative; /* Needed for dropdown positioning */
+}
+
+header nav ul li a:hover {
+    color: goldenrod;
+    font-weight: 700;
+}
+
+header nav ul li:hover > ul {
+    display: block;
+}
+
+/* Dropdown Menu Styling */
+header nav ul ul {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background-color: rgba(46, 43, 43, 0.9);
+    border: 1px solid goldenrod;
+    border-radius: 10px;
+    min-width: 250px;
+    padding: 10px 0;
+}
+
+header nav ul ul li {
+    padding: 10px 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+header nav ul ul li:first-child {
+    border-top: none;
+}
+
+header nav ul ul li a {
+    font-size: 16px;
+    color: #ffffff;
+}
+
+/* Mobile Menu Button */
+header label {
+    display: none;
+    cursor: pointer;
+    font-size: 30px;
+    color: #fff;
+    margin-right: 20px;
+}
+
+/* ========== Menu Bar Checkbox ========== */
+#menu-bar {
+    display: none;
+}
+
+/* ========== Auth Buttons ========== */
+.auth-buttons a {
+    background-color: crimson;
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    text-decoration: none;
+    border-radius: 5px;
+    margin-right: 10px;
+}
+
+.auth-buttons a:hover {
+    background-color: darkred;
+}
+
+/* ========== Section ========== */
+section {
+    width: 100%;
+    min-height: 80vh;
+    color: white;
+    padding-top: 150px; /* Adjust for fixed header */
+    padding-bottom: 100px; /* Adjust for fixed footer */
+    text-align: center;
+}
+
+section h1 {
+    color: goldenrod;
+    margin-bottom: 20px;
+    font-size: 40px;
+}
+
+section p {
+    margin: 10px 0;
+    font-size: 20px;
+    line-height: 1.5;
+}
+
+.hero-section {
+    padding-top: 250px;
+    padding-bottom: 250px;
+    background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent overlay for text readability */
+    min-height: 100vh; /* Make the hero section fill the screen */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.hero-content {
+    margin-top: 30px;
+}
+
+.cta {
+    display: inline-block;
+    padding: 10px 30px;
+    color: crimson;
+    background-color: transparent;
+    border: 2px solid crimson;
+    font-size: 1.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.cta:hover {
+    color: white;
+    background-color: crimson;
+}
+
+/* ========== About Page Specific Styling ========== */
+.about-section {
+    padding: 120px 20px;
+}
+
+.grid-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+    padding: 20px;
+    margin-top: 40px;
+    color: black;
+}
+
+.grid-item {
+    background-color: rgba(255, 255, 255, 0.8);
+    padding: 20px;
+    border-radius: 10px;
+}
+
+.grid-item h2 {
+    color: goldenrod;
+    margin-bottom: 10px;
+}
+
+.grid-item p {
+    font-size: 16px;
+    color: #333;
+}
+
+/* ========== Page Content Styling ========== */
+.page-content {
+    padding: 120px 20px 80px; /* Top, Right/Left, Bottom padding */
+    color: #333; /* Darker text for readability */
+    background-color: rgba(255, 255, 255, 0.9); /* Semi-transparent white background */
+    min-height: calc(100vh - 180px); /* Fill the rest of the screen */
+}
+
+.content-container {
+    max-width: 900px;
+    margin: 0 auto;
+    text-align: left;
+}
+
+.content-item {
+    padding: 20px;
+    margin-bottom: 30px;
+    border-left: 5px solid goldenrod;
+}
+
+.content-item h2 {
+    color: crimson;
+    margin-bottom: 10px;
+}
+
+.content-item ul {
+    list-style-type: disc;
+    padding-left: 20px;
+    margin-top: 10px;
+}
+
+.content-item li {
+    margin-bottom: 5px;
+}
+
+/* Active Navigation Link */
+header nav ul li a.active {
+    color: goldenrod;
+    font-weight: 700;
+    border-bottom: 2px solid goldenrod;
+}
+
+/* For mobile dropdowns on active page */
+@media (max-width: 981px) {
+    header nav ul li a.active {
+        border-bottom: none;
+    }
+}
+
+/* ========== Call-to-Action Button ========== */
+.cta-button {
+    display: inline-block;
+    padding: 12px 25px;
+    margin-top: 20px;
+    background-color: goldenrod;
+    color: #fff;
+    text-decoration: none;
+    border-radius: 5px;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
+}
+
+.cta-button:hover {
+    background-color: #e6b800; /* A slightly darker goldenrod on hover */
+}
+
+/* ========== Announcement Page Styling ========== */
+.announcement-item {
+    border: 1px solid #ddd;
+    border-left: 5px solid crimson;
+    padding: 20px;
+    margin-bottom: 25px;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.announcement-item h2 {
+    color: goldenrod;
+    margin-top: 0;
+}
+
+.announcement-date {
+    font-size: 14px;
+    color: #666;
+    margin: -10px 0 15px;
+    font-style: italic;
+}
+
+/* ========== Contact Page Styling ========== */
+.contact-page {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 40px;
+  justify-content: center;
+}
+
+.contact-info, .contact-form-container {
+  flex: 1 1 45%; /* Allows items to grow/shrink and wrap */
+  max-width: 500px;
+  background-color: #f0f0f0;
+  padding: 30px;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.contact-info h2, .contact-form-container h2 {
+  color: crimson;
+  border-bottom: 2px solid goldenrod;
+  padding-bottom: 10px;
+  margin-bottom: 20px;
+}
+
+.info-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 15px;
+  gap: 15px;
+}
+
+.info-item i {
+  color: goldenrod;
+  font-size: 20px;
+  min-width: 25px; /* Ensures icons are aligned */
+}
+
+.info-item p {
+  margin: 0;
+  font-size: 16px;
+  color: #555;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  font-weight: bold;
+  margin-bottom: 8px;
+  color: #333;
+}
+
+.form-group input, .form-group textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 16px;
+  box-sizing: border-box; /* Ensures padding doesn't affect total width */
+  transition: border-color 0.3s ease;
+}
+
+.form-group input:focus, .form-group textarea:focus {
+  border-color: goldenrod;
+  outline: none;
+}
+
+.contact-form .cta-button {
+  width: 100%;
+  text-align: center;
+  padding: 15px;
+  border: none;
+  cursor: pointer;
+}
+
+.map-container {
+  width: 100%;
+  margin-top: 40px;
+  border: 1px solid #ddd;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Responsive adjustments for the contact page */
+@media (max-width: 768px) {
+  .contact-page {
+    flex-direction: column;
+    gap: 20px;
+  }
+}
+
+/* ========== Application Form Styling ========== */
+.application-form {
+    max-width: 800px;
+    margin: 0 auto;
+    background-color: #f9f9f9;
+    padding: 40px;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.application-form fieldset {
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 30px;
+}
+
+.application-form legend {
+    font-size: 1.5em;
+    font-weight: bold;
+    color: crimson;
+    padding: 0 10px;
+}
+
+.application-form .form-group label {
+    font-weight: 600;
+}
+
+.application-form input[type="text"],
+.application-form input[type="date"],
+.application-form input[type="tel"],
+.application-form input[type="email"],
+.application-form select {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-sizing: border-box;
+    margin-top: 5px;
+    margin-bottom: 15px;
+    font-size: 16px;
+}
+
+.application-form button[type="submit"] {
+    display: block;
+    width: 100%;
+    border: none;
+    cursor: pointer;
+    font-size: 1.1em;
+}
+
+/* ========== Auth Page Styling ========== */
+.auth-container {
+    max-width: 500px;
+    margin: 40px auto;
+    padding: 30px;
+    background-color: #f0f0f0;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+
+.auth-container h2 {
+    color: crimson;
+    margin-bottom: 20px;
+}
+
+.auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.auth-form .form-group label {
+    text-align: left;
+    display: block;
+    margin-bottom: 5px;
+}
+
+.auth-form input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 1em;
+    box-sizing: border-box;
+}
+
+.auth-form .cta-button {
+    width: 100%;
+    padding: 15px;
+    font-size: 1.1em;
+    margin-top: 15px;
+}
+
+.auth-toggle-text {
+    margin-top: 20px;
+    font-size: 0.9em;
+    color: #666;
+}
+
+.auth-toggle-text a {
+    color: goldenrod;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.auth-message {
+    margin-top: 20px;
+    padding: 15px;
+    border-radius: 5px;
+    font-weight: bold;
+    display: none;
+}
+
+.auth-message.success {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.auth-message.error {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+/* ========== Login/Register Form Styling (Updated) ========== */
+body {
+    background-image: url(images/4.jpg); /* Matches the original body style */
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    font-family: 'Montserrat', sans-serif; /* Matches the global font */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+}
+
+.form-container {
+    background: rgba(46, 43, 43, 0.9); /* Matches the dropdown background color */
+    padding: 2.5rem;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5); /* Darker shadow for a stronger look */
+    width: 100%;
+    max-width: 500px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    border: 1px solid goldenrod; /* Matches the dropdown border */
+}
+
+.form {
+    transition: transform 0.5s ease-in-out, opacity 0.5s ease-in-out;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    padding: 1rem;
+    box-sizing: border-box;
+    opacity: 0;
+    transform: translateX(100%);
+}
+
+.form.active-form {
+    opacity: 1;
+    transform: translateX(0);
+    position: relative;
+}
+
+h2 {
+    color: goldenrod; /* Matches the H1 and other accents */
+    margin-bottom: 1.5rem;
+    font-weight: 700;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+input[type="email"],
+input[type="password"] {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid goldenrod; /* Matches the border color */
+    background-color: transparent; /* Makes the background transparent */
+    color: #fff; /* White text for readability */
+    border-radius: 5px;
+    box-sizing: border-box;
+    font-size: 1rem;
+}
+
+input::placeholder {
+    color: rgba(255, 255, 255, 0.7); /* Lighter placeholder text */
+}
+
+input[type="email"]:focus,
+input[type="password"]:focus {
+    border-color: crimson; /* Matches the CTA hover color */
+    outline: none;
+    box-shadow: 0 0 5px rgba(220, 20, 60, 0.5);
+}
+
+button[type="submit"] {
+    background-color: crimson; /* Matches the .auth-buttons background */
+    color: #fff;
+    padding: 12px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
+}
+
+button[type="submit"]:hover {
+    background-color: darkred; /* Matches the .auth-buttons hover effect */
+}
+
+.form-links {
+    margin-top: 1.5rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.form-links a {
+    color: goldenrod; /* Matches the link color */
+    text-decoration: none;
+    font-weight: bold;
+    cursor: pointer;
+    transition: color 0.3s ease;
+}
+
+.form-links a:hover {
+    color: crimson; /* Uses a different accent color for hover */
+}
+
+.form-links span {
+    color: #fff; /* White separator to match the dark background */
+}
+
+/* ========== Footer ========== */
+footer {
+    width: 100%;
+    padding: 20px;
+    color: #fff;
+    text-align: center;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    z-index: 500;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex; /* Changed */
+    flex-direction: row; /* Changed */
+    justify-content: center; /* Changed */
+    align-items: center; /* Changed */
+    flex-wrap: wrap; /* To handle smaller screens */
+}
+
+footer p {
+    margin: 0 15px; /* Added horizontal margin */
+    font-size: 14px;
+}
+
+footer a {
+    color: #fab804;
+    text-decoration: none;
+    font-size: 25px;
+    margin: 0 10px; /* Added horizontal margin */
+}
+
+/* ========== Media Queries ========== */
+@media (max-width: 981px) {
+    header {
+        justify-content: space-between;
+    }
+    
+    header nav {
+        display: none;
+        position: absolute;
+        top: 100px;
+        left: 0;
+        width: 100%;
+        background-color: rgba(0, 0, 0, 0.8);
+        text-align: center;
+    }
+
+    header nav ul {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    header nav ul li {
+        padding: 15px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    header nav ul ul {
+        position: static;
+        display: none;
+        background-color: transparent;
+        border: none;
+        min-width: 0;
+        padding: 0;
+    }
+
+    header nav ul li:hover > ul {
+        display: block;
+    }
+
+    header nav ul ul li {
+        padding: 10px 0;
+    }
+
+    header label {
+        display: block;
+    }
+
+    #menu-bar:checked ~ nav {
+        display: block;
+    }
+    
+    .auth-buttons {
+        display: none;
+    }
+
+    .hero-section {
+        padding: 150px 20px;
+    }
+}
