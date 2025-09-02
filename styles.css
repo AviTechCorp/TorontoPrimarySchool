@@ -15,6 +15,9 @@ body {
     background-size: cover;
     background-position: center;
     background-attachment: fixed;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
 }
 
 /* ========== Links & Lists ========== */
@@ -55,7 +58,7 @@ header nav ul {
 
 header nav ul li {
     padding: 10px 20px;
-    position: relative; /* Needed for dropdown positioning */
+    position: relative;
 }
 
 header nav ul li a:hover {
@@ -128,30 +131,32 @@ header label {
 /* ========== Section ========== */
 section {
     width: 100%;
-    min-height: 80vh;
+    min-height: 70vh;
     color: white;
-    padding-top: 150px; /* Adjust for fixed header */
-    padding-bottom: 100px; /* Adjust for fixed footer */
+    padding-top: 150px;
+    padding-bottom: 100px;
     text-align: center;
 }
 
 section h1 {
     color: goldenrod;
-    margin-bottom: 20px;
+    margin: 10px;
+    font-family: 'Montserrat', sans-serif;
     font-size: 40px;
 }
 
 section p {
-    margin: 10px 0;
-    font-size: 20px;
+    margin: 10px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 25px;
     line-height: 1.5;
 }
 
 .hero-section {
     padding-top: 250px;
     padding-bottom: 250px;
-    background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent overlay for text readability */
-    min-height: 100vh; /* Make the hero section fill the screen */
+    background-color: rgba(0, 0, 0, 0.5);
+    min-height: 100vh;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -168,10 +173,11 @@ section p {
     color: crimson;
     background-color: transparent;
     border: 2px solid crimson;
-    font-size: 1.5rem;
+    font-size: 2rem;
     text-transform: uppercase;
-    letter-spacing: 0.5rem;
+    letter-spacing: 1rem;
     transition: all 0.3s ease;
+    transition-property: background-color, color;
 }
 
 .cta:hover {
@@ -211,10 +217,12 @@ section p {
 
 /* ========== Page Content Styling ========== */
 .page-content {
-    padding: 120px 20px 80px; /* Top, Right/Left, Bottom padding */
-    color: #333; /* Darker text for readability */
-    background-color: rgba(255, 255, 255, 0.9); /* Semi-transparent white background */
-    min-height: calc(100vh - 180px); /* Fill the rest of the screen */
+    padding: 120px 20px 100px;
+    color: #fff;
+    background-color: rgba(46, 43, 43, 0.9);
+    flex-grow: 1;
+    width: 100%;
+    min-height: calc(100vh - 200px);
 }
 
 .content-container {
@@ -272,7 +280,7 @@ header nav ul li a.active {
 }
 
 .cta-button:hover {
-    background-color: #e6b800; /* A slightly darker goldenrod on hover */
+    background-color: #e6b800;
 }
 
 /* ========== Announcement Page Styling ========== */
@@ -300,94 +308,94 @@ header nav ul li a.active {
 
 /* ========== Contact Page Styling ========== */
 .contact-page {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 40px;
-  justify-content: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 40px;
+    justify-content: center;
 }
 
 .contact-info, .contact-form-container {
-  flex: 1 1 45%; /* Allows items to grow/shrink and wrap */
-  max-width: 500px;
-  background-color: #f0f0f0;
-  padding: 30px;
-  border-radius: 8px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    flex: 1 1 45%;
+    max-width: 500px;
+    background-color: #f0f0f0;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .contact-info h2, .contact-form-container h2 {
-  color: crimson;
-  border-bottom: 2px solid goldenrod;
-  padding-bottom: 10px;
-  margin-bottom: 20px;
+    color: crimson;
+    border-bottom: 2px solid goldenrod;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
 }
 
 .info-item {
-  display: flex;
-  align-items: center;
-  margin-bottom: 15px;
-  gap: 15px;
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+    gap: 15px;
 }
 
 .info-item i {
-  color: goldenrod;
-  font-size: 20px;
-  min-width: 25px; /* Ensures icons are aligned */
+    color: goldenrod;
+    font-size: 20px;
+    min-width: 25px;
 }
 
 .info-item p {
-  margin: 0;
-  font-size: 16px;
-  color: #555;
+    margin: 0;
+    font-size: 16px;
+    color: #555;
 }
 
 .form-group {
-  margin-bottom: 20px;
+    margin-bottom: 20px;
 }
 
 .form-group label {
-  display: block;
-  font-weight: bold;
-  margin-bottom: 8px;
-  color: #333;
+    display: block;
+    font-weight: bold;
+    margin-bottom: 8px;
+    color: #333;
 }
 
 .form-group input, .form-group textarea {
-  width: 100%;
-  padding: 12px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  font-size: 16px;
-  box-sizing: border-box; /* Ensures padding doesn't affect total width */
-  transition: border-color 0.3s ease;
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 16px;
+    box-sizing: border-box;
+    transition: border-color 0.3s ease;
 }
 
 .form-group input:focus, .form-group textarea:focus {
-  border-color: goldenrod;
-  outline: none;
+    border-color: goldenrod;
+    outline: none;
 }
 
 .contact-form .cta-button {
-  width: 100%;
-  text-align: center;
-  padding: 15px;
-  border: none;
-  cursor: pointer;
+    width: 100%;
+    text-align: center;
+    padding: 15px;
+    border: none;
+    cursor: pointer;
 }
 
 .map-container {
-  width: 100%;
-  margin-top: 40px;
-  border: 1px solid #ddd;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    margin-top: 40px;
+    border: 1px solid #ddd;
+    box-shadow: 0 4x 8px rgba(0, 0, 0, 0.1);
 }
 
 /* Responsive adjustments for the contact page */
 @media (max-width: 768px) {
-  .contact-page {
-    flex-direction: column;
-    gap: 20px;
-  }
+    .contact-page {
+        flex-direction: column;
+        gap: 20px;
+    }
 }
 
 /* ========== Application Form Styling ========== */
@@ -517,11 +525,11 @@ header nav ul li a.active {
 
 /* ========== Login/Register Form Styling (Updated) ========== */
 body {
-    background-image: url(images/4.jpg); /* Matches the original body style */
+    background-image: url(images/4.jpg);
     background-size: cover;
     background-position: center;
     background-attachment: fixed;
-    font-family: 'Montserrat', sans-serif; /* Matches the global font */
+    font-family: 'Montserrat', sans-serif;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -530,16 +538,16 @@ body {
 }
 
 .form-container {
-    background: rgba(46, 43, 43, 0.9); /* Matches the dropdown background color */
+    background: rgba(46, 43, 43, 0.9);
     padding: 2.5rem;
     border-radius: 10px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5); /* Darker shadow for a stronger look */
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
     width: 100%;
     max-width: 500px;
     text-align: center;
     position: relative;
     overflow: hidden;
-    border: 1px solid goldenrod; /* Matches the dropdown border */
+    border: 1px solid goldenrod;
 }
 
 .form {
@@ -561,7 +569,7 @@ body {
 }
 
 h2 {
-    color: goldenrod; /* Matches the H1 and other accents */
+    color: goldenrod;
     margin-bottom: 1.5rem;
     font-weight: 700;
 }
@@ -572,31 +580,36 @@ form {
     gap: 1rem;
 }
 
-input[type="email"],
-input[type="password"] {
+.form input[type="email"],
+.form input[type="password"],
+.form input[type="text"],
+.form input[type="tel"],
+.form input[type="date"],
+.form select {
     width: 100%;
     padding: 12px;
-    border: 1px solid goldenrod; /* Matches the border color */
-    background-color: transparent; /* Makes the background transparent */
-    color: #fff; /* White text for readability */
+    border: 1px solid goldenrod;
+    background-color: transparent;
+    color: #fff;
     border-radius: 5px;
     box-sizing: border-box;
     font-size: 1rem;
 }
 
-input::placeholder {
-    color: rgba(255, 255, 255, 0.7); /* Lighter placeholder text */
+.form input::placeholder {
+    color: rgba(255, 255, 255, 0.7);
 }
 
-input[type="email"]:focus,
-input[type="password"]:focus {
-    border-color: crimson; /* Matches the CTA hover color */
+.form input:focus,
+.form select:focus,
+.form textarea:focus {
+    border-color: crimson;
     outline: none;
     box-shadow: 0 0 5px rgba(220, 20, 60, 0.5);
 }
 
 button[type="submit"] {
-    background-color: crimson; /* Matches the .auth-buttons background */
+    background-color: crimson;
     color: #fff;
     padding: 12px;
     border: none;
@@ -608,7 +621,7 @@ button[type="submit"] {
 }
 
 button[type="submit"]:hover {
-    background-color: darkred; /* Matches the .auth-buttons hover effect */
+    background-color: darkred;
 }
 
 .form-links {
@@ -620,7 +633,7 @@ button[type="submit"]:hover {
 }
 
 .form-links a {
-    color: goldenrod; /* Matches the link color */
+    color: goldenrod;
     text-decoration: none;
     font-weight: bold;
     cursor: pointer;
@@ -628,11 +641,156 @@ button[type="submit"]:hover {
 }
 
 .form-links a:hover {
-    color: crimson; /* Uses a different accent color for hover */
+    color: crimson;
 }
 
 .form-links span {
-    color: #fff; /* White separator to match the dark background */
+    color: #fff;
+}
+
+/* Styling for the role selection field */
+.form-container select {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid goldenrod;
+    background-color: transparent;
+    color: #fff;
+    border-radius: 5px;
+    box-sizing: border-box;
+    font-size: 1rem;
+    margin-bottom: 1rem;
+}
+
+.form-container select option {
+    background-color: #2e2b2b;
+    color: #fff;
+}
+
+/* Hide the role-specific fields by default */
+.role-fields {
+    display: none;
+}
+
+/* Style for fieldsets */
+fieldset {
+    border: 1px solid goldenrod;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+legend {
+    color: crimson;
+    font-size: 1.2em;
+    font-weight: bold;
+    padding: 0 10px;
+}
+
+/* Adjustments for the password section */
+#password-section {
+    margin-top: 1rem;
+}
+
+#password-section input {
+    margin-bottom: 1rem;
+}
+
+/* ========== Portal Page Styling ========== */
+.portal-container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: transparent;
+    box-shadow: none;
+    color: #fff;
+}
+
+.portal-title {
+    color: goldenrod;
+    text-align: center;
+    margin-bottom: 40px;
+    font-size: 2.5rem;
+    border-bottom: 2px solid goldenrod;
+    padding-bottom: 10px;
+}
+
+.portal-section {
+    margin-bottom: 50px;
+}
+
+.portal-section h2 {
+    color: goldenrod;
+    font-size: 2rem;
+    margin-bottom: 20px;
+}
+
+.profile-card {
+    display: flex;
+    align-items: center;
+    gap: 30px;
+    background-color: rgba(60, 57, 57, 0.8);
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+.profile-pic {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid goldenrod;
+}
+
+.profile-details p {
+    font-size: 1.1rem;
+    margin: 5px 0;
+    color: #fff; /* Changed to white */
+}
+
+.report-card-preview {
+    background-color: rgba(60, 57, 57, 0.8);
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    text-align: left;
+    color: #fff; /* Changed to white */
+}
+
+.report-card-preview h3 {
+    text-align: center;
+    color: crimson;
+    margin-bottom: 15px;
+}
+
+.report-card-preview table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+}
+
+.report-card-preview th, .report-card-preview td {
+    border: 1px solid #ddd;
+    padding: 12px;
+    text-align: left;
+    color: #fff; /* Changed to white */
+}
+
+.report-card-preview th {
+    background-color: rgba(80, 77, 77, 0.8);
+    font-weight: bold;
+}
+
+.tool-card {
+    background-color: rgba(60, 57, 57, 0.8);
+    padding: 25px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    text-align: center;
+}
+
+.tool-card p {
+    color: white;
 }
 
 /* ========== Footer ========== */
@@ -641,20 +799,19 @@ footer {
     padding: 20px;
     color: #fff;
     text-align: center;
-    position: fixed;
-    bottom: 0;
-    left: 0;
+    position: relative;
     z-index: 500;
     background-color: rgba(0, 0, 0, 0.5);
-    display: flex; /* Changed */
-    flex-direction: row; /* Changed */
-    justify-content: center; /* Changed */
-    align-items: center; /* Changed */
-    flex-wrap: wrap; /* To handle smaller screens */
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-top: auto;
 }
 
 footer p {
-    margin: 0 15px; /* Added horizontal margin */
+    margin: 0 15px;
     font-size: 14px;
 }
 
@@ -662,7 +819,7 @@ footer a {
     color: #fab804;
     text-decoration: none;
     font-size: 25px;
-    margin: 0 10px; /* Added horizontal margin */
+    margin: 0 10px;
 }
 
 /* ========== Media Queries ========== */
@@ -689,15 +846,19 @@ footer a {
     header nav ul li {
         padding: 15px;
         border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        position: relative;
     }
     
     header nav ul ul {
-        position: static;
         display: none;
-        background-color: transparent;
-        border: none;
-        min-width: 0;
-        padding: 0;
+        position: absolute;
+        top: 0;
+        left: 100%;
+        background-color: rgba(46, 43, 43, 0.9);
+        border: 1px solid goldenrod;
+        min-width: 250px;
+        padding: 10px 0;
+        border-radius: 10px;
     }
 
     header nav ul li:hover > ul {
@@ -706,6 +867,11 @@ footer a {
 
     header nav ul ul li {
         padding: 10px 0;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    header nav ul ul li:first-child {
+        border-top: none;
     }
 
     header label {
@@ -715,12 +881,24 @@ footer a {
     #menu-bar:checked ~ nav {
         display: block;
     }
-    
+
     .auth-buttons {
-        display: none;
+        padding: 15px;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
     }
 
-    .hero-section {
-        padding: 150px 20px;
+    /* Responsive adjustments for portals */
+    .portal-container {
+        padding: 10px;
+    }
+    
+    .profile-card {
+        flex-direction: column;
+        text-align: center;
+        gap: 15px;
+    }
+
+    .report-card-preview table {
+        font-size: 0.8rem;
     }
 }

@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portals - Toronto PS</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+</head>
+<body>
+    <header>
+        <nav>
+            <div class="logo">
+                <h1>Toronto PS</h1>
+            </div>
+            <ul class="nav-links">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="about.html">About</a></li>
+                <li class="dropdown">
+                    <a href="academics.html" class="dropbtn">Academics ▼</a>
+                    <div class="dropdown-content">
+                        <a href="academics.html#grades">Grades</a>
+                        <a href="academics.html#subjects">Subjects</a>
+                        <a href="academics.html#past-papers">Past Papers</a>
+                        <a href="academics.html#learning-material">Learning Material</a>
+                        <a href="academics.html#overall-results">Overall Results</a>
+                    </div>
+                </li>
+                <li class="dropdown">
+                    <a href="admissions.html" class="dropbtn">Admissions ▼</a>
+                    <div class="dropdown-content">
+                        <a href="admissions.html#form">Admission Form</a>
+                        <a href="admissions.html#requirements">Requirements</a>
+                    </div>
+                </li>
+                <li class="dropdown">
+                    <a href="activities.html" class="dropbtn">Activities ▼</a>
+                    <div class="dropdown-content">
+                        <a href="activities.html#sports">Sports</a>
+                        <a href="activities.html#music">Music</a>
+                        <a href="activities.html#dance">Dance</a>
+                        <a href="activities.html#art">Art & Culture</a>
+                    </div>
+                </li>
+                <li><a href="portals.html" class="active">Portals</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section class="content-section">
+            <h2>School Portals</h2>
+            <p>Sign in or register to access important information and tools.</p>
+            
+            <div class="portal-form-container">
+                <div class="tabs">
+                    <button class="tab-button active" onclick="showForm('signin')">Sign In</button>
+                    <button class="tab-button" onclick="showForm('register')">Register</button>
+                </div>
+
+                <div id="signin-forms" class="portal-form active">
+                    <div class="portal-role-tabs">
+                        <button class="role-tab active" onclick="showRoleForm('parent-signin')">Parent</button>
+                        <button class="role-tab" onclick="showRoleForm('teacher-signin')">Teacher</button>
+                        <button class="role-tab" onclick="showRoleForm('admin-signin')">Admin</button>
+                    </div>
+                    <form id="parent-signin-form" class="role-form active">
+                        <input type="email" id="parent-email-signin" placeholder="Email" required>
+                        <input type="password" id="parent-password-signin" placeholder="Password" required>
+                        <button type="submit">Sign In</button>
+                    </form>
+                    <form id="teacher-signin-form" class="role-form">
+                        <input type="email" id="teacher-email-signin" placeholder="Email" required>
+                        <input type="password" id="teacher-password-signin" placeholder="Password" required>
+                        <button type="submit">Sign In</button>
+                    </form>
+                    <form id="admin-signin-form" class="role-form">
+                        <input type="email" id="admin-email-signin" placeholder="Email" required>
+                        <input type="password" id="admin-password-signin" placeholder="Password" required>
+                        <button type="submit">Sign In</button>
+                    </form>
+                </div>
+
+                <div id="register-forms" class="portal-form">
+                    <div class="portal-role-tabs">
+                        <button class="role-tab active" onclick="showRoleForm('parent-register')">Parent</button>
+                        <button class="role-tab" onclick="showRoleForm('teacher-register')">Teacher</button>
+                        <button class="role-tab" onclick="showRoleForm('admin-register')">Admin</button>
+                    </div>
+
+                    <form id="parent-register-form" class="role-form active">
+                        <h4>Parent Section</h4>
+                        <input type="text" id="parent-surname-register" placeholder="Surname" required>
+                        <input type="text" id="parent-name-register" placeholder="Name" required>
+                        <input type="email" id="parent-email-register" placeholder="Email" required>
+                        <input type="tel" id="parent-contact-register" placeholder="Contact Number" required>
+                        <input type="text" id="parent-relationship-register" placeholder="Relationship with Learner" required>
+                        <input type="text" id="parent-admission-register" placeholder="Admission Number" required>
+                        <hr>
+                        <h4>Learner Section</h4>
+                        <input type="text" id="learner-surname-register" placeholder="Surname" required>
+                        <input type="text" id="learner-first-name-register" placeholder="First Name" required>
+                        <input type="text" id="learner-middle-name-register" placeholder="Middle Name (Optional)">
+                        <input type="date" id="learner-dob-register" placeholder="Date of Birth" required>
+                        <select id="learner-gender-register" required>
+                            <option value="" disabled selected>Select Gender</option>
+                            <option value="male">Male</option>
+                            <option value="female">Female</option>
+                            <option value="other">Other</option>
+                        </select>
+                        <input type="text" id="learner-grade-register" placeholder="Grade" required>
+                        <input type="password" id="parent-password-register" placeholder="Password" required>
+                        <input type="password" id="parent-confirm-password-register" placeholder="Confirm Password" required>
+                        <button type="submit">Register as Parent</button>
+                    </form>
+
+                    <form id="teacher-register-form" class="role-form">
+                        <input type="text" id="teacher-surname-register" placeholder="Surname" required>
+                        <input type="text" id="teacher-preferred-name-register" placeholder="Preferred Name" required>
+                        <input type="email" id="teacher-email-register" placeholder="Email" required>
+                        <input type="password" id="teacher-password-register" placeholder="Password" required>
+                        <input type="password" id="teacher-confirm-password-register" placeholder="Confirm Password" required>
+                        <button type="submit">Register as Teacher</button>
+                    </form>
+                    
+                    <form id="admin-register-form" class="role-form">
+                        <input type="text" id="admin-surname-register" placeholder="Surname" required>
+                        <input type="text" id="admin-preferred-name-register" placeholder="Preferred Name" required>
+                        <input type="email" id="admin-email-register" placeholder="Email" required>
+                        <input type="password" id="admin-password-register" placeholder="Password" required>
+                        <input type="password" id="admin-confirm-password-register" placeholder="Confirm Password" required>
+                        <input type="text" id="admin-special-id-register" placeholder="Special ID" required>
+                        <button type="submit">Register as Admin</button>
+                    </form>
+                </div>
+
+                <p id="auth-status"></p>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 Toronto Primary School. All Rights Reserved.</p>
+    </footer>
+
+    <script src="firebase-init.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
