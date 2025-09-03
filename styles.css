@@ -524,19 +524,6 @@ header nav ul li a.active {
 }
 
 /* ========== Login/Register Form Styling (Updated) ========== */
-body {
-    background-image: url(images/4.jpg);
-    background-size: cover;
-    background-position: center;
-    background-attachment: fixed;
-    font-family: 'Montserrat', sans-serif;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-    margin: 0;
-}
-
 .form-container {
     background: rgba(46, 43, 43, 0.9);
     padding: 2.5rem;
@@ -548,6 +535,7 @@ body {
     position: relative;
     overflow: hidden;
     border: 1px solid goldenrod;
+    margin: 120px auto; /* Add margin to prevent overlap with fixed header */
 }
 
 .form {
@@ -695,32 +683,88 @@ legend {
     margin-bottom: 1rem;
 }
 
-/* ========== Portal Page Styling ========== */
-.portal-container {
-    max-width: 1100px;
-    margin: 0 auto;
+/* ========== Portal Pages Layout and Styling ========== */
+.portal-main-content {
+    display: flex;
+    flex-grow: 1;
+    min-height: calc(100vh - 100px);
+    padding-top: 100px;
+}
+
+.sidebar {
+    width: 250px;
+    background-color: rgba(46, 43, 43, 0.9);
+    color: white;
     padding: 20px;
-    background-color: transparent;
-    box-shadow: none;
-    color: #fff;
+    padding-top: 40px;
+    flex-shrink: 0;
+    box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+}
+
+.sidebar-title {
+    color: goldenrod;
+    font-size: 22px;
+    margin-bottom: 20px;
+    border-bottom: 2px solid goldenrod;
+    padding-bottom: 10px;
+    text-align: center;
+}
+
+.sidebar ul {
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar ul li {
+    margin-bottom: 10px;
+}
+
+.sidebar ul li a {
+    display: block;
+    padding: 15px;
+    font-size: 18px;
+    color: #ffffff;
+    border-radius: 5px;
+    transition: background-color 0.3s;
+}
+
+.sidebar ul li a i {
+    margin-right: 10px;
+}
+
+.sidebar ul li a:hover {
+    background-color: goldenrod;
+    color: #2e2b2b;
+}
+
+.portal-content-wrapper {
+    flex-grow: 1;
+    background-color: #ffffff;
+    color: #2e2b2b;
+    padding: 40px;
+    padding-top: 60px;
+    overflow-y: auto;
 }
 
 .portal-title {
-    color: goldenrod;
-    text-align: center;
+    color: crimson;
+    font-size: 2.5em;
     margin-bottom: 40px;
-    font-size: 2.5rem;
-    border-bottom: 2px solid goldenrod;
-    padding-bottom: 10px;
+    text-align: center;
 }
 
 .portal-section {
     margin-bottom: 50px;
+    padding: 30px;
+    background-color: #f9f9f9;
+    border-radius: 10px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
 }
 
 .portal-section h2 {
     color: goldenrod;
-    font-size: 2rem;
+    border-bottom: 2px solid crimson;
+    padding-bottom: 10px;
     margin-bottom: 20px;
 }
 
@@ -728,177 +772,52 @@ legend {
     display: flex;
     align-items: center;
     gap: 30px;
-    background-color: rgba(60, 57, 57, 0.8);
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
 }
 
 .profile-pic {
-    width: 100px;
-    height: 100px;
+    width: 120px;
+    height: 120px;
     border-radius: 50%;
-    object-fit: cover;
     border: 3px solid goldenrod;
+    object-fit: cover;
+}
+
+.profile-details {
+    font-size: 1.1em;
+    line-height: 1.6;
 }
 
 .profile-details p {
-    font-size: 1.1rem;
-    margin: 5px 0;
-    color: #fff; /* Changed to white */
-}
-
-.report-card-preview {
-    background-color: rgba(60, 57, 57, 0.8);
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-    text-align: left;
-    color: #fff; /* Changed to white */
-}
-
-.report-card-preview h3 {
-    text-align: center;
-    color: crimson;
-    margin-bottom: 15px;
-}
-
-.report-card-preview table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-bottom: 20px;
-}
-
-.report-card-preview th, .report-card-preview td {
-    border: 1px solid #ddd;
-    padding: 12px;
-    text-align: left;
-    color: #fff; /* Changed to white */
-}
-
-.report-card-preview th {
-    background-color: rgba(80, 77, 77, 0.8);
-    font-weight: bold;
+    color: #000000;
 }
 
 .tool-card {
-    background-color: rgba(60, 57, 57, 0.8);
+    background-color: #fff;
     padding: 25px;
+    border-left: 5px solid goldenrod;
     border-radius: 8px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-    text-align: center;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+}
+
+.tool-card h3 {
+    color: crimson;
+    margin-bottom: 10px;
 }
 
 .tool-card p {
-    color: white;
+    font-size: 16px;
+    color: #555;
+    margin: 0;
 }
 
-/* ========== Footer ========== */
-footer {
-    width: 100%;
-    padding: 20px;
-    color: #fff;
-    text-align: center;
-    position: relative;
-    z-index: 500;
-    background-color: rgba(0, 0, 0, 0.5);
-    display: flex;
-    flex-direction: row;
-    justify-content: center;
-    align-items: center;
-    flex-wrap: wrap;
-    margin-top: auto;
+.tool-card ul {
+    list-style-type: none;
+    padding: 0;
+    margin-top: 10px;
 }
 
-footer p {
-    margin: 0 15px;
-    font-size: 14px;
-}
-
-footer a {
-    color: #fab804;
-    text-decoration: none;
-    font-size: 25px;
-    margin: 0 10px;
-}
-
-/* ========== Media Queries ========== */
-@media (max-width: 981px) {
-    header {
-        justify-content: space-between;
-    }
-    
-    header nav {
-        display: none;
-        position: absolute;
-        top: 100px;
-        left: 0;
-        width: 100%;
-        background-color: rgba(0, 0, 0, 0.8);
-        text-align: center;
-    }
-
-    header nav ul {
-        flex-direction: column;
-        width: 100%;
-    }
-
-    header nav ul li {
-        padding: 15px;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        position: relative;
-    }
-    
-    header nav ul ul {
-        display: none;
-        position: absolute;
-        top: 0;
-        left: 100%;
-        background-color: rgba(46, 43, 43, 0.9);
-        border: 1px solid goldenrod;
-        min-width: 250px;
-        padding: 10px 0;
-        border-radius: 10px;
-    }
-
-    header nav ul li:hover > ul {
-        display: block;
-    }
-
-    header nav ul ul li {
-        padding: 10px 0;
-        border-top: 1px solid rgba(255, 255, 255, 0.1);
-    }
-    
-    header nav ul ul li:first-child {
-        border-top: none;
-    }
-
-    header label {
-        display: block;
-    }
-
-    #menu-bar:checked ~ nav {
-        display: block;
-    }
-
-    .auth-buttons {
-        padding: 15px;
-        border-top: 1px solid rgba(255, 255, 255, 0.1);
-    }
-
-    /* Responsive adjustments for portals */
-    .portal-container {
-        padding: 10px;
-    }
-    
-    .profile-card {
-        flex-direction: column;
-        text-align: center;
-        gap: 15px;
-    }
-
-    .report-card-preview table {
-        font-size: 0.8rem;
-    }
+.tool-card ul li {
+    margin-bottom: 5px;
+    color: #333;
 }

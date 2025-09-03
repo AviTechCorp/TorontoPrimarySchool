@@ -60,54 +60,74 @@
         </nav>
     </header>
 
-    <main class="page-content">
-        <div class="portal-container">
+    <main class="portal-main-content">
+        <aside class="sidebar">
+            <h3 class="sidebar-title">Parents Menu</h3>
+            <ul>
+                <li><a href="#dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                <li><a href="#profile"><i class="fas fa-user-circle"></i> Your Profile</a></li>
+                <li><a href="#learner-section"><i class="fas fa-child"></i> Learner Section</a></li>
+                <li><a href="#forum"><i class="fas fa-comments"></i> Parent-Teacher Forum</a></li>
+                <li><a href="#resources"><i class="fas fa-book-open"></i> Useful Resources</a></li>
+            </ul>
+        </aside>
+
+        <div class="portal-content-wrapper">
             <h1 class="portal-title">Parents Portal</h1>
 
-            <section class="portal-section">
-                <h2>Learner Profile</h2>
+            <section id="profile" class="portal-section">
+                <h2>Your Profile</h2>
                 <div class="profile-card">
-                    <img src="images/placeholder-profile.png" alt="Learner Profile Picture" class="profile-pic">
+                    <img src="images/placeholder-profile.png" alt="Parent Profile Picture" class="profile-pic">
                     <div class="profile-details">
-                        <p><strong>Name:</strong> [Learner's Full Name]</p>
-                        <p><strong>Grade:</strong> [Grade]</p>
-                        <p><strong>Date of Birth:</strong> [Date of Birth]</p>
-                        <p><strong>Admission Number:</strong> [Admission Number]</p>
+                        <p><strong>Name:</strong> [Parent's Full Name]</p>
+                        <p><strong>Email:</strong> [Parent's Email Address]</p>
+                        <p><strong>Contact:</strong> [Parent's Contact Number]</p>
+                        <p><strong>Relationship:</strong> [Relationship to Learner]</p>
                     </div>
                 </div>
             </section>
             
-            <section class="portal-section">
-                <h2>Preview Report Card</h2>
-                <div class="report-card-preview">
-                    <h3>Term 1 - Grade 3</h3>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Subject</th>
-                                <th>Term Mark</th>
-                                <th>Teacher Comments</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>Mathematics</td>
-                                <td>85%</td>
-                                <td>Excellent progress, great at problem-solving.</td>
-                            </tr>
-                            <tr>
-                                <td>English</td>
-                                <td>92%</td>
-                                <td>Outstanding reading and writing skills.</td>
-                            </tr>
-                            <tr>
-                                <td>Life Skills</td>
-                                <td>78%</td>
-                                <td>Shows a positive attitude in group activities.</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                    <a href="#" class="cta-button">Download Full Report</a>
+            <section id="learner-section" class="portal-section">
+                <h2>Learner Section</h2>
+                <div class="tool-card">
+                    <h3>Academics Summary</h3>
+                    <p>View your child's academic performance at a glance. </p>
+                    <a href="#" class="cta-button">View Summary</a>
+                </div>
+                <div class="tool-card">
+                    <h3>Report Card</h3>
+                    <p>Access and download your child's full report cards from previous terms.</p>
+                    <a href="#" class="cta-button">Download Report</a>
+                </div>
+                <div class="tool-card">
+                    <h3>Learner Details</h3>
+                    <p>Review and update your child's personal and medical information on file with the school.</p>
+                    <a href="#" class="cta-button">Edit Details</a>
+                </div>
+            </section>
+
+            <section id="forum" class="portal-section">
+                <h2>Parent-Teacher Forum</h2>
+                <div class="tool-card">
+                    <p>Engage in secure, direct communication with your child's teachers.</p>
+                    <a href="#" class="cta-button">Go to Forum</a>
+                </div>
+            </section>
+
+            <section id="resources" class="portal-section">
+                <h2>Useful Resources</h2>
+                <div class="grid-container">
+                    <div class="grid-item tool-card">
+                        <h3>School Calendar</h3>
+                        <p>Stay updated on school holidays, events, and important dates.</p>
+                        <a href="#" class="cta-button">View Calendar</a>
+                    </div>
+                    <div class="grid-item tool-card">
+                        <h3>Fee Payments</h3>
+                        <p>View your current fee statement and payment history.</p>
+                        <a href="#" class="cta-button">View Financials</a>
+                    </div>
                 </div>
             </section>
         </div>

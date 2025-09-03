@@ -60,16 +60,38 @@
         </nav>
     </header>
 
-    <main class="page-content">
-        <div class="portal-container">
-            <h1 class="portal-title">Admins Portal</h1>
+    <main class="portal-main-content">
+        <aside class="sidebar">
+            <h3 class="sidebar-title">Admin Menu</h3>
+            <ul>
+                <li><a href="#profile"><i class="fas fa-user-shield"></i> Your Profile</a></li>
+                <li><a href="#sams-mgmt"><i class="fas fa-cogs"></i> SA-SAMS Management</a></li>
+                <li><a href="#finance"><i class="fas fa-dollar-sign"></i> Finance</a></li>
+                <li><a href="#other-tools"><i class="fas fa-tools"></i> Other Tools</a></li>
+            </ul>
+        </aside>
+
+        <div class="portal-content-wrapper">
+            <h1 class="portal-title">Admins Portal Dashboard</h1>
+
+            <section id="profile" class="portal-section">
+                <h2>Your Profile</h2>
+                <div class="profile-card">
+                    <img src="images/placeholder-profile.png" alt="Admin Profile Picture" class="profile-pic">
+                    <div class="profile-details">
+                        <p><strong>Name:</strong> [Admin's Full Name]</p>
+                        <p><strong>Role:</strong> [Admin Role, e.g., Principal, Bursar]</p>
+                        <p><strong>Email:</strong> [Admin's Email Address]</p>
+                    </div>
+                </div>
+            </section>
             
-            <section class="portal-section">
+            <section id="sams-mgmt" class="portal-section">
                 <h2>SA-SAMS Management</h2>
                 <div class="grid-container">
                     <div class="grid-item tool-card">
                         <h3>Academics</h3>
-                        <p>Manage curriculum, subject records, and assessment data.</p>
+                        <p>Manage curriculum, subject records, and assessment data. </p>
                         <a href="#" class="cta-button">Go to Academics</a>
                     </div>
                     <div class="grid-item tool-card">
@@ -85,11 +107,27 @@
                 </div>
             </section>
             
-            <section class="portal-section">
+            <section id="finance" class="portal-section">
                 <h2>Finance</h2>
                 <div class="tool-card">
                     <p>Oversee all school financial activities, including fee payments, budgets, and reporting.</p>
                     <a href="#" class="cta-button">Go to Finance</a>
+                </div>
+            </section>
+
+            <section id="other-tools" class="portal-section">
+                <h2>Other Administrative Tools</h2>
+                <div class="grid-container">
+                    <div class="grid-item tool-card">
+                        <h3>Announcements</h3>
+                        <p>Create and publish new announcements for parents, teachers, and learners.</p>
+                        <a href="#" class="cta-button">Manage Announcements</a>
+                    </div>
+                    <div class="grid-item tool-card">
+                        <h3>System Configuration</h3>
+                        <p>Adjust and configure system settings and user permissions.</p>
+                        <a href="#" class="cta-button">Go to Settings</a>
+                    </div>
                 </div>
             </section>
         </div>
