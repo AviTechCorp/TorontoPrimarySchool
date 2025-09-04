@@ -96,10 +96,6 @@ header nav ul li a:hover {
     font-weight: 700;
 }
 
-header nav ul li:hover > ul {
-    display: block;
-}
-
 /* Dropdown Menu Styling */
 header nav ul ul {
     display: none;
@@ -111,6 +107,10 @@ header nav ul ul {
     border-radius: 10px;
     min-width: 250px;
     padding: 10px 0;
+}
+
+header nav ul li:hover > ul {
+    display: block;
 }
 
 header nav ul ul li {
@@ -855,14 +855,14 @@ legend {
         height: 60px; /* Adjust logo size */
     }
 
-    /* Hide the navigation menu by default */
+    /* Hide the navigation menu by default and make it scrollable */
     header nav {
         width: 100%;
         max-height: 0;
-        overflow: hidden;
+        overflow-y: auto; /* Enable vertical scrolling */
         transition: max-height 0.3s ease-out;
     }
-    
+
     /* When the checkbox is checked, show the nav menu */
     #menu-bar:checked + label + nav {
         max-height: 500px; /* A large value to reveal the menu */
@@ -887,10 +887,15 @@ legend {
 
     header nav ul ul {
         position: static;
-        display: block;
+        display: none; /* Hide dropdowns by default on mobile */
         background-color: transparent;
         border: none;
         padding: 0 0 0 20px;
+    }
+    
+    /* Make dropdown appear on click (by targeting the checkbox) or touch */
+    .dropdown input[type="checkbox"]:checked ~ ul {
+        display: block;
     }
 
     header nav ul ul li {
