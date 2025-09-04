@@ -1,6 +1,6 @@
+/* ========== Global Styles ========== */
 @import 'https://fonts.googleapis.com/css?family=Montserrat:300, 400, 700&display=swap';
 
-/* ========== Global Styles ========== */
 * {
     margin: 0;
     padding: 0;
@@ -23,7 +23,6 @@ body {
 /* ========== Links & Lists ========== */
 a {
     text-decoration: none;
-    font-size: 20px;
     color: #fff;
     transition: color 0.3s;
 }
@@ -51,14 +50,45 @@ header img {
     height: 80px;
 }
 
+/* Auth Buttons */
+.auth-buttons {
+    display: flex;
+    gap: 10px;
+    margin-left: auto; /* Push the buttons to the right */
+}
+
+.auth-buttons a {
+    background-color: crimson;
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    text-decoration: none;
+    border-radius: 5px;
+    transition: background-color 0.3s;
+    font-weight: 700;
+}
+
+.auth-buttons a:hover {
+    background-color: darkred;
+}
+
+/* Navigation Links */
 header nav ul {
     display: flex;
     justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
 }
 
 header nav ul li {
-    padding: 10px 20px;
+    padding: 10px 15px;
     position: relative;
+}
+
+header nav ul li a {
+    font-size: 20px;
 }
 
 header nav ul li a:hover {
@@ -103,29 +133,17 @@ header label {
     cursor: pointer;
     font-size: 30px;
     color: #fff;
-    margin-right: 20px;
+    order: 3; /* Position after nav on small screens */
+}
+
+/* Hamburger menu icon */
+.fa-bars {
+    order: 2;
 }
 
 /* ========== Menu Bar Checkbox ========== */
 #menu-bar {
     display: none;
-}
-
-/* ========== Auth Buttons ========== */
-.auth-buttons a {
-    background-color: crimson;
-    color: #fff;
-    border: none;
-    padding: 10px 20px;
-    font-size: 16px;
-    cursor: pointer;
-    text-decoration: none;
-    border-radius: 5px;
-    margin-right: 10px;
-}
-
-.auth-buttons a:hover {
-    background-color: darkred;
 }
 
 /* ========== Section ========== */
@@ -820,4 +838,140 @@ legend {
 .tool-card ul li {
     margin-bottom: 5px;
     color: #333;
+}
+
+/* ====================================
+   Updated Responsive Design 
+   ==================================== */
+@media (max-width: 981px) {
+    header {
+        flex-direction: row; /* Keep elements in a row */
+        flex-wrap: wrap; /* Allow wrapping */
+        height: auto;
+        padding: 10px 20px;
+    }
+
+    header img {
+        height: 60px; /* Adjust logo size */
+    }
+
+    /* Hide the navigation menu by default */
+    header nav {
+        width: 100%;
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.3s ease-out;
+    }
+    
+    /* When the checkbox is checked, show the nav menu */
+    #menu-bar:checked + label + nav {
+        max-height: 500px; /* A large value to reveal the menu */
+    }
+
+    header nav ul {
+        flex-direction: column;
+        align-items: flex-start;
+        padding-top: 10px;
+    }
+
+    header nav ul li {
+        width: 100%;
+        text-align: left;
+        padding: 10px 0;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    header nav ul li:first-child {
+        border-top: none;
+    }
+
+    header nav ul ul {
+        position: static;
+        display: block;
+        background-color: transparent;
+        border: none;
+        padding: 0 0 0 20px;
+    }
+
+    header nav ul ul li {
+        padding: 5px 0;
+        border-top: none;
+    }
+
+    header nav ul ul li a {
+        font-size: 14px;
+    }
+    
+    /* Display the mobile menu icon */
+    header label {
+        display: block;
+        margin-left: 20px; /* Space from logo */
+    }
+    
+    /* Ensure the auth buttons are always visible, not hidden in the menu */
+    .auth-buttons {
+        order: 1; /* Move them to a new line on small screens if needed */
+        margin-left: auto;
+    }
+
+    /* Portal sidebar responsiveness */
+    .portal-main-content {
+        flex-direction: column;
+        padding-top: 120px;
+    }
+
+    .sidebar {
+        width: 100%;
+        padding: 20px;
+        box-shadow: none;
+    }
+}
+
+@media (max-width: 768px) {
+    .hero-section {
+        padding: 180px 20px;
+    }
+
+    .cta {
+        font-size: 1.5rem;
+        letter-spacing: 0.5rem;
+        padding: 8px 20px;
+    }
+
+    section h1 {
+        font-size: 30px;
+    }
+
+    section p {
+        font-size: 20px;
+    }
+    
+    .contact-page {
+        flex-direction: column;
+        gap: 20px;
+    }
+    
+    .contact-info, .contact-form-container {
+        flex-basis: 100%;
+        max-width: 100%;
+    }
+}
+
+@media (max-width: 500px) {
+    header img {
+        height: 50px;
+    }
+    
+    .auth-buttons a {
+        padding: 8px 15px;
+        font-size: 14px;
+    }
+
+    .form-container {
+        padding: 1.5rem;
+    }
+
+    h2 {
+        font-size: 1.5rem;
+    }
 }
