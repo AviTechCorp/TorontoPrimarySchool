@@ -3,147 +3,301 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Teachers Portal</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <title>Teachers Portal - Royal High School</title>
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="shortcut icon" href="images/44.png" type="image/x-icon">
 </head>
 <body>
+
     <header>
-        <a href="index.html"><img src="images/Logo.png" alt="Toronto Primary School Logo"></a>
-        <input type="checkbox" id="menu-bar">
-        <label for="menu-bar"><i class="fas fa-bars"></i></label>
-        <nav>
-            <ul>
-                <li><a href="index.html">Home</a></li>
-                <li><a href="about.html">About</a></li>
-                <li>
-                    <a href="#">Academics <i class="fas fa-caret-down"></i></a>
-                    <ul>
-                        <li><a href="academics.html#curriculum">Curriculum</a></li>
-                        <li><a href="academics.html#departments">Departments</a></li>
-                        <li><a href="academics.html#subjects">Subjects</a></li>
-                        <li><a href="academics.html#assessments">Assessments</a></li>
-                    </ul>
-                </li>
-                <li>
-                    <a href="#">Activities <i class="fas fa-caret-down"></i></a>
-                    <ul>
-                        <li><a href="activities.html#extracurricular">Extracurricular Activities</a></li>
-                        <li><a href="activities.html#sports">Sports</a></li>
-                        <li><a href="activities.html#clubs">Clubs</a></li>
-                        <li><a href="activities.html#events">Events</a></li>
-                    </ul>
-                </li>
-                <li>
-                    <a href="#">Admission <i class="fas fa-caret-down"></i></a>
-                    <ul>
-                        <li><a href="admission.html#how-to-apply">How to Apply</a></li>
-                        <li><a href="application-form.html">Application Form</a></li>
-                        <li><a href="admission.html#requirements">Admission Requirements</a></li>
-                    </ul>
-                </li>
-                <li>
-                    <a href="#">Parents <i class="fas fa-caret-down"></i></a>
-                    <ul>
-                        <li><a href="parents.html#sgb">SGB</a></li>
-                        <li><a href="parents.html#resources">Resources for Parents</a></li>
-                    </ul>
-                </li>
-                <li><a href="announcement.html">Announcements</a></li>
-                <li><a href="contact.html">Contacts</a></li>
-                <li>
-                    <div class="auth-buttons">
-                        <a href="auth.html" class="btn-login active">Log Out</a>
-                    </div>
-                </li>
-            </ul>
-        </nav>
+        <div class="logo">
+            <a href="index.html"><img src="images/Logo.png" alt="Royal High School Logo"></a>
+        </div>
+        <div class="auth-buttons">
+            <a href="portals.html" class="btn-login btn-logout">Log Out</a>
+        </div>
     </header>
 
     <main class="portal-main-content">
         <aside class="sidebar">
-            <h3 class="sidebar-title">Teachers Menu</h3>
+            <h2 class="sidebar-title">Teacher Dashboard</h2>
             <ul>
-                <li><a href="#profile"><i class="fas fa-user-circle"></i> Your Profile</a></li>
-                <li><a href="#subjects"><i class="fas fa-book"></i> Subject Management</a></li>
-                <li><a href="#efiling"><i class="fas fa-folder-open"></i> e-Filing</a></li>
-                <li><a href="#lesson-quizzes"><i class="fas fa-pencil-alt"></i> Lessons & Quizzes</a></li>
-                <li><a href="#communication"><i class="fas fa-chalkboard"></i> Communication</a></li>
+                <li><a href="#dashboard"><i class="fas fa-home"></i> Home</a></li>
+                <li><a href="#profile"><i class="fas fa-user-circle"></i> My Profile</a></li>
+                <li><a href="#students"><i class="fas fa-users"></i> Student Management</a></li>
+                <li><a href="#classes"><i class="fas fa-chalkboard-teacher"></i> My Classes</a></li>
+                <li><a href="#materials"><i class="fas fa-book-open"></i> Course Materials</a></li>
+                <li><a href="#communication"><i class="fas fa-comments"></i> Communication</a></li>
+                <li><a href="#reports"><i class="fas fa-chart-line"></i> Reports & Analytics</a></li>
+                <li><a href="#calendar"><i class="fas fa-calendar-alt"></i> School Calendar</a></li>
+                <li><a href="#settings"><i class="fas fa-cog"></i> Settings</a></li>
             </ul>
         </aside>
 
-        <div class="portal-content-wrapper">
-            <h1 class="portal-title">Teachers Portal Dashboard</h1>
+        <section class="portal-content-wrapper">
+            <h1 class="portal-title">Welcome to Your Teachers Portal!</h1>
 
-            <section id="profile" class="portal-section">
-                <h2>Your Profile</h2>
-                <div class="profile-card">
-                    <img src="images/placeholder-profile.png" alt="Teacher Profile Picture" class="profile-pic">
-                    <div class="profile-details">
-                        <p><strong>Name:</strong> [Teacher's Full Name]</p>
-                        <p><strong>Email:</strong> [Teacher's Email Address]</p>
-                        <p><strong>Contact:</strong> [Teacher's Contact Number]</p>
-                        <p><strong>Department:</strong> [Department Name]</p>
-                    </div>
-                </div>
-            </section>
-
-            <section id="subjects" class="portal-section">
-                <h2>Subject Management</h2>
-                <div class="tool-card">
-                    <h3>Subjects Taught</h3>
-                    <p>Here you can view and manage the subjects you are assigned to teach.</p>
-                    <ul>
-                        <li>Mathematics - Grade 3</li>
-                        <li>English - Grade 3</li>
-                        <li>Life Skills - Grade 3</li>
-                    </ul>
-                    <a href="#" class="cta-button">Add/Change Subject</a>
-                </div>
-            </section>
-            
-            <section id="efiling" class="portal-section">
-                <h2>e-Filing</h2>
-                <div class="tool-card">
-                    <p>Access and manage all academic documents, lesson plans, and administrative forms electronically.</p>
-                    <a href="#" class="cta-button">Go to e-Filing</a>
-                </div>
-            </section>
-            
-            <section id="lesson-quizzes" class="portal-section">
-                <h2>Lesson Planning & Quizzes</h2>
+            <div id="dashboard" class="portal-section">
+                <h2>Dashboard Overview</h2>
                 <div class="grid-container">
-                    <div class="grid-item tool-card">
-                        <h3>Lesson Plan Generator</h3>
-                        <p>A tool to help you create and organize your lesson plans for the term.</p>
-                        <a href="#" class="cta-button">Create Plan</a>
+                    <div class="tool-card">
+                        <h3>Upcoming Events</h3>
+                        <p><strong>Today:</strong> No events.</p>
+                        <p><strong>Tomorrow, 9 AM:</strong> Math Class (Grade 10B)</p>
+                        <p><strong>Tomorrow, 3 PM:</strong> Parent-Teacher Conference (via Zoom)</p>
                     </div>
-                    <div class="grid-item tool-card">
-                        <h3>Quiz Preparation Tool</h3>
-                        <p>Generate and manage quizzes and assessments for your learners.</p>
-                        <a href="#" class="cta-button">Create Quiz</a>
+                    <div class="tool-card">
+                        <h3>Notifications</h3>
+                        <p><i class="fas fa-envelope"></i> You have <strong>2 new messages</strong> from parents.</p>
+                        <p><i class="fas fa-exclamation-circle"></i> <strong>1 new assignment</strong> submitted for review.</p>
+                        <p><i class="fas fa-bell"></i> Important: All grades must be submitted by Friday.</p>
+                    </div>
+                    <div class="tool-card">
+                        <h3>Quick Actions</h3>
+                        <p><a href="#attendance-form" class="cta-button">Mark Today's Attendance</a></p>
+                        <p><a href="#grades-form" class="cta-button">Enter Grades</a></p>
+                        <p><a href="#communication-form" class="cta-button">Send a New Message</a></p>
                     </div>
                 </div>
-            </section>
+            </div>
             
-            <section id="communication" class="portal-section">
-                <h2>Communication</h2>
-                <div class="tool-card">
-                    <h3>Teacher-Parent Forum</h3>
-                    <p>Engage in secure, real-time communication with parents to discuss learner progress, upcoming events, and important notices.</p>
-                    <a href="#" class="cta-button">Join the Forum</a>
+            <div id="profile" class="portal-section">
+                <h2>My Profile</h2>
+                <div class="profile-card">
+                    <img src="https://via.placeholder.com/150" alt="Teacher Profile Picture" class="profile-pic">
+                    <div class="profile-details">
+                        <p><strong>Name:</strong> Jane Doe</p>
+                        <p><strong>Employee ID:</strong> T-0045</p>
+                        <p><strong>Department:</strong> Science</p>
+                        <p><strong>Email:</strong> j.doe@royalhigh.edu</p>
+                        <p><strong>Courses:</strong> Grade 10 Physics, Grade 11 Chemistry</p>
+                        <p><strong>Contact:</strong> 123-456-7890</p>
+                    </div>
                 </div>
-            </section>
-        </div>
+            </div>
+
+            <div id="students" class="portal-section">
+                <h2>Student Management</h2>
+                <div class="grid-container">
+                    <div class="tool-card">
+                        <h3>Attendance</h3>
+                        <p>Mark daily attendance for your classes.  </p>
+                        <a href="#attendance-form" class="cta-button">Mark Attendance</a>
+                    </div>
+                    <div class="tool-card">
+                        <h3>Grading</h3>
+                        <p>Enter and update grades for assignments and tests.  </p>
+                        <a href="#grades-form" class="cta-button">Manage Grades</a>
+                    </div>
+                    <div class="tool-card">
+                        <h3>Student Directory</h3>
+                        <p>View student profiles, contact info, and academic history.</p>
+                        <a href="#" class="cta-button">View Students</a>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="attendance-form" class="portal-section">
+                <h2>Mark Attendance</h2>
+                <form action="#" method="POST">
+                    <label for="class-select">Select Class:</label>
+                    <select id="class-select" name="class">
+                        <option value="physics-10">Grade 10 Physics</option>
+                        <option value="chemistry-11">Grade 11 Chemistry</option>
+                    </select>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Student Name</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>John Smith</td>
+                                <td>
+                                    <input type="radio" id="js-present" name="js-status" value="present" checked> <label for="js-present">Present</label>
+                                    <input type="radio" id="js-absent" name="js-status" value="absent"> <label for="js-absent">Absent</label>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Jane Williams</td>
+                                <td>
+                                    <input type="radio" id="jw-present" name="jw-status" value="present" checked> <label for="jw-present">Present</label>
+                                    <input type="radio" id="jw-absent" name="jw-status" value="absent"> <label for="jw-absent">Absent</label>
+                                </td>
+                            </tr>
+                            </tbody>
+                    </table>
+                    <button type="submit" class="cta-button">Submit Attendance</button>
+                </form>
+            </div>
+
+            <div id="grades-form" class="portal-section">
+                <h2>Manage Grades</h2>
+                <form action="#" method="POST">
+                    <label for="class-grade">Select Class:</label>
+                    <select id="class-grade" name="class">
+                        <option value="physics-10">Grade 10 Physics</option>
+                        <option value="chemistry-11">Grade 11 Chemistry</option>
+                    </select>
+                    <label for="assignment-select">Select Assignment:</label>
+                    <select id="assignment-select" name="assignment">
+                        <option value="lab-report-1">Lab Report 1</option>
+                        <option value="quiz-2">Quiz 2</option>
+                    </select>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Student Name</th>
+                                <th>Grade (e.g., A+)</th>
+                                <th>Score (e.g., 95/100)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>John Smith</td>
+                                <td><input type="text" name="js-grade" placeholder="A+"></td>
+                                <td><input type="text" name="js-score" placeholder="95/100"></td>
+                            </tr>
+                            <tr>
+                                <td>Jane Williams</td>
+                                <td><input type="text" name="jw-grade" placeholder="B"></td>
+                                <td><input type="text" name="jw-score" placeholder="82/100"></td>
+                            </tr>
+                            </tbody>
+                    </table>
+                    <button type="submit" class="cta-button">Save Grades</button>
+                </form>
+            </div>
+            
+            <div id="classes" class="portal-section">
+                <h2>My Classes</h2>
+                <div class="tool-card">
+                    <h3>Grade 10 Physics</h3>
+                    <p><strong>Students:</strong> 25</p>
+                    <p><strong>Schedule:</strong> Mon, Wed, Fri (9:00 AM - 10:30 AM)</p>
+                    <a href="#" class="cta-button">View Class Roster</a>
+                </div>
+                <div class="tool-card">
+                    <h3>Grade 11 Chemistry</h3>
+                    <p><strong>Students:</strong> 22</p>
+                    <p><strong>Schedule:</strong> Tue, Thu (1:00 PM - 2:30 PM)</p>
+                    <a href="#" class="cta-button">View Class Roster</a>
+                </div>
+            </div>
+
+            <div id="materials" class="portal-section">
+                <h2>Course Materials</h2>
+                <div class="grid-container">
+                    <div class="tool-card">
+                        <h3>Upload New Materials</h3>
+                        <p>Share lesson plans, notes, and other resources with your students.</p>
+                        <form action="#" method="POST" enctype="multipart/form-data">
+                            <input type="file" name="course-material-file">
+                            <button type="submit" class="cta-button">Upload File</button>
+                        </form>
+                    </div>
+                    <div class="tool-card">
+                        <h3>View Shared Resources</h3>
+                        <ul>
+                            <li><a href="#">Physics - Chapter 1 Notes (PDF)</a></li>
+                            <li><a href="#">Chemistry - Lab Safety Guidelines (DOC)</a></li>
+                            <li><a href="#">Physics - Practice Problems (PDF)</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div id="communication" class="portal-section">
+                <h2>Communication Center</h2>
+                <div class="grid-container">
+                    <div class="tool-card">
+                        <h3>Message Parents</h3>
+                        <p>Send private messages to the parents of your students.</p>
+                        <a href="#communication-form" class="cta-button">Send a Message</a>
+                    </div>
+                    <div class="tool-card">
+                        <h3>Message Colleagues</h3>
+                        <p>Collaborate and communicate with other teachers and staff members.</p>
+                        <a href="#communication-form" class="cta-button">Contact Colleagues</a>
+                    </div>
+                </div>
+            </div>
+
+            <div id="communication-form" class="portal-section">
+                <h2>Compose a Message</h2>
+                <form action="#" method="POST">
+                    <label for="recipient">Recipient:</label>
+                    <select id="recipient" name="recipient">
+                        <option value="">Select Recipient</option>
+                        <optgroup label="Parents">
+                            <option value="parent-js">John Smith's Parent</option>
+                            <option value="parent-jw">Jane Williams' Parent</option>
+                        </optgroup>
+                        <optgroup label="Colleagues">
+                            <option value="colleague-math">Math Department Head</option>
+                            <option value="colleague-science">Science Department Head</option>
+                        </optgroup>
+                    </select>
+                    <label for="message-subject">Subject:</label>
+                    <input type="text" id="message-subject" name="subject" required>
+                    <label for="message-body">Message:</label>
+                    <textarea id="message-body" name="message" rows="5" required></textarea>
+                    <button type="submit" class="cta-button">Send Message</button>
+                </form>
+            </div>
+
+            <div id="reports" class="portal-section">
+                <h2>Reports & Analytics</h2>
+                <div class="grid-container">
+                    <div class="tool-card">
+                        <h3>Student Report Cards</h3>
+                        <p>Generate detailed report cards for your students at the end of each term.</p>
+                        <a href="#" class="cta-button">Generate Report Card</a>
+                    </div>
+                    <div class="tool-card">
+                        <h3>Class Performance</h3>
+                        <p>View performance trends, grade distributions, and attendance statistics for your classes.</p>
+                        <a href="#" class="cta-button">View Class Analytics</a>
+                    </div>
+                </div>
+            </div>
+
+            <div id="calendar" class="portal-section">
+                <h2>School Calendar</h2>
+                <div class="tool-card">
+                    <p>Stay updated with school events, holidays, and important deadlines.</p>
+                    <iframe src="https://calendar.google.com/calendar/embed?src=your_school_calendar_id" style="border: 0" width="100%" height="400" frameborder="0" scrolling="no"></iframe>
+                    <p><strong>Note:</strong> Replace the iframe source with your school's Google Calendar embed link for a live calendar.</p>
+                </div>
+            </div>
+
+            <div id="settings" class="portal-section">
+                <h2>Settings</h2>
+                <div class="grid-container">
+                    <div class="tool-card">
+                        <h3>Change Password</h3>
+                        <p>Update your password to ensure your account security.</p>
+                        <form action="#" method="POST">
+                            <label for="current-password">Current Password:</label>
+                            <input type="password" id="current-password" name="current-password" required>
+                            <label for="new-password">New Password:</label>
+                            <input type="password" id="new-password" name="new-password" required>
+                            <button type="submit" class="cta-button">Update Password</button>
+                        </form>
+                    </div>
+                    <div class="tool-card">
+                        <h3>Notification Preferences</h3>
+                        <p>Customize how you receive notifications for new messages or assignments.</p>
+                        <a href="#" class="cta-button">Edit Preferences</a>
+                    </div>
+                </div>
+            </div>
+        </section>
     </main>
 
-    <footer>
-        <p>© 2023 Toronto Primary School. All rights reserved.</p>
-        <a href="#"><i class="fa-brands fa-x-twitter"></i></a>
-        <a href="#"><i class="fa-brands fa-facebook-f"></i></a>
-        <a href="#"><i class="fa-brands fa-instagram"></i></a>
-        <a href="#"><i class="fa-brands fa-linkedin-in"></i></a>
-        <a href="#"><i class="fa-brands fa-square-youtube"></i></a>
-    </footer>
+    <script src="script.js" type="module"></script>
 </body>
 </html>
