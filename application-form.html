@@ -67,6 +67,18 @@
             <div class="form-group">
               <label for="learner-name">Learner's Full Name</label>
               <input type="text" id="learner-name" name="learner-name" required>
+              <label for="learner-surname">Other Name</label>
+              <input type="text" id="learner-othername" name="learner-othername" required>
+              <label for="learner-surname">Surname</label>
+              <input type="text" id="learner-surname" name="learner-surname" required>
+              <label for="parent-id">ID Number</label>
+              <input type="text" id="parent-id" name="parent-id" required>              
+              <select id="learner-gender-register" required>
+                  <option value="" disabled selected>Select Gender</option>
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                  <option value="other">Other</option>
+              </select>            
             </div>
             <div class="form-group">
               <label for="dob">Date of Birth</label>
@@ -80,6 +92,10 @@
                 <option value="1">Grade 1</option>
                 <option value="2">Grade 2</option>
                 <option value="3">Grade 3</option>
+                <option value="4">Grade 4</option>
+                <option value="5">Grade 5</option>
+                <option value="6">Grade 6</option>
+                <option value="7">Grade 7</option>
               </select>
             </div>
             <div class="form-group">
@@ -111,6 +127,51 @@
               <input type="email" id="email" name="email" required>
             </div>
           </fieldset>
+
+          <fieldset>
+            <legend>Parent/Guardian Details</legend>
+            <div class="form-group">
+              <label for="parent-name">Full Name</label>
+              <input type="text" id="parent-name" name="parent-name" required>
+            </div>
+            <div class="form-group">
+              <label for="parent-id">ID Number</label>
+              <input type="text" id="parent-id" name="parent-id" required>
+            </div>
+            <div class="form-group">
+              <label for="relationship">Relationship to Learner</label>
+              <input type="text" id="relationship" name="relationship" required>
+            </div>
+            <div class="form-group">
+              <label for="contact-number">Contact Number</label>
+              <input type="tel" id="contact-number" name="contact-number" required>
+            </div>
+            <div class="form-group">
+              <label for="email">Email Address</label>
+              <input type="email" id="email" name="email" required>
+            </div>
+          </fieldset>
+          <fieldset>
+            <legend>Supporting Documents (Learner)</legend>
+            <div class="form-group">
+              <label for="">ID Card/certificate</label>
+              <label for="">Clinic Card</label>
+              <label for="">Previous School Report card (applicable for grade 1-7)</label>
+              <label for="">Learner Profile (applicable for grade 1-7)</label>
+              <input type="file" id="" name="birth-certificate" accept=".pdf,.jpg,.png" required>
+              <label for="">accepted docs: .pdf,.jpg,.png</label>
+            </div>
+          </fieldset>
+          <fieldset>
+            <legend>Supporting Documents (Parent/Guardian)</legend>
+            <div class="form-group">
+              <label for="">ID Card</label>
+              <label for="">Proof of Residence</label>
+              <input type="file" id="" name="id-proof" accept=".pdf,.jpg,.png" required>
+              <label for="">accepted docs: .pdf,.jpg,.png</label>
+            </div>
+          </fieldset>
+          <hr>  
           <button type="submit" class="cta-button">Submit Application</button>
         </form>
       </div>
