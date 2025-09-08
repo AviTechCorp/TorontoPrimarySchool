@@ -418,7 +418,7 @@ header nav ul li a.active {
 
 /* ========== Application Form Styling ========== */
 .application-form {
-    max-width: 800px;
+    max-width: 900px; /* Increased max-width for more space */
     margin: 0 auto;
     background-color: #f9f9f9;
     padding: 40px;
@@ -438,25 +438,65 @@ header nav ul li a.active {
     font-weight: bold;
     color: crimson;
     padding: 0 10px;
+    background-color: #f9f9f9; /* Match background color to legend stands out */
+}
+
+/* New: CSS Grid for form fields */
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+}
+
+.form-grid-2 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.form-grid-2 .file-upload-group label{
+    color: black;
+}
+
+.form-group, .file-upload-group {
+    display: flex;
+    flex-direction: column;
 }
 
 .application-form .form-group label {
     font-weight: 600;
+    color: #333;
+    margin-bottom: 5px;
 }
 
 .application-form input[type="text"],
 .application-form input[type="date"],
 .application-form input[type="tel"],
 .application-form input[type="email"],
-.application-form select {
+.application-form select,
+.application-form textarea {
     width: 100%;
     padding: 12px;
     border: 1px solid #ccc;
     border-radius: 5px;
     box-sizing: border-box;
-    margin-top: 5px;
-    margin-bottom: 15px;
     font-size: 16px;
+    transition: border-color 0.3s ease;
+}
+
+.application-form input[type="file"] {
+    margin-top: 5px;
+}
+
+.application-form textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+
+.application-form .form-note {
+    font-size: 0.9em;
+    color: #666;
+    margin-bottom: 15px;
 }
 
 .application-form button[type="submit"] {
@@ -465,6 +505,16 @@ header nav ul li a.active {
     border: none;
     cursor: pointer;
     font-size: 1.1em;
+    background-color: crimson;
+    color: #fff;
+    padding: 15px;
+    border-radius: 5px;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
+}
+
+.application-form button[type="submit"]:hover {
+    background-color: darkred;
 }
 
 /* ========== Auth Page Styling ========== */
