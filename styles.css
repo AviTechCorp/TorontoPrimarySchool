@@ -517,6 +517,60 @@ header nav ul li a.active {
     background-color: darkred;
 }
 
+
+/* New CSS for the submission confirmation message */
+.confirmation-message {
+  text-align: center;
+  padding: 50px 20px;
+}
+
+.confirmation-message h2 {
+  color: #28a745; /* Green for success */
+  font-size: 2.5em;
+  margin-bottom: 20px;
+}
+
+.confirmation-message p {
+  font-size: 1.2em;
+  line-height: 1.6;
+}
+
+.confirmation-message a {
+  display: inline-block;
+  margin-top: 30px;
+  padding: 15px 30px;
+  background-color: crimson;
+  color: white;
+  text-decoration: none;
+  border-radius: 5px;
+  font-weight: bold;
+  transition: background-color 0.3s ease;
+}
+
+.confirmation-message a:hover {
+  background-color: darkred;
+}
+
+.documents-upload {
+    font-size: 1.1em;
+    color: #333;
+    margin-bottom: 20px;
+}
+.documents-upload a {
+    color: rgb(56, 10, 223);
+    text-decoration: underline;
+    font-weight: bold;
+}
+.documents-upload a:hover {
+    color: rgb(10, 56, 223);
+}
+.documents-upload legend {
+    font-size: 1.3em;
+    font-weight: bold;
+    color: crimson;
+    margin-bottom: 10px;
+}
+
 /* ========== Auth Page Styling ========== */
 .auth-container {
     max-width: 500px;

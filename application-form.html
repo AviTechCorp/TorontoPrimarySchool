@@ -57,11 +57,11 @@
         <a href="auth.html" class="btn-login">Register/Login</a>
       </div>
     </header>
-
-    <section class="page-content">
+    
+    <section id="main-content" class="page-content">
       <h1>Application Form</h1>
       <div class="content-container">
-        <form action="https://script.google.com/macros/s/AKfycbx-YSdIH_Ap2py8UiGhfEG5fpBul5Qbb2OjOLBHha9tOnQTkmOJq9MVo-3V8ywPEi47zw/exec" method="POST" class="application-form" enctype="multipart/form-data">
+        <form id="application-form" action="https://script.google.com/macros/s/AKfycbzW-J9sMy6yZtW2_8OpEvO-HTyfPQbafzgj0GyvUGiArreIBUrD6Qr2wsnnjhbKHImW8Q/exec" method="POST" class="application-form">
           <fieldset>
             <legend>Learner Details</legend>
             <div class="form-grid">
@@ -102,18 +102,13 @@
                 <label for="learner-race">Race</label>
                 <select id="learner-race" name="learner-race" required>
                   <option value="" disabled selected>Select Race</option>
-                  <option value="male">African</option>
-                  <option value="female">English</option>
-                  <option value="other">Indian</option>
-                  <option value="other">Coloured</option>
+                  <option value="african">African</option>
+                  <option value="english">English</option>
+                  <option value="indian">Indian</option>
+                  <option value="coloured">Coloured</option>
                   <option value="other">Other</option>
                 </select>
               </div>
-              <div class="form-group">
-                <label for="learner-othername">Other Name(s)</label>
-                <input type="text" id="learner-othername" name="learner-othername">
-              </div>
-
               <div class="form-group">
                 <label for="learner-language">Home Language</label>
                 <input type="text" id="learner-language" name="learner-language" required>
@@ -140,7 +135,6 @@
               </div>
             </div>
           </fieldset>
-
           <fieldset>
             <legend>Parent/Guardian Details</legend>
             <div class="form-grid">
@@ -170,7 +164,6 @@
               </div>
             </div>
           </fieldset>
-
           <fieldset>
             <legend>Second Parent/Guardian (Optional)</legend>
             <div class="form-grid">
@@ -200,33 +193,11 @@
               </div>
             </div>
           </fieldset>
-
-          <fieldset>
+          <hr>
+          <div class="documents-upload">
             <legend>Supporting Documents</legend>
-            <p class="form-note">Accepted file types: .pdf, .jpg, .png</p>
-            <div class="form-grid-2">
-              <div class="file-upload-group">
-                <label for="birth-cert-upload">Learner's Birth Certificate/ID Card</label>
-                <input type="file" id="birth-cert-upload" name="birth-certificate" accept=".pdf,.jpg,.png" required>
-              </div>
-              <div class="file-upload-group">
-                <label for="clinic-card-upload">Learner's Clinic Card</label>
-                <input type="file" id="clinic-card-upload" name="clinic-card" accept=".pdf,.jpg,.png" required>
-              </div>
-              <div class="file-upload-group">
-                <label for="report-card-upload">Previous School Report Card (Grades 1-7)</label>
-                <input type="file" id="report-card-upload" name="report-card" accept=".pdf,.jpg,.png">
-              </div>
-              <div class="file-upload-group">
-                <label for="parent-id-upload">Parent/Guardian ID Card</label>
-                <input type="file" id="parent-id-upload" name="parent-id-proof" accept=".pdf,.jpg,.png" required>
-              </div>
-              <div class="file-upload-group">
-                <label for="proof-residence-upload">Proof of Residence</label>
-                <input type="file" id="proof-residence-upload" name="proof-residence" accept=".pdf,.jpg,.png" required>
-              </div>
-            </div>
-          </fieldset>
+            <a href="https://script.google.com/macros/s/AKfycbyzqTiQLBj6Ma84GCQODNAhcFtzo1AIUejmf4aHYLGzdP4PKEPqxs7ITxRSKg1Pa17YqA/exec">click here</a> to upload your documents<em>(ID, Birth Certificate, Proof of Residence, Latest Report Card, etc...)</em>
+          </div>
           <hr>
           <button type="submit" class="cta-button">Submit Application</button>
         </form>
@@ -241,5 +212,7 @@
       <a href="#"><i class="fa-brands fa-linkedin-in"></i></a>
       <a href="#"><i class="fa-brands fa-square-youtube"></i></a>
     </footer>
+
+    <script src="script.js"></script>
   </body>
 </html>
