@@ -6,6 +6,7 @@
     <title>Login & Register</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <link rel="stylesheet" href="styles.css">
+    <script type="module" src="auth.js" defer></script>
 </head>
 <body>
     <header>
@@ -61,7 +62,6 @@
     </header>
 
     <div class="form-container">
-        
         <div id="register-form" class="form active-form">
             <h2>Register</h2>
             <form action="#" method="post">
@@ -139,7 +139,7 @@
                     <option value="teacher">Teacher</option>
                     <option value="admin">Admin</option>
                 </select>
-                <input type="email" name="email" placeholder="Email" id="loginEmail">
+                <input type="email" name="email" placeholder="Email" id="loginEmail" required>
                 <input type="password" name="password" placeholder="Password" id="loginPassword" required>
                 <button id="loginSubmit" type="submit">Log In</button>
             </form>
@@ -160,6 +160,5 @@
         <a href="#"><i class="fa-brands fa-linkedin-in"></i></a>
         <a href="#"><i class="fa-brands fa-square-youtube"></i></a>
     </footer>
-    <script type="module" src="script.js" defer></script>
 </body>
 </html>

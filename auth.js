@@ -1,0 +1,222 @@
+// Import the functions you need from the SDKs you need
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
+import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
+
+
+// Your web app's Firebase configuration
+const firebaseConfig = {
+    apiKey: "AIzaSyAJlr-6eTCCpQtWHkPics3-tbOS_X5xA84",
+    authDomain: "school-website-66326.firebaseapp.com",
+    databaseURL: "https://school-website-66326-default-rtdb.firebaseio.com",
+    projectId: "school-website-66326",
+    storageBucket: "school-website-66326.firebasestorage.app",
+    messagingSenderId: "660829781706",
+    appId: "1:660829781706:web:bf447db1d80fc094d9be33"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app); // Get the auth service instance
+const db = getFirestore(app); // Get the Firestore service instance
+
+// Get references to elements for form switching
+const loginLink = document.getElementById('show-login');
+const registerLink = document.getElementById('show-register');
+const loginForm = document.getElementById('login-form');
+const registerForm = document.getElementById('register-form');
+
+// Get references to elements for the Register form
+const registerRoleSelect = document.getElementById('role-select');
+const parentFields = document.getElementById('parent-fields');
+const teacherFields = document.getElementById('teacher-fields');
+const adminFields = document.getElementById('admin-fields');
+const registerPasswordInput = document.getElementById('registerPassword');
+const confirmPasswordInput = document.getElementById('confirmPassword');
+const registerSubmitButton = document.getElementById('registerSubmit');
+
+// Get references to elements for the Login form
+const loginRoleSelect = document.getElementById('login-role-select');
+const loginEmailInput = document.getElementById('loginEmail');
+const loginPasswordInput = document.getElementById('loginPassword');
+const loginSubmitButton = document.getElementById('loginSubmit');
+
+/**
+ * Handles the logic for displaying the correct form fields based on the selected role.
+ */
+function handleRoleSelection() {
+    const selectedRole = registerRoleSelect.value;
+    
+    // Hide all role-specific fields
+    parentFields.style.display = 'none';
+    teacherFields.style.display = 'none';
+    adminFields.style.display = 'none';
+    
+    // Show the fields for the selected role
+    switch (selectedRole) {
+        case 'parent':
+            parentFields.style.display = 'block';
+            break;
+        case 'teacher':
+            teacherFields.style.display = 'block';
+            break;
+        case 'admin':
+            adminFields.style.display = 'block';
+            break;
+    }
+}
+
+// Event listener for the role select dropdown
+registerRoleSelect.addEventListener('change', handleRoleSelection);
+
+// Initial call to set the correct display on page load
+handleRoleSelection();
+
+/**
+ * Gathers data from the correct form fields based on the selected role.
+ * @param {string} role - The selected role ('parent', 'teacher', or 'admin').
+ * @returns {object} An object containing the user data.
+ */
+function collectUserData(role) {
+    let userData = {
+        role: role,
+    };
+
+    if (role === 'parent') {
+        userData.email = document.querySelector('input[name="parent-email"]').value;
+        userData.surname = document.querySelector('input[name="parent-surname"]').value;
+        userData.name = document.querySelector('input[name="parent-name"]').value;
+        userData.contact = document.querySelector('input[name="parent-contact"]').value;
+        userData.relationship = document.querySelector('input[name="relationship"]').value;
+        userData.admissionNumber = document.querySelector('input[name="admission-number"]').value;
+        userData.learnerSurname = document.querySelector('input[name="learner-surname"]').value;
+        userData.learnerFirstName = document.querySelector('input[name="learner-first-name"]').value;
+        userData.learnerMiddleName = document.querySelector('input[name="learner-middle-name"]').value;
+        userData.learnerDOB = document.querySelector('input[name="learner-dob"]').value;
+        userData.learnerGender = document.querySelector('select[name="learner-gender"]').value;
+        userData.learnerGrade = document.querySelector('select[name="learner-grade"]').value;
+    } else if (role === 'teacher') {
+        userData.email = document.querySelector('input[name="teacher-email"]').value;
+        userData.surname = document.querySelector('input[name="teacher-surname"]').value;
+        userData.preferredName = document.querySelector('input[name="teacher-preferred-name"]').value;
+    } else if (role === 'admin') {
+        userData.email = document.querySelector('input[name="admin-email"]').value;
+        userData.surname = document.querySelector('input[name="admin-surname"]').value;
+        userData.preferredName = document.querySelector('input[name="admin-preferred-name"]').value;
+        userData.specialId = document.querySelector('input[name="admin-special-id"]').value;
+    }
+
+    return userData;
+}
+
+// Event Listener for REGISTER button
+registerSubmitButton.addEventListener('click', async function(event) {
+    event.preventDefault(); // Prevent default form submission
+
+    const role = registerRoleSelect.value;
+    const email = collectUserData(role).email;
+    const password = registerPasswordInput.value;
+    const confirmPassword = confirmPasswordInput.value;
+    
+    // Basic form validation
+    if (!email || !password || !confirmPassword || !role) {
+        alert('Please fill in all required fields.');
+        return;
+    }
+
+    if (password !== confirmPassword) {
+        alert('Passwords do not match!');
+        return;
+    }
+    
+    // Check if role-specific fields are filled
+    const roleForm = document.getElementById(`${role}-fields`);
+    const requiredInputs = roleForm ? roleForm.querySelectorAll('[required]') : [];
+    for (let input of requiredInputs) {
+        if (!input.value) {
+            alert('Please fill in all required fields for your role.');
+            return;
+        }
+    }
+
+    try {
+        // Create user with email and password in Firebase Authentication
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
+        
+        // Collect additional user data from the form
+        const userData = collectUserData(role);
+
+        // Save additional user data to Firestore
+        await setDoc(doc(db, "users", user.uid), userData);
+
+        alert(`Registration successful! Welcome, ${userData.name || userData.preferredName || userData.surname}!`);
+        // Switch to the login form after successful registration
+        loginLink.click();
+    } catch (error) {
+        console.error("Registration Error:", error);
+        alert(`Registration Error: ${error.message}`);
+    }
+});
+
+// Event Listener for LOGIN button
+loginSubmitButton.addEventListener('click', async function(event) {
+    event.preventDefault(); // Prevent default form submission
+
+    const email = loginEmailInput.value;
+    const password = loginPasswordInput.value;
+    const role = loginRoleSelect.value;
+    
+    // Basic validation
+    if (!email || !password || !role) {
+        alert('Please enter your email, password, and select your role.');
+        return;
+    }
+
+    try {
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
+
+        // Redirect based on the selected role
+        switch(role) {
+            case 'parent':
+                alert(`Welcome back, Parent!`);
+                window.location.href = "parents-portal.html";
+                break;
+            case 'teacher':
+                alert(`Welcome back, Teacher!`);
+                window.location.href = "teachers-portal.html";
+                break;
+            case 'admin':
+                alert(`Welcome back, Admin!`);
+                window.location.href = "admins-portal.html";
+                break;
+            default:
+                // Fallback for an unknown role
+                alert('Welcome! Redirecting to the home page.');
+                window.location.href = "index.html";
+                break;
+        }
+
+    } catch (error) {
+        console.error("Login Error:", error);
+        alert(`Login Error: ${error.message}`);
+    }
+});
+
+// Form switching logic
+loginLink.addEventListener('click', () => {
+    registerForm.classList.remove('active-form');
+    loginForm.classList.add('active-form');
+    // Update the active button style
+    loginLink.classList.add('active');
+    registerLink.classList.remove('active');
+});
+
+registerLink.addEventListener('click', () => {
+    loginForm.classList.remove('active-form');
+    registerForm.classList.add('active-form');
+    // Update the active button style
+    registerLink.classList.add('active');
+    loginLink.classList.remove('active');
+});
