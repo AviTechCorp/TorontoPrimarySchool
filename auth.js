@@ -1,7 +1,7 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
-import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
+import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
 
 
 // Your web app's Firebase configuration
@@ -67,10 +67,12 @@ function handleRoleSelection() {
 }
 
 // Event listener for the role select dropdown
-registerRoleSelect.addEventListener('change', handleRoleSelection);
+if(registerRoleSelect) {
+    registerRoleSelect.addEventListener('change', handleRoleSelection);
+    // Initial call to set the correct display on page load
+    handleRoleSelection();
+}
 
-// Initial call to set the correct display on page load
-handleRoleSelection();
 
 /**
  * Gathers data from the correct form fields based on the selected role.
@@ -110,113 +112,157 @@ function collectUserData(role) {
 }
 
 // Event Listener for REGISTER button
-registerSubmitButton.addEventListener('click', async function(event) {
-    event.preventDefault(); // Prevent default form submission
+if(registerSubmitButton) {
+    registerSubmitButton.addEventListener('click', async function(event) {
+        event.preventDefault(); // Prevent default form submission
 
-    const role = registerRoleSelect.value;
-    const email = collectUserData(role).email;
-    const password = registerPasswordInput.value;
-    const confirmPassword = confirmPasswordInput.value;
-    
-    // Basic form validation
-    if (!email || !password || !confirmPassword || !role) {
-        alert('Please fill in all required fields.');
-        return;
-    }
-
-    if (password !== confirmPassword) {
-        alert('Passwords do not match!');
-        return;
-    }
-    
-    // Check if role-specific fields are filled
-    const roleForm = document.getElementById(`${role}-fields`);
-    const requiredInputs = roleForm ? roleForm.querySelectorAll('[required]') : [];
-    for (let input of requiredInputs) {
-        if (!input.value) {
-            alert('Please fill in all required fields for your role.');
+        const role = registerRoleSelect.value;
+        const email = collectUserData(role).email;
+        const password = registerPasswordInput.value;
+        const confirmPassword = confirmPasswordInput.value;
+        
+        // Basic form validation
+        if (!email || !password || !confirmPassword || !role) {
+            alert('Please fill in all required fields.');
             return;
         }
-    }
 
-    try {
-        // Create user with email and password in Firebase Authentication
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        const user = userCredential.user;
+        if (password !== confirmPassword) {
+            alert('Passwords do not match!');
+            return;
+        }
         
-        // Collect additional user data from the form
-        const userData = collectUserData(role);
-
-        // Save additional user data to Firestore
-        await setDoc(doc(db, "users", user.uid), userData);
-
-        alert(`Registration successful! Welcome, ${userData.name || userData.preferredName || userData.surname}!`);
-        // Switch to the login form after successful registration
-        loginLink.click();
-    } catch (error) {
-        console.error("Registration Error:", error);
-        alert(`Registration Error: ${error.message}`);
-    }
-});
-
-// Event Listener for LOGIN button
-loginSubmitButton.addEventListener('click', async function(event) {
-    event.preventDefault(); // Prevent default form submission
-
-    const email = loginEmailInput.value;
-    const password = loginPasswordInput.value;
-    const role = loginRoleSelect.value;
-    
-    // Basic validation
-    if (!email || !password || !role) {
-        alert('Please enter your email, password, and select your role.');
-        return;
-    }
-
-    try {
-        const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        const user = userCredential.user;
-
-        // Redirect based on the selected role
-        switch(role) {
-            case 'parent':
-                alert(`Welcome back, Parent!`);
-                window.location.href = "parents-portal.html";
-                break;
-            case 'teacher':
-                alert(`Welcome back, Teacher!`);
-                window.location.href = "teachers-portal.html";
-                break;
-            case 'admin':
-                alert(`Welcome back, Admin!`);
-                window.location.href = "admins-portal.html";
-                break;
-            default:
-                // Fallback for an unknown role
-                alert('Welcome! Redirecting to the home page.');
-                window.location.href = "index.html";
-                break;
+        // Check if role-specific fields are filled
+        const roleForm = document.getElementById(`${role}-fields`);
+        const requiredInputs = roleForm ? roleForm.querySelectorAll('[required]') : [];
+        for (let input of requiredInputs) {
+            if (!input.value) {
+                alert('Please fill in all required fields for your role.');
+                return;
+            }
         }
 
-    } catch (error) {
-        console.error("Login Error:", error);
-        alert(`Login Error: ${error.message}`);
-    }
-});
+        try {
+            // Create user with email and password in Firebase Authentication
+            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+            const user = userCredential.user;
+            
+            // Collect additional user data from the form
+            const userData = collectUserData(role);
+
+            // Save additional user data to Firestore
+            await setDoc(doc(db, "users", user.uid), userData);
+
+            alert(`Registration successful! Welcome, ${userData.name || userData.preferredName || userData.surname}!`);
+            // Switch to the login form after successful registration
+            loginLink.click();
+        } catch (error) {
+            console.error("Registration Error:", error);
+            alert(`Registration Error: ${error.message}`);
+        }
+    });
+}
+
+
+// Event Listener for LOGIN button
+if(loginSubmitButton) {
+    loginSubmitButton.addEventListener('click', async function(event) {
+        event.preventDefault(); // Prevent default form submission
+
+        const email = loginEmailInput.value;
+        const password = loginPasswordInput.value;
+        const role = loginRoleSelect.value;
+        
+        // Basic validation
+        if (!email || !password || !role) {
+            alert('Please enter your email, password, and select your role.');
+            return;
+        }
+
+        try {
+            const userCredential = await signInWithEmailAndPassword(auth, email, password);
+            const user = userCredential.user;
+
+            const userDocRef = doc(db, 'users', user.uid);
+            const userDocSnap = await getDoc(userDocRef);
+            
+            if (userDocSnap.exists()) {
+                const userData = userDocSnap.data();
+                if (userData.role === role) {
+                    alert(`Welcome back, ${role}!`);
+                    // Redirect based on the selected role
+                    switch(role) {
+                        case 'parent':
+                            window.location.href = "parents-portal.html";
+                            break;
+                        case 'teacher':
+                            window.location.href = "teachers-portal.html";
+                            break;
+                        case 'admin':
+                            window.location.href = "admins-portal.html";
+                            break;
+                        default:
+                            // Fallback for an unknown role
+                            window.location.href = "index.html";
+                            break;
+                    }
+                } else {
+                    alert("The role you selected does not match the role you registered as. Please try again.");
+                    // Sign the user out immediately if roles don't match
+                    await signOut(auth);
+                }
+            } else {
+                alert("User data not found. Please contact support.");
+                await signOut(auth);
+            }
+        } catch (error) {
+            console.error("Login Error:", error);
+            alert(`Login Error: ${error.message}`);
+        }
+    });
+}
 
 // Form switching logic
-loginLink.addEventListener('click', () => {
-    registerForm.classList.remove('active-form');
-    loginForm.classList.add('active-form');
-    // Update the active button style
-    loginLink.classList.add('active');
-    registerLink.classList.remove('active');
-});
+if (loginLink) {
+    loginLink.addEventListener('click', () => {
+        registerForm.classList.remove('active-form');
+        loginForm.classList.add('active-form');
+        // Update the active button style
+        loginLink.classList.add('active');
+        registerLink.classList.remove('active');
+    });
+}
 
-registerLink.addEventListener('click', () => {
-    loginForm.classList.remove('active-form');
-    registerForm.classList.add('active-form');
-    // Update the active button style
-    registerLink.classList.add('active');
-    loginLink.classList.remove('active');
+if (registerLink) {
+    registerLink.addEventListener('click', () => {
+        loginForm.classList.remove('active-form');
+        registerForm.classList.add('active-form');
+        // Update the active button style
+        registerLink.classList.add('active');
+        loginLink.classList.remove('active');
+    });
+}
+
+/**
+ * Handle user logout.
+ * This function signs the user out of Firebase and redirects them to the login page.
+ */
+function handleLogout() {
+    signOut(auth).then(() => {
+        // Sign-out successful.
+        alert("You have been logged out successfully.");
+        window.location.href = "auth.html";
+    }).catch((error) => {
+        // An error happened.
+        console.error("Logout Error:", error);
+        alert("Logout failed. Please try again.");
+    });
+}
+
+// Attach the logout function to all buttons with the class 'btn-logout'
+document.querySelectorAll('.btn-logout').forEach(button => {
+    button.addEventListener('click', (e) => {
+        e.preventDefault(); // Prevent the default link behavior
+        handleLogout();
+    });
 });
