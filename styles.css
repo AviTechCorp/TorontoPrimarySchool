@@ -874,7 +874,7 @@ legend {
 
 .portal-content-wrapper {
     flex-grow: 1;
-    background-color: #ffffff;
+    background-color: rgb(212, 186, 237);
     color: #2e2b2b;
     padding: 40px;
     padding-top: 60px;
@@ -891,7 +891,7 @@ legend {
 .portal-section {
     margin-bottom: 50px;
     padding: 30px;
-    background-color: #f9f9f9;
+    background-color: crimson;
     border-radius: 10px;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
 }
@@ -923,7 +923,7 @@ legend {
 }
 
 .profile-details p {
-    color: #000000;
+    color: #fcfcfc;
 }
 
 .tool-card {
