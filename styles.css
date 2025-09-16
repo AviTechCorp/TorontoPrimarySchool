@@ -302,19 +302,28 @@ header nav ul li a.active {
 }
 
 /* ========== Announcement Page Styling ========== */
+/* Enhanced Announcement Card Styling */
 .announcement-item {
     border: 1px solid #ddd;
     border-left: 5px solid crimson;
     padding: 20px;
     margin-bottom: 25px;
-    background-color: #f9f9f9;
+    background-color: #ffffff; /* Change to white for better contrast */
     border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Add a more prominent shadow */
+    transition: transform 0.3s ease, box-shadow 0.3s ease; /* Add transition for hover effect */
+    color: #333; /* Set a default text color for readability */
+}
+
+.announcement-item:hover {
+    transform: translateY(-5px); /* Move the card up slightly on hover */
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2); /* Enhance the shadow on hover */
 }
 
 .announcement-item h2 {
     color: goldenrod;
     margin-top: 0;
+    margin-bottom: 10px;
 }
 
 .announcement-date {
@@ -322,6 +331,10 @@ header nav ul li a.active {
     color: #666;
     margin: -10px 0 15px;
     font-style: italic;
+}
+
+.announcement-item p {
+    color: #555; /* Ensure paragraph text is readable */
 }
 
 /* ========== Contact Page Styling ========== */
@@ -944,9 +957,45 @@ legend {
     color: #333;
 }
 
+/* Styling for the new Announcements Form in the Admin Portal */
+.announcement-form-container {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+#new-announcement-form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+#new-announcement-form label {
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 5px;
+}
+
+#new-announcement-form input,
+#new-announcement-form textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 16px;
+    box-sizing: border-box;
+    color: #000;
+}
+
+#new-announcement-form button.cta-button {
+    width: auto;
+    align-self: flex-start;
+}
+
 /* ====================================
-   Updated Responsive Design 
-   ==================================== */
+    Updated Responsive Design 
+    ==================================== */
 @media (max-width: 981px) {
     header {
         flex-direction: row; /* Keep elements in a row */

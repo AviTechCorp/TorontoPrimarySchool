@@ -6,6 +6,9 @@
     <title>Admins Portal</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <link rel="stylesheet" href="styles.css">
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
 </head>
 <body>
     <header>
@@ -53,7 +56,7 @@
                 <li><a href="contact.html">Contacts</a></li>
                 <li>
                     <div class="auth-buttons">
-                        <a href="#" class="btn-login active btn-logout">Log Out</a>
+                        <a href="auth.html" class="btn-login active">Log Out</a>
                     </div>
                 </li>
             </ul>
@@ -67,6 +70,7 @@
                 <li><a href="#profile"><i class="fas fa-user-shield"></i> Your Profile</a></li>
                 <li><a href="#sams-mgmt"><i class="fas fa-cogs"></i> SA-SAMS Management</a></li>
                 <li><a href="#finance"><i class="fas fa-dollar-sign"></i> Finance</a></li>
+                <li><a href="#announcements-mgmt"><i class="fas fa-bullhorn"></i> Announcements</a></li>
                 <li><a href="#other-tools"><i class="fas fa-tools"></i> Other Tools</a></li>
             </ul>
         </aside>
@@ -114,6 +118,28 @@
                     <a href="#" class="cta-button">Go to Finance</a>
                 </div>
             </section>
+            
+            <section id="announcements-mgmt" class="portal-section">
+                <h2>Manage Announcements</h2>
+                <p>Create new announcements to publish on the school website.</p>
+                <div class="announcement-form-container">
+                    <form id="new-announcement-form">
+                        <div class="form-group">
+                            <label for="announcement-title">Title</label>
+                            <input type="text" id="announcement-title" name="title" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="announcement-content">Content</label>
+                            <textarea id="announcement-content" name="content" rows="6" required></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="announcement-date">Date</label>
+                            <input type="date" id="announcement-date" name="date" required>
+                        </div>
+                        <button type="submit" class="cta-button">Publish Announcement</button>
+                    </form>
+                </div>
+            </section>
 
             <section id="other-tools" class="portal-section">
                 <h2>Other Administrative Tools</h2>
@@ -121,7 +147,7 @@
                     <div class="grid-item tool-card">
                         <h3>Announcements</h3>
                         <p>Create and publish new announcements for parents, teachers, and learners.</p>
-                        <a href="#" class="cta-button">Manage Announcements</a>
+                        <a href="#announcements-mgmt" class="cta-button">Manage Announcements</a>
                     </div>
                     <div class="grid-item tool-card">
                         <h3>System Configuration</h3>
@@ -141,6 +167,6 @@
         <a href="#"><i class="fa-brands fa-linkedin-in"></i></a>
         <a href="#"><i class="fa-brands fa-square-youtube"></i></a>
     </footer>
-    <script type="module" src="auth.js"></script>
+    <script src="admins-portal.js"></script>
 </body>
 </html>
