@@ -1,0 +1,156 @@
+/* ==================================
+    Teachers Portal Specific Styling
+    ================================== */
+
+/* Dashboard Overview Cards */
+#dashboard .grid-container .tool-card {
+    border-left: 5px solid goldenrod;
+}
+
+#dashboard .tool-card p {
+    font-size: 16px;
+    color: #555;
+    line-height: 1.6;
+}
+
+#dashboard .tool-card h3 {
+    color: crimson;
+    margin-bottom: 15px;
+}
+
+/* Parent Information Table Styling */
+#parent-data-container {
+    margin-top: 20px;
+    padding: 20px;
+    background-color: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    overflow-x: auto; /* Enable horizontal scrolling for small screens */
+}
+
+#parent-data-container table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
+
+#parent-data-container th, #parent-data-container td {
+    border: 1px solid #ddd;
+    padding: 12px;
+    text-align: left;
+    white-space: nowrap; /* Prevents text from wrapping */
+}
+
+#parent-data-container thead {
+    background-color: crimson;
+    color: #000000;
+}
+
+#parent-data-container th {
+    font-weight: bold;
+    text-transform: uppercase;
+    font-size: 14px;
+}
+
+#parent-data-container tbody tr:nth-child(even) {
+    background-color: #f2f2f2;
+}
+
+/* Forms with Tables (Attendance & Grades) */
+#attendance-form form,
+#grades-form form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+#attendance-form label,
+#grades-form label {
+    font-weight: 600;
+    color: #333;
+}
+
+#attendance-form select,
+#grades-form select {
+    width: 100%;
+    padding: 10px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    font-size: 16px;
+    color: #333;
+    background-color: #fff;
+}
+
+#attendance-form table,
+#grades-form table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+#attendance-form th, #attendance-form td,
+#grades-form th, #grades-form td {
+    border: 1px solid #ddd;
+    padding: 12px;
+    text-align: left;
+}
+
+#attendance-form thead,
+#grades-form thead {
+    background-color: crimson;
+    color: #fff;
+}
+
+#attendance-form td input[type="radio"] {
+    margin-right: 5px;
+}
+
+#grades-form input[type="text"] {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+/* Communication Form Styling */
+#communication-form form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+#communication-form label {
+    font-weight: 600;
+    color: #333;
+}
+
+#communication-form input[type="text"],
+#communication-form textarea,
+#communication-form select {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 16px;
+}
+
+#communication-form textarea {
+    resize: vertical;
+    min-height: 120px;
+}
+
+/* Styling for the new Contact link in the parent data table */
+#parents-data .contact-link {
+    display: inline-block;
+    padding: 5px 10px;
+    background-color: #007bff;
+    color: white;
+    text-decoration: none;
+    border-radius: 5px;
+    font-size: 0.9em;
+    transition: background-color 0.3s ease;
+}
+
+#parents-data .contact-link:hover {
+    background-color: #0056b3;
+}

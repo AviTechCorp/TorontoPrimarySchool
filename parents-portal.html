@@ -6,58 +6,16 @@
     <title>Parents Portal</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="parents-portal.css">
 </head>
 <body>
     <header>
-        <a href="index.html"><img src="images/Logo.png" alt="Toronto Primary School Logo"></a>
-        <input type="checkbox" id="menu-bar">
-        <label for="menu-bar"><i class="fas fa-bars"></i></label>
-        <nav>
-            <ul>
-                <li><a href="index.html">Home</a></li>
-                <li><a href="about.html">About</a></li>
-                <li>
-                    <a href="#">Academics <i class="fas fa-caret-down"></i></a>
-                    <ul>
-                        <li><a href="academics.html#curriculum">Curriculum</a></li>
-                        <li><a href="academics.html#departments">Departments</a></li>
-                        <li><a href="academics.html#subjects">Subjects</a></li>
-                        <li><a href="academics.html#assessments">Assessments</a></li>
-                    </ul>
-                </li>
-                <li>
-                    <a href="#">Activities <i class="fas fa-caret-down"></i></a>
-                    <ul>
-                        <li><a href="activities.html#extracurricular">Extracurricular Activities</a></li>
-                        <li><a href="activities.html#sports">Sports</a></li>
-                        <li><a href="activities.html#clubs">Clubs</a></li>
-                        <li><a href="activities.html#events">Events</a></li>
-                    </ul>
-                </li>
-                <li>
-                    <a href="#">Admission <i class="fas fa-caret-down"></i></a>
-                    <ul>
-                        <li><a href="admission.html#how-to-apply">How to Apply</a></li>
-                        <li><a href="application-form.html">Application Form</a></li>
-                        <li><a href="admission.html#requirements">Admission Requirements</a></li>
-                    </ul>
-                </li>
-                <li>
-                    <a href="#">Parents <i class="fas fa-caret-down"></i></a>
-                    <ul>
-                        <li><a href="parents.html#sgb">SGB</a></li>
-                        <li><a href="parents.html#resources">Resources for Parents</a></li>
-                    </ul>
-                </li>
-                <li><a href="announcement.html">Announcements</a></li>
-                <li><a href="contact.html">Contacts</a></li>
-                <li>
-                    <div class="auth-buttons">
-                        <a href="#" class="btn-login active btn-logout">Log Out</a>
-                    </div>
-                </li>
-            </ul>
-        </nav>
+        <div class="logo">
+            <a href="index.html"><img src="images/Logo.png" alt="Royal High School Logo"></a>
+        </div>
+        <div class="auth-buttons">
+            <a href="#" class="btn-login btn-logout">Log Out</a>
+        </div>
     </header>
 
     <main class="portal-main-content">
@@ -80,14 +38,37 @@
                 <div class="profile-card">
                     <img src="images/placeholder-profile.png" alt="Parent Profile Picture" class="profile-pic">
                     <div class="profile-details">
-                        <p><strong>Name:</strong> [Parent's Full Name]</p>
-                        <p><strong>Email:</strong> [Parent's Email Address]</p>
-                        <p><strong>Contact:</strong> [Parent's Contact Number]</p>
-                        <p><strong>Relationship:</strong> [Relationship to Learner]</p>
+                        <p class="profile-name"><strong>Name:</strong> Loading...</p>
+                        <p class="profile-email"><strong>Email:</strong> Loading...</p>
+                        <p class="profile-contact"><strong>Contact:</strong> Loading...</p>
+                        <p class="profile-relationship"><strong>Relationship:</strong> Loading...</p>
+                        <p style="color: blue;"><strong>Please fill out the form below for contact purposes:</strong></p>
+                        <form id="parent-profile-form" action="https://script.google.com/macros/s/AKfycbwknJUMHtoGLVTXzb_mB_qL4-0ik6tkKfnKdAkkOfxr2AtrwYp_mHdItGWHWjd__OkB5g/exec" method="post">
+                            
+                            <label for="parent-name">Your Full Name:</label>
+                            <input type="text" id="parent-name" name="parentName" required>
+
+                                                        <label for="parent-name">Your Full Name:</label>
+                            <input type="text" id="parent-name" name="parentName" required>
+
+                            <label for="parent-email">Email Address:</label>
+                            <input type="email" id="parent-email" name="parentEmail" required>
+                            
+                            <label for="contact">Contact Number:</label>
+                            <input type="tel" id="contact" name="contact">
+                            
+                            <label for="relationship">Relationship to Learner:</label>
+                            <input type="text" id="relationship" name="relationship" placeholder="e.g., Mother, Father" required>
+
+                            <label for="learner-name">Learner's Full Name:</label>
+                            <input type="text" id="learner-name" name="learnerName" required>
+
+                            <button type="submit" class="cta-button">Save Profile Details</button>
+
+                            </form>
                     </div>
                 </div>
-            </section>
-            
+            </section>            
             <section id="learner-section" class="portal-section">
                 <h2>Learner Section</h2>
                 <div class="tool-card">
@@ -141,6 +122,7 @@
         <a href="#"><i class="fa-brands fa-linkedin-in"></i></a>
         <a href="#"><i class="fa-brands fa-square-youtube"></i></a>
     </footer>
+    <script src="parents-portal.js"></script>
     <script type="module" src="auth.js"></script>
 </body>
 </html>

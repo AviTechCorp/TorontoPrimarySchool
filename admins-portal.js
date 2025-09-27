@@ -44,3 +44,18 @@ announcementForm.addEventListener('submit', async (e) => {
         alert('An error occurred while publishing the announcement. Please try again.');
     }
 });
+
+// Function to load and display admin profile data
+function loadAdminProfile() {
+    const userData = JSON.parse(sessionStorage.getItem('currentUser'));
+
+    if (userData) {
+        document.querySelector('#profile .profile-details p:nth-child(1)').innerHTML = `<strong>Name:</strong> ${userData.preferredName} ${userData.surname}`;
+        document.querySelector('#profile .profile-details p:nth-child(2)').innerHTML = `<strong>Special ID:</strong> ${userData.specialId}`;
+        document.querySelector('#profile .profile-details p:nth-child(3)').innerHTML = `<strong>Email:</strong> ${userData.email}`;
+    } else {
+        console.error("User data not found in session storage. Please log in again.");
+    }
+}
+
+document.addEventListener('DOMContentLoaded', loadAdminProfile);

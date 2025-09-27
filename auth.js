@@ -189,7 +189,11 @@ if(loginSubmitButton) {
             if (userDocSnap.exists()) {
                 const userData = userDocSnap.data();
                 if (userData.role === role) {
-                    alert(`Welcome back, ${role}!`);
+                    // Store user data in sessionStorage for access on other pages
+                    sessionStorage.setItem('currentUser', JSON.stringify(userData));
+                    
+                    alert(`Welcome back, ${userData.name || userData.preferredName || 'User'}!`);
+
                     // Redirect based on the selected role
                     switch(role) {
                         case 'parent':
@@ -243,13 +247,35 @@ if (registerLink) {
     });
 }
 
+
+// Check for authentication state change to redirect users who are not logged in.
+onAuthStateChanged(auth, (user) => {
+    const currentPath = window.location.pathname;
+    const isLoggedIn = !!user;
+
+    // List of protected portal pages
+    const protectedPages = [
+        'parents-portal.html',
+        'teachers-portal.html',
+        'admins-portal.html'
+    ];
+    
+    // Check if the current page is a protected page and the user is not logged in
+    if (protectedPages.some(page => currentPath.endsWith(page)) && !isLoggedIn) {
+        alert("You must be logged in to view this page.");
+        window.location.href = "auth.html";
+    }
+});
+
+
 /**
  * Handle user logout.
  * This function signs the user out of Firebase and redirects them to the login page.
  */
 function handleLogout() {
     signOut(auth).then(() => {
-        // Sign-out successful.
+        // Clear user data from session storage on logout
+        sessionStorage.removeItem('currentUser');
         alert("You have been logged out successfully.");
         window.location.href = "auth.html";
     }).catch((error) => {
