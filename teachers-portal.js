@@ -84,3 +84,56 @@ sidebarLinks.forEach(link => {
 });
 
 document.addEventListener('DOMContentLoaded', loadTeacherProfile);
+
+// ** 1. Portal Section Switching for Usability **
+function setupPortalNavigation() {
+    const sidebarLinks = document.querySelectorAll('.sidebar ul li a');
+    const sections = document.querySelectorAll('.portal-section');
+
+    // Function to show the target section and hide others
+    function showSection(targetId) {
+        sections.forEach(section => {
+            section.classList.remove('active-section');
+            section.classList.add('hidden-section');
+            if (section.id === targetId) {
+                section.classList.add('active-section');
+                section.classList.remove('hidden-section');
+            }
+        });
+    }
+
+    // Handle link clicks
+    sidebarLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            // Remove active class from all links
+            sidebarLinks.forEach(l => l.classList.remove('active'));
+            // Add active class to the clicked link
+            this.classList.add('active');
+            
+            const targetId = this.getAttribute('href').substring(1);
+            showSection(targetId);
+            
+            // Update URL hash
+            history.pushState(null, null, `#${targetId}`);
+        });
+    });
+
+    // Handle page load based on URL hash (default to dashboard)
+    const initialHash = window.location.hash.substring(1) || 'dashboard';
+    showSection(initialHash);
+    const initialLink = document.querySelector(`.sidebar ul li a[href="#${initialHash}"]`);
+    if (initialLink) {
+        initialLink.classList.add('active');
+    }
+}
+
+// ** 4. Initialization **
+document.addEventListener('DOMContentLoaded', () => {
+    loadTeacherProfile();
+    setupPortalNavigation();
+    
+    // Make the loadParentData function globally accessible for the HTML button
+    window.loadParentData = loadParentData;
+});

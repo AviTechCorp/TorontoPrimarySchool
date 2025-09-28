@@ -1,61 +1,527 @@
-/* Styling for the form within the profile card */
-#parent-profile-form {
+/* ===================================================
+   Toronto Primary School - Parent Portal Styles
+   =================================================== */
+
+/* --- Fonts & Base --- */
+@import 'https://fonts.googleapis.com/css?family=Montserrat:300, 400, 700&display=swap';
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Montserrat', sans-serif;
+}
+
+a {
+    text-decoration: none;
+    color: inherit;
+    transition: color 0.3s;
+}
+
+ul {
+    list-style: none;
+}
+
+/* --- Color Palette (Used here for consistency) --- */
+:root {
+    --primary-blue: #007bff; /* Deep Blue for Trust/Professionalism */
+    --primary-red: crimson; /* Crimson for Alerts/Highlights */
+    --accent-gold: goldenrod; /* Gold for Status/Important items */
+    --text-dark: #333;
+    --text-light: #fff;
+    --background-light: #f7f7f7;
+    --sidebar-bg: #2c3e50; /* Darker, professional sidebar */
+}
+
+/* --- Header & Buttons (General Portal Setup) --- */
+header {
+    width: 100%;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1000;
+    height: 100px;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 20px;
+}
+
+header img {
+    height: 80px;
+}
+
+.auth-buttons {
+    display: flex;
+    gap: 10px;
+    margin-left: auto;
+}
+
+.auth-buttons a {
+    background-color: var(--primary-red);
+    color: var(--text-light);
+    padding: 10px 15px;
+    border-radius: 5px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.auth-buttons a:hover {
+    background-color: darkred;
+}
+
+/* ====================================
+   Portal Layout (Main Content)
+   ==================================== */
+
+.portal-main-content {
+    display: flex;
+    flex-grow: 1;
+    min-height: calc(100vh - 100px);
+    padding-top: 100px;
+    background-color: var(--background-light); 
+}
+
+/* --- Sidebar --- */
+.sidebar {
+    width: 250px; 
+    background-color: var(--sidebar-bg); 
+    color: var(--text-light);
+    padding: 20px 0; 
+    flex-shrink: 0;
+    box-shadow: 3px 0 10px rgba(0,0,0,0.2); 
+}
+
+.sidebar-title {
+    color: var(--accent-gold);
+    font-size: 1.4em; 
+    margin: 0 20px 25px;
+    border-bottom: 2px solid var(--accent-gold);
+    padding-bottom: 12px;
+    font-weight: 700;
+}
+
+.sidebar ul li a {
+    display: flex; 
+    align-items: center;
+    padding: 15px 20px;
+    font-size: 1em;
+    color: #ffffff;
+    border-left: 5px solid transparent; 
+    transition: all 0.2s ease;
+}
+
+.sidebar ul li a i {
+    margin-right: 15px;
+    min-width: 20px; 
+}
+
+.sidebar ul li a:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: var(--primary-blue);
+}
+
+.sidebar ul li a.active {
+    background-color: #34495e; 
+    color: var(--accent-gold);
+    font-weight: 700;
+    border-left: 5px solid var(--primary-blue); 
+}
+
+/* --- Content Wrapper --- */
+.portal-content-wrapper {
+    flex-grow: 1;
+    background-color: var(--background-light); 
+    color: var(--text-dark);
+    padding: 40px;
+    overflow-y: auto;
+}
+
+.portal-title {
+    color: var(--primary-blue);
+    font-size: 2.2em;
+    margin-bottom: 40px;
+    border-bottom: 3px solid var(--accent-gold);
+    padding-bottom: 10px;
+}
+
+/* --- Sections --- */
+.portal-section {
+    margin-bottom: 35px;
+    padding: 30px;
+    background-color: white; 
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+    border-top: 5px solid var(--primary-blue); 
+}
+
+.portal-section.hidden-section {
+    display: none;
+}
+.portal-section.active-section {
+    display: block;
+}
+
+.portal-section h2 {
+    color: var(--text-dark); 
+    font-size: 1.7em;
+    font-weight: 700;
+    border-bottom: 1px solid #eee; 
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+}
+
+.portal-section p {
+    font-size: 1em;
+    color: #555;
+    line-height: 1.5;
+}
+.portal-section .note-blue {
+    color: var(--primary-blue);
+    font-weight: bold;
+    margin-top: 15px;
+}
+
+/* --- Profile Section --- */
+.profile-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 40px;
+    flex-wrap: wrap;
+}
+
+.profile-pic {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    border: 4px solid var(--accent-gold);
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.profile-details {
+    flex-grow: 1;
+}
+
+.profile-details p {
+    margin-bottom: 8px;
+    font-size: 1.05em;
+    color: var(--text-dark);
+}
+
+.profile-details form {
+    margin-top: 25px;
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background-color: #f9f9f9;
     display: grid;
+    gap: 10px;
+    grid-template-columns: 1fr;
+}
+
+.profile-details label {
+    font-weight: 600;
+    color: var(--primary-blue);
+    margin-top: 10px;
+}
+
+.profile-details input[type="text"],
+.profile-details input[type="email"],
+.profile-details input[type="tel"] {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 1em;
+}
+
+/* --- Dashboard / Learner Section Cards --- */
+.grid-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
     gap: 20px;
-    grid-template-columns: 1fr; /* Default to a single column on small screens */
     margin-top: 20px;
 }
 
-/* Use a two-column grid for larger screens to save space */
-@media (min-width: 768px) {
-    #parent-profile-form {
-        grid-template-columns: repeat(2, 1fr);
-    }
-    /* Make the submit button span across both columns */
-    #parent-profile-form .cta-button {
-        grid-column: 1 / -1;
-    }
-}
-
-/* Style for each form group (label and input) */
-#parent-profile-form .form-group {
+.tool-card {
+    background-color: #ffffff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    transition: transform 0.2s, box-shadow 0.2s;
+    border: 1px solid #eee;
     display: flex;
     flex-direction: column;
+    justify-content: space-between;
 }
 
-#parent-profile-form label {
-    font-size: 1em;
-    font-weight: 600;
-    color: goldenrod;
-    margin-bottom: 8px;
-    transition: color 0.3s ease;
+.tool-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 15px rgba(0,0,0,0.15);
 }
 
-#parent-profile-form input {
-    width: 100%;
-    padding: 12px;
-    border: 1px solid #ddd;
-    border-radius: 8px; /* Slightly more rounded corners */
-    font-size: 1em;
-    color: #333; /* Darker text for readability */
-    background-color: #fff; /* White background */
-    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+.tool-card h3 {
+    font-size: 1.2em;
+    margin-bottom: 5px;
+    display: flex;
+    align-items: center;
+    color: var(--primary-blue);
 }
-
-#parent-profile-form input:focus {
-    border-color: crimson;
-    outline: none;
-    box-shadow: 0 0 8px rgba(220, 20, 60, 0.2); /* Subtle glow on focus */
-}
-
-/* Update the CTA button style for better integration */
-#parent-profile-form .cta-button {
-    width: 100%; /* Ensure button is full-width */
-    padding: 15px;
+.tool-card h3 i {
+    margin-right: 10px;
     font-size: 1.1em;
-    font-weight: bold;
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
+}
+
+.tool-card p {
+    font-size: 0.95em;
+    color: #666;
+    margin-bottom: 15px;
+    flex-grow: 1;
+}
+
+/* Accent Colors for Cards */
+.tool-card.accent-1 { border-left: 5px solid var(--accent-gold); }
+.tool-card.accent-1 h3 i { color: var(--accent-gold); }
+
+.tool-card.accent-2 { border-left: 5px solid var(--primary-red); }
+.tool-card.accent-2 h3 i { color: var(--primary-red); }
+
+.tool-card.accent-3 { border-left: 5px solid var(--primary-blue); } 
+.tool-card.accent-3 h3 i { color: var(--primary-blue); }
+
+/* --- Forum Section (COOL LIST STYLE) --- */
+
+.message-card {
+    background-color: #fcfcfc;
+    border: 1px solid #ddd;
+    border-left: 5px solid var(--primary-blue);
+    padding: 15px 20px;
+    margin-bottom: 10px;
+    border-radius: 6px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.message-card:hover {
+    border-left-color: var(--accent-gold);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+.message-header {
+    font-size: 1.1em;
+    font-weight: 700;
+    color: var(--primary-red);
+    flex-basis: 100%; /* Takes full width on top */
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+}
+
+.message-header i {
+    color: var(--primary-red);
+    margin-right: 10px;
+}
+
+.message-card .message-details {
+    flex-grow: 1;
+    display: flex;
+    gap: 30px;
+}
+
+.message-card .message-details p {
+    font-size: 0.9em;
+    color: #666;
+    margin: 0;
+}
+
+
+/* --- Resources Section (COOL LIST STYLE) --- */
+.resource-list-container {
+    margin-top: 20px;
+}
+
+.resource-list li {
+    background-color: white;
+    padding: 20px;
+    margin-bottom: 12px;
     border-radius: 8px;
-    margin-top: 10px; /* Adjust spacing */
+    border: 1px solid #eee;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    transition: all 0.2s;
+}
+
+.resource-list li:hover {
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.resource-list li i {
+    font-size: 2.5em;
+    flex-shrink: 0;
+}
+
+.resource-list li .accent-1 { color: var(--accent-gold); }
+.resource-list li .accent-2 { color: var(--primary-red); }
+.resource-list li .accent-3 { color: var(--primary-blue); }
+
+.resource-list li h3 {
+    margin-bottom: 5px;
+    font-size: 1.2em;
+    color: var(--text-dark);
+}
+
+.resource-list li div {
+    flex-grow: 1;
+}
+
+/* --- Action Buttons --- */
+.cta-button {
+    background-color: var(--primary-red);
+    color: white;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 5px;
+    font-size: 1em;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.cta-button:hover {
+    background-color: darkred;
+}
+
+.cta-button.primary-blue {
+    background-color: var(--primary-blue);
+}
+.cta-button.primary-blue:hover {
+    background-color: #0056b3;
+}
+
+
+.cta-button-small {
+    background-color: var(--primary-blue);
+    color: white;
+    padding: 8px 15px;
+    border: none;
+    border-radius: 4px;
+    font-size: 0.9em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    display: inline-block;
+}
+
+.cta-button-small:hover {
+    background-color: #0056b3;
+}
+
+
+/* --- Footer --- */
+footer {
+    padding: 20px 40px;
+    background-color: var(--sidebar-bg);
+    color: #bbb;
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    font-size: 0.9em;
+    flex-shrink: 0;
+}
+
+footer a {
+    color: #bbb;
+    font-size: 1.2em;
+}
+footer a:hover {
+    color: var(--accent-gold);
+}
+
+/* ====================================
+   Responsive Adjustments
+   ==================================== */
+@media (max-width: 981px) {
+    .portal-main-content {
+        flex-direction: column;
+    }
+
+    .sidebar {
+        width: 100%;
+        padding: 15px 0; 
+    }
+
+    .sidebar ul {
+        display: flex;
+        flex-direction: row; 
+        overflow-x: auto;
+        padding: 0 10px;
+    }
+
+    .sidebar ul li {
+        flex-shrink: 0;
+        margin-right: 5px;
+    }
+    
+    .sidebar ul li a {
+        padding: 10px 15px;
+        font-size: 1em;
+        white-space: nowrap; 
+    }
+    
+    .portal-content-wrapper {
+        padding: 20px; 
+    }
+
+    .message-card {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    .message-card .message-details {
+        gap: 15px;
+        margin-bottom: 5px;
+    }
+    .message-card .cta-button-small {
+        align-self: flex-end;
+    }
+}
+
+@media (max-width: 600px) {
+    .profile-card {
+        flex-direction: column;
+        align-items: center;
+        gap: 20px;
+    }
+
+    .portal-title {
+        font-size: 1.8em;
+    }
+
+    .resource-list li {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    
+    .resource-list li h3, .resource-list li p {
+        margin-left: 0;
+    }
+    
+    .resource-list li .cta-button-small {
+        align-self: flex-end;
+    }
 }
