@@ -1,169 +1,182 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Learner Portal - Toronto Primary School</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-  <link rel="stylesheet" href="learners-portal.css"> 
-  <link rel="shortcut icon" href="images/44.png" type="image/x-icon">
+ <meta charset="UTF-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0">
+ <title>Learner Portal - Toronto Primary School</title>
+ <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+ <link rel="stylesheet" href="learners-portal.css"> 
+ <link rel="shortcut icon" href="images/44.png" type="image/x-icon">
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+ <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
 </head>
 <body>
 
-  <header>
-    <div class="logo">
-      <a href="index.html"><img src="images/Logo.png" alt="Toronto Primary School Logo"></a>
+ <header>
+  <div class="logo">
+   <a href="index.html"><img src="images/Logo.png" alt="Toronto Primary School Logo"></a>
+  </div>
+    <div class="auth-buttons">
+   <a href="#" class="btn-login btn-logout"><i class="fas fa-sign-out-alt"></i> Log Out</a>
+  </div>
+ </header>
+
+ <main class="portal-main-content">
+  <aside class="sidebar">
+   <h2 class="sidebar-title">Learner Navigation</h2>
+   <ul>
+    <li><a href="#dashboard" class="active"><i class="fas fa-chart-line"></i> Dashboard</a></li>
+    <li><a href="#profile"><i class="fas fa-user-circle"></i> My Profile</a></li>
+    <li><a href="#grades"><i class="fas fa-book-reader"></i> My Grades</a></li>
+    <li><a href="#assignments"><i class="fas fa-clipboard-list"></i> Assignments</a></li>
+    <li><a href="#attendance"><i class="fas fa-calendar-check"></i> Attendance</a></li>
+    <li><a href="#materials"><i class="fas fa-file-pdf"></i> Course Materials</a></li>
+    <li><a href="#calendar"><i class="fas fa-calendar-alt"></i> School Calendar</a></li>
+        <li><a href="#announcements"><i class="fas fa-bullhorn"></i> Announcements</a></li>
+   </ul>
+  </aside>
+
+  <section class="portal-content-wrapper">
+   <h1 class="portal-title">Hello, <span id="learner-name-display">Learner</span>! Ready to Learn? ✨</h1>
+
+   <div id="dashboard" class="portal-section active-section">
+    <h2>Quick Overview</h2>
+    <div class="grid-container dashboard-cards">
+     <div class="tool-card accent-1">
+      <h3><i class="fas fa-bell"></i> New Alerts</h3>
+      <p id="dashboard-notifications">No new notifications. Great job!</p>
+     </div>
+     <div class="tool-card accent-2">
+      <h3><i class="fas fa-clock"></i> Upcoming Due Date</h3>
+      <p id="dashboard-assignments">Maths worksheet due Friday.</p>
+     </div>
+     <div class="tool-card accent-3">
+      <h3><i class="fas fa-chart-bar"></i> Term Average</h3>
+      <p id="dashboard-latest-grade">85% (Very Good!)</p>
+     </div>
     </div>
-        <div class="auth-buttons">
-      <a href="#" class="btn-login btn-logout"><i class="fas fa-sign-out-alt"></i> Log Out</a>
+   </div>
+   
+   <div id="profile" class="portal-section hidden-section">
+    <h2>My Personal Details</h2>
+    <div class="profile-card">
+     <img src="images/placeholder-profile.png" alt="Learner Profile Picture" class="profile-pic">
+     <div class="profile-details grid-two-columns">
+      <h3>Learner Information</h3>
+      <p id="profile-name-full"><strong>Full Name:</strong></p>
+      <p id="profile-adm-num"><strong>Admission No:</strong></p>
+      <p id="profile-grade"><strong>Current Grade:</strong></p>
+      <p id="profile-email"><strong>Portal Email:</strong></p>
+      <p id="profile-dob"><strong>Date of Birth:</strong></p>
+      <p id="profile-gender"><strong>Gender:</strong></p>
+     </div>
+     <div class="profile-details grid-two-columns parent-info">
+      <h3>Parent/Guardian Contact</h3>
+      <p id="profile-parent-name"><strong>Name:</strong> N/A</p>
+      <p id="profile-parent-contact"><strong>Contact:</strong> N/A</p>
+      <p id="profile-parent-email"><strong>Email:</strong> N/A</p>
+     </div>
     </div>
-  </header>
+   </div>
 
-  <main class="portal-main-content">
-    <aside class="sidebar">
-      <h2 class="sidebar-title">Learner Navigation</h2>
-      <ul>
-        <li><a href="#dashboard" class="active"><i class="fas fa-chart-line"></i> Dashboard</a></li>
-        <li><a href="#profile"><i class="fas fa-user-circle"></i> My Profile</a></li>
-        <li><a href="#grades"><i class="fas fa-book-reader"></i> My Grades</a></li>
-        <li><a href="#assignments"><i class="fas fa-clipboard-list"></i> Assignments</a></li>
-        <li><a href="#attendance"><i class="fas fa-calendar-check"></i> Attendance</a></li>
-        <li><a href="#materials"><i class="fas fa-file-pdf"></i> Course Materials</a></li>
-        <li><a href="#calendar"><i class="fas fa-calendar-alt"></i> School Calendar</a></li>
-      </ul>
-    </aside>
+   <div id="grades" class="portal-section hidden-section">
+    <h2>My Report Card</h2>
+    <p>This table shows your current performance for Term <span id="current-term">3</span>. Keep up the great work!</p>
+    <div id="grades-container">
+     <table class="data-table">
+      <thead>
+       <tr>
+        <th>Subject</th>
+        <th>Current %</th>
+        <th>Achievement Level</th>
+       </tr>
+      </thead>
+      <tbody id="grades-table-body">
+       <tr><td>Mathematics</td><td>88%</td><td>Outstanding Achievement</td></tr>
+       <tr><td>Home Language</td><td>75%</td><td>Substantial Achievement</td></tr>
+       <tr><td>Life Skills</td><td>91%</td><td>Outstanding Achievement</td></tr>
+      </tbody>
+     </table>
+     <button class="btn primary-btn print-btn"><i class="fas fa-print"></i> Download Report Card</button>
+    </div>
+   </div>
 
-    <section class="portal-content-wrapper">
-      <h1 class="portal-title">Hello, <span id="learner-name-display">Learner</span>! Ready to Learn? ✨</h1>
+   <div id="assignments" class="portal-section hidden-section">
+    <h2>My Homework & Tasks</h2>
+    <p>Stay organised! Check deadlines for all your subjects below. Don't let anything become **Overdue**!</p>
+    <div id="assignments-container">
+     <ul class="assignment-list">
+      <li>
+       <span class="task-details"><i class="fas fa-exclamation-triangle"></i> **Maths:** Topic 3 worksheet</span> 
+       <span class="due-date">Due 29/10/2025</span> 
+       <span class="status overdue">Overdue</span>
+      </li>
+      <li>
+       <span class="task-details"><i class="fas fa-clipboard-list"></i> **Science:** Photosynthesis Poster</span> 
+       <span class="due-date">Due 05/11/2025</span> 
+       <span class="status upcoming">Upcoming</span>
+      </li>
+      <li>
+       <span class="task-details"><i class="fas fa-palette"></i> **Art:** Sketchbook Entry 5</span> 
+       <span class="due-date">Due 10/11/2025</span> 
+       <span class="status upcoming">Upcoming</span>
+      </li>
+      <li>
+       <span class="task-details"><i class="fas fa-check-circle"></i> **History:** Ancient Civilizations Quiz</span> 
+       <span class="due-date">Completed 20/10/2025</span> 
+       <span class="status completed">Completed</span>
+      </li>
+     </ul>
+    </div>
+    
+   </div>
 
-      <div id="dashboard" class="portal-section active-section">
-        <h2>Quick Overview</h2>
-        <div class="grid-container dashboard-cards">
-          <div class="tool-card accent-1">
-            <h3><i class="fas fa-bell"></i> New Alerts</h3>
-            <p id="dashboard-notifications">No new notifications. Great job!</p>
-          </div>
-          <div class="tool-card accent-2">
-            <h3><i class="fas fa-clock"></i> Upcoming Due Date</h3>
-            <p id="dashboard-assignments">Maths worksheet due Friday.</p>
-          </div>
-          <div class="tool-card accent-3">
-            <h3><i class="fas fa-chart-bar"></i> Term Average</h3>
-            <p id="dashboard-latest-grade">85% (Very Good!)</p>
-          </div>
-        </div>
-      </div>
-      
-      <div id="profile" class="portal-section hidden-section">
-        <h2>My Personal Details</h2>
-        <div class="profile-card">
-          <img src="images/placeholder-profile.png" alt="Learner Profile Picture" class="profile-pic">
-          <div class="profile-details grid-two-columns">
-            <h3>Learner Information</h3>
-            <p id="profile-name-full"><strong>Full Name:</strong></p>
-            <p id="profile-adm-num"><strong>Admission No:</strong></p>
-            <p id="profile-grade"><strong>Current Grade:</strong></p>
-            <p id="profile-email"><strong>Portal Email:</strong></p>
-            <p id="profile-dob"><strong>Date of Birth:</strong></p>
-            <p id="profile-gender"><strong>Gender:</strong></p>
-          </div>
-          <div class="profile-details grid-two-columns parent-info">
-            <h3>Parent/Guardian Contact</h3>
-            <p id="profile-parent-name"><strong>Name:</strong> N/A</p>
-            <p id="profile-parent-contact"><strong>Contact:</strong> N/A</p>
-            <p id="profile-parent-email"><strong>Email:</strong> N/A</p>
-          </div>
-        </div>
-      </div>
+   <div id="attendance" class="portal-section hidden-section">
+    <h2>Attendance Record</h2>
+    <p>A strong attendance record shows commitment to learning!</p>
+    <div id="attendance-container">
+     <p>Total days attended: <strong>58</strong> / Total days in term: <strong>60</strong></p>
+     <p>Absences this term: <strong>2</strong> (All excused)</p>
+    </div>
+   </div>
+   
+   <div id="materials" class="portal-section hidden-section">
+    <h2>Study Resources</h2>
+    <p>Download study guides, lesson notes, and past papers here.</p>
+    <div id="materials-container">
+     <ul class="material-list">
+      <li><a href="#"><i class="fas fa-file-pdf"></i> Maths: Term 3 Study Guide (PDF)</a></li>
+      <li><a href="#"><i class="fas fa-file-pdf"></i> Science: Topic 4 Notes (Ecosystems)</a></li>
+      <li><a href="#"><i class="fas fa-link"></i> Online Interactive Reading List</a></li>
+      <li><a href="#"><i class="fas fa-file-pdf"></i> History: Past Exam Paper (Q4)</a></li>
+     </ul>
+    </div>
+   </div>
+   
+   <div id="calendar" class="portal-section hidden-section">
+    <h2>Important Dates</h2>
+    <p>Mark your calendars! Key events and exam dates for the term.</p>
+    <div id="calendar-container">
+     <ul class="calendar-list">
+      <li><strong>15 Nov:</strong> <span>Term 4 Exams Begin (All Grades)</span></li>
+      <li><strong>01 Dec:</strong> <span>Annual School Sports Day</span></li>
+      <li><strong>10 Dec:</strong> <span>Last Day of Term / Report Card Collection</span></li>
+     </ul>
+    </div>
+   </div>
 
-      <div id="grades" class="portal-section hidden-section">
-        <h2>My Report Card</h2>
-        <p>This table shows your current performance for Term <span id="current-term">3</span>. Keep up the great work!</p>
-        <div id="grades-container">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>Subject</th>
-                <th>Current %</th>
-                <th>Achievement Level</th>
-              </tr>
-            </thead>
-            <tbody id="grades-table-body">
-              <tr><td>Mathematics</td><td>88%</td><td>Outstanding Achievement</td></tr>
-              <tr><td>Home Language</td><td>75%</td><td>Substantial Achievement</td></tr>
-              <tr><td>Life Skills</td><td>91%</td><td>Outstanding Achievement</td></tr>
-                          </tbody>
-          </table>
-          <button class="btn primary-btn print-btn"><i class="fas fa-print"></i> Download Report Card</button>
-        </div>
-      </div>
-
-      <div id="assignments" class="portal-section hidden-section">
-        <h2>My Homework & Tasks</h2>
-        <p>Stay organised! Check deadlines for all your subjects below. Don't let anything become **Overdue**!</p>
-        <div id="assignments-container">
-          <ul class="assignment-list">
-            <li>
-              <span class="task-details"><i class="fas fa-exclamation-triangle"></i> **Maths:** Topic 3 worksheet</span> 
-              <span class="due-date">Due 29/10/2025</span> 
-              <span class="status overdue">Overdue</span>
-            </li>
-            <li>
-              <span class="task-details"><i class="fas fa-clipboard-list"></i> **Science:** Photosynthesis Poster</span> 
-              <span class="due-date">Due 05/11/2025</span> 
-              <span class="status upcoming">Upcoming</span>
-            </li>
-            <li>
-              <span class="task-details"><i class="fas fa-palette"></i> **Art:** Sketchbook Entry 5</span> 
-              <span class="due-date">Due 10/11/2025</span> 
-              <span class="status upcoming">Upcoming</span>
-            </li>
-            <li>
-              <span class="task-details"><i class="fas fa-check-circle"></i> **History:** Ancient Civilizations Quiz</span> 
-              <span class="due-date">Completed 20/10/2025</span> 
-              <span class="status completed">Completed</span>
-            </li>
-          </ul>
-        </div>
-      </div>
-
-      <div id="attendance" class="portal-section hidden-section">
-        <h2>Attendance Record</h2>
-        <p>A strong attendance record shows commitment to learning!</p>
-        <div id="attendance-container">
-          <p>Total days attended: <strong>58</strong> / Total days in term: <strong>60</strong></p>
-          <p>Absences this term: <strong>2</strong> (All excused)</p>
-        </div>
-      </div>
-      
-      <div id="materials" class="portal-section hidden-section">
-        <h2>Study Resources</h2>
-        <p>Download study guides, lesson notes, and past papers here.</p>
-        <div id="materials-container">
-          <ul class="material-list">
-            <li><a href="#"><i class="fas fa-file-pdf"></i> Maths: Term 3 Study Guide (PDF)</a></li>
-            <li><a href="#"><i class="fas fa-file-pdf"></i> Science: Topic 4 Notes (Ecosystems)</a></li>
-            <li><a href="#"><i class="fas fa-link"></i> Online Interactive Reading List</a></li>
-            <li><a href="#"><i class="fas fa-file-pdf"></i> History: Past Exam Paper (Q4)</a></li>
-          </ul>
-        </div>
-      </div>
-      
-      <div id="calendar" class="portal-section hidden-section">
-        <h2>Important Dates</h2>
-        <p>Mark your calendars! Key events and exam dates for the term.</p>
-        <div id="calendar-container">
-          <ul class="calendar-list">
-            <li><strong>15 Nov:</strong> <span>Term 4 Exams Begin (All Grades)</span></li>
-            <li><strong>01 Dec:</strong> <span>Annual School Sports Day</span></li>
-            <li><strong>10 Dec:</strong> <span>Last Day of Term / Report Card Collection</span></li>
-          </ul>
-        </div>
-      </div>
-    </section>
-  </main>
-  
-  <script src="learners-portal.js"></script> 
-  <script type="module" src="auth.js"></script>
+      <div id="announcements" class="portal-section hidden-section">
+    <h2>School Announcements</h2>
+    <p>The latest news and updates from the school administration. Check here frequently!</p>
+    <div id="announcements-list">
+     <p>Loading announcements...</p>
+    </div>
+   </div>
+  </section>
+ </main>
+ 
+ <script src="learners-portal.js"></script> 
+ <script type="module" src="auth.js"></script>
+  <script src="announcements.js"></script>
 </body>
 </html>
