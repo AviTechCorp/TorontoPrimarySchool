@@ -6,6 +6,7 @@
     <title>Admins Portal</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="admins-portal.css">
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
@@ -49,7 +50,29 @@
             
             <section id="sams-mgmt" class="portal-section">
                 <h2>SA-SAMS Management</h2>
-                <div class="grid-container">
+                <div class="tool-card">
+                    <h3>Imported Learner Registrations (Offer Accepted)</h3>
+                    <p>This list displays applications that have been accepted and are ready for final import into the official SA-SAMS system. Data is pulled from the Firestore `sams_registrations` collection.</p>
+                    
+                    <table id="sams-data-table">
+                        <thead>
+                            <tr>
+                                <th>Adm No.</th>
+                                <th>Learner Name</th>
+                                <th>Grade</th>
+                                <th>Parent Email</th>
+                                <th>Imported At</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            </tbody>
+                    </table>
+
+                    <p class="data-status-message" id="sams-data-status">Loading accepted applications...</p>
+                </div>
+                
+                <div class="grid-container" style="margin-top: 20px;">
                     <div class="grid-item tool-card">
                         <h3>Academics</h3>
                         <p>Manage curriculum, subject records, and assessment data. </p>
@@ -67,7 +90,7 @@
                     </div>
                 </div>
             </section>
-            
+
             <section id="finance" class="portal-section">
                 <h2>Finance</h2>
                 <div class="tool-card">

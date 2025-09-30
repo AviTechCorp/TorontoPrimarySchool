@@ -1050,6 +1050,21 @@ legend {
     align-self: flex-start;
 }
 
+/* --- Admission Portal Specific Styles (Referenced in admission-team-portal.html) --- */
+
+/* Ensures custom admission-team-portal.css styles are loaded and don't clash */
+.admissions-header .auth-buttons a,
+.applicant-action-btn {
+    transition: background-color 0.2s;
+}
+
+/* Ensure the portal layout is consistent with other portals */
+.portal-section h2 {
+    border-bottom: 2px solid #ccc;
+    padding-bottom: 5px;
+    margin-bottom: 20px;
+}
+
 /* ====================================
     Updated Responsive Design 
     ==================================== */

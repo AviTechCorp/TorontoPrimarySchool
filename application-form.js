@@ -5,7 +5,7 @@
 const applicationForm = document.getElementById('application-form');
 const mainContentSection = document.getElementById('main-content');
 // Use the new, single URL you just deployed
-const scriptURL = 'https://script.google.com/macros/s/AKfycby3uv0oJAq4yiTWcWSUpp5AUvh7svtRHU3uOSQHGGTGG9Nr4pVAEVcHCQnnHX27WDb4jA/exec';
+const scriptURL = 'https://script.google.com/macros/s/AKfycbyYCBiHB7oaAchC--LfvJhpAOqOOqVNYtsd90-2g4gHp1LHzkz_7lhrMMvVaD41Pmyr3g/exec';
 
 if (applicationForm && mainContentSection) {
   applicationForm.addEventListener('submit', async (e) => {
