@@ -37,15 +37,16 @@ ul {
     --text-light: #fff;
     --background-light: #f7f7f7;
     --sidebar-bg: #2c3e50; /* Darker, professional sidebar */
+    --table-header-bg: #34495e; /* Darker header for tables */
 
     /* Admissions Status Colors */
-    --status-new: #007bff; /* Primary Blue */
-    --status-review: #ffc107; /* Accent Gold */
-    --status-interview: #6f42c1; /* Purple */
-    --status-offer: #28a745; /* Primary Green */
-    --status-accepted: #17a2b8; /* Cyan/Teal */
-    --status-waitlisted: #fd7e14; /* Orange */
-    --status-rejected: #dc3545; /* Primary Red */
+    --status-new: #007bff; 
+    --status-review: #ffc107; 
+    --status-interview: #6f42c1; 
+    --status-offer: #28a745; 
+    --status-accepted: #17a2b8; 
+    --status-waitlisted: #fd7e14; 
+    --status-rejected: #dc3545; 
 }
 
 /* ====================================
@@ -94,7 +95,7 @@ header img {
 .portal-main-content {
     display: flex;
     min-height: 100vh;
-    padding-top: 90px; /* Offset for fixed header */
+    padding-top: 90px; 
     background-color: var(--background-light); 
 }
 
@@ -127,6 +128,37 @@ header img {
     transition: all 0.2s ease;
 }
 
+/* Style for the main category link (e.g., SA-SAMS Management) */
+.sidebar ul li a.group-title {
+    font-weight: 700;
+    color: var(--accent-gold); 
+    border-left: 5px solid transparent;
+}
+.sidebar ul li a.group-title.active {
+    background-color: #34495e; 
+    color: var(--primary-blue);
+    border-left: 5px solid var(--primary-blue);
+}
+
+/* Sub-Menu Styling */
+.sub-menu {
+    padding-left: 0; 
+    margin-top: 0;
+    margin-bottom: 10px;
+    background-color: #34495e; 
+}
+
+.sub-menu li a {
+    padding-left: 45px; 
+    font-size: 0.95em;
+    color: #ddeeff;
+}
+
+.sub-menu li a:hover {
+    background-color: #415a77;
+    color: var(--text-light);
+}
+
 .sidebar ul li a i {
     margin-right: 15px;
     min-width: 20px; 
@@ -143,6 +175,13 @@ header img {
     font-weight: 700;
     border-left: 5px solid var(--primary-blue); 
 }
+/* Ensure sub-menu active item uses specific style */
+.sub-menu li a.active {
+    background-color: #415a77; 
+    color: var(--primary-blue);
+    border-left: 5px solid var(--primary-blue);
+}
+
 
 /* --- Content Wrapper --- */
 .portal-content-wrapper {
@@ -169,11 +208,10 @@ header img {
     border-radius: 10px;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
     border-top: 5px solid var(--primary-blue); 
-    /* NEW: Hide all sections by default, JS will show the active one */
     display: none; 
 }
 
-/* NEW: Style for the visible section */
+/* Style for the visible section */
 .portal-section.active-section {
     display: block;
 }
@@ -268,35 +306,107 @@ header img {
     background-color: #0056b3;
 }
 
+/* Secondary Button Style (for "Back to List") */
+.cta-button-secondary {
+    background-color: #6c757d; 
+    color: white;
+    padding: 8px 15px;
+    border: none;
+    border-radius: 4px;
+    font-size: 0.9em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+.cta-button-secondary:hover {
+    background-color: #5a6268;
+}
 
 /* ====================================
-    SA-SAMS Data Table (Specific to this section)
+    Assignment Tool View Switcher (NEW)
     ==================================== */
 
-#sams-data-table {
+.assignment-view-switcher {
+    display: flex;
+    border: 1px solid var(--primary-blue);
+    border-radius: 4px;
+    overflow: hidden;
+    width: fit-content; /* Contain the buttons */
+    margin-bottom: 20px; /* Separator margin */
+}
+
+.assignment-view-switcher button {
+    /* Override margin and border-radius from generic cta-button-small */
+    margin-top: 0 !important; 
+    border-radius: 0 !important;
+    padding: 10px 15px;
+    background-color: transparent;
+    color: var(--primary-blue);
+    border: none;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.assignment-view-switcher button:hover {
+    background-color: #e6f0ff; /* Light blue background on hover */
+}
+
+.assignment-view-switcher button.active-view {
+    background-color: var(--primary-blue);
+    color: var(--text-light);
+    font-weight: 700;
+}
+
+.assignment-view-switcher button.active-view:hover {
+    background-color: #0056b3; /* Slightly darker blue on hover */
+}
+
+/* ====================================
+    SA-SAMS Data Table (All Tables)
+    ==================================== */
+
+#sams-data-table, 
+#active-learners-table,
+#unassigned-learners-table, /* Added for new unassigned table */
+#assigned-learners-table /* Added for new assigned table */
+{
     width: 100%;
     border-collapse: collapse;
     margin-top: 15px;
 }
 
-#sams-data-table th, #sams-data-table td {
+#sams-data-table th, #sams-data-table td, 
+#active-learners-table th, #active-learners-table td,
+#unassigned-learners-table th, #unassigned-learners-table td,
+#assigned-learners-table th, #assigned-learners-table td {
     padding: 12px 15px;
     border: 1px solid #ddd;
     text-align: left;
     font-size: 0.95em;
+    color: black;
 }
 
-#sams-data-table thead tr {
-    background-color: blue;
+#sams-data-table thead tr, #active-learners-table thead tr,
+#unassigned-learners-table thead tr, #assigned-learners-table thead tr {
+    background-color: blue; 
     color: var(--text-light);
     font-weight: 700;
 }
 
-#sams-data-table tbody tr:nth-child(n) {
-    background-color: #f0f0f0;
-    color: black;
+/* Table body row styling */
+#sams-data-table tbody tr, 
+#active-learners-table tbody tr,
+#unassigned-learners-table tbody tr,
+#assigned-learners-table tbody tr {
+    background-color: white;
 }
-#sams-data-table tbody tr:hover {
+
+#sams-data-table tbody tr:hover, #active-learners-table tbody tr:hover,
+#unassigned-learners-table tbody tr:hover, #assigned-learners-table tbody tr:hover {
     background-color: #e8e8e8;
 }
 
@@ -348,7 +458,8 @@ header img {
 }
 .form-group input[type="text"],
 .form-group input[type="date"],
-.form-group textarea {
+.form-group textarea,
+.form-group select { /* Added select for filters */
     width: 100%;
     padding: 10px;
     border: 1px solid #ccc;
@@ -381,35 +492,63 @@ footer {
         padding: 15px 0; 
     }
 
+    .sidebar-title {
+        display: none; 
+    }
+
     .sidebar ul {
         display: flex;
         flex-direction: row; 
         overflow-x: auto;
         padding: 0 10px;
+        white-space: nowrap;
     }
-
+    
     .sidebar ul li {
         flex-shrink: 0;
         margin-right: 5px;
+        position: relative; 
     }
     
-    .sidebar ul li a {
+    .sidebar ul li a, .sub-menu li a {
         padding: 10px 15px;
         font-size: 1em;
-        white-space: nowrap; 
         border-left: none; 
+        display: inline-flex;
     }
-    .sidebar ul li a.active {
+    
+    .sidebar ul li a.group-title {
+        border-left: none;
+    }
+    
+    .sidebar ul li a.active, .sub-menu li a.active {
         border-left: none;
         border-bottom: 3px solid var(--primary-blue);
     }
     
+    .sub-menu {
+        display: flex;
+        background-color: transparent;
+        padding-left: 0;
+    }
+    .sub-menu li a {
+        padding-left: 15px; 
+    }
+
     .portal-content-wrapper {
         padding: 20px; 
     }
     
     .grid-container {
         grid-template-columns: 1fr;
+    }
+    
+    .assignment-view-switcher {
+        width: 100%;
+        /* Make buttons take full width of container for better touch usability */
+    }
+    .assignment-view-switcher button {
+        flex-grow: 1; 
     }
 }
 
