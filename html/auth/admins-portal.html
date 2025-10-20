@@ -8,7 +8,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
 
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-  <link rel="stylesheet" href="../../../css/portals/admins-portal/admins-portal.css">
+  <link rel="stylesheet" href="../../css/portals/admins-portal/admins-portal.css">
  
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
@@ -23,7 +23,7 @@
           <i class="fas fa-bars text-xl"></i>
         </button>
         <div class="logo font-bold text-2xl tracking-tight">
-          <a href="../../../index.html" class="text-white hover:text-gray-200">TORONTO PRIMARY SCHOOL</a>
+          <a href="../../index.html" class="text-white hover:text-gray-200">TORONTO PRIMARY SCHOOL</a>
         </div>
       </div>
       
@@ -73,7 +73,7 @@
       <section id="profile" class="portal-section active-section">
         <h2>Your Profile</h2>
         <div class="profile-card">
-          <img src="../../../images/placeholder-profile.png" alt="Admin Profile Picture" class="profile-pic">
+          <img src="../../images/placeholder-profile.png" alt="Admin Profile Picture" class="profile-pic">
           <div class="profile-details">
             <p><strong>Name:</strong> [Admin's Full Name]</p>
             <p><strong>Role:</strong> [Admin Role, e.g., Principal, Bursar]</p>
@@ -321,18 +321,18 @@
   </footer>
     <!-- firebase compat libs already included in head -->
     <!-- load firebase-config and portal scripts as plain scripts (they expect globals) -->
-    <script src="../../../js/portals/admins-portal/firebase-config.js"></script> 	
-    <script src="../../../js/portals/admins-portal/announcement-manager.js"></script>
-    <script src="../../../js/portals/admins-portal/navigation-ui.js"></script> 	
-    <script src="../../../js/portals/admins-portal/sams-data-loaders.js"></script> 	
-    <script src="../../../js/portals/admins-portal/lms-manager.js"></script> 	
-    <script src="../../../js/portals/admins-portal/grade-assignment-tool.js"></script> 	
+    <script src="../../js/portals/admins-portal/firebase-config.js"></script> 	
+    <script src="../../js/portals/admins-portal/announcement-manager.js"></script>
+    <script src="../../js/portals/admins-portal/navigation-ui.js"></script> 	
+    <script src="../../js/portals/admins-portal/sams-data-loaders.js"></script> 	
+    <script src="../../js/portals/admins-portal/lms-manager.js"></script> 	
+    <script src="../../js/portals/admins-portal/grade-assignment-tool.js"></script> 	
 
     <!-- auth.js uses ES module imports — load it as a module and expose logout to window (see auth.js change) -->
-    <script type="module" src="../../../js/auth/auth.js"></script>
+    <script type="module" src="../../js/auth/auth.js"></script>
 
     <!-- initialization relies on globals from the portal scripts above -->
-    <script src="../../../js/portals/admins-portal/main-initialization.js"></script>
+    <script src="../../js/portals/admins-portal/main-initialization.js"></script>
 
 </body>
 </html>
