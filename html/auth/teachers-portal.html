@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+ <meta charset="UTF-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0">
+ <title>Teachers Portal</title>
+ <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+ <link rel="stylesheet" href="../../../styles.css">
+ <link rel="stylesheet" href="../../../css/portals/teachers-portal/teachers-portal.css">
+ <link rel="shortcut icon" href="../../../images/44.png" type="image/x-icon">
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+ <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+</head>
+<body>
+
+ <header>
+  <div class="logo">
+   <a href="../../../index.html"><img src="../../../images/Logo.png" alt="Royal High School Logo"></a>
+  </div>
+  <div class="auth-buttons">
+   <a href="#" class="btn-login btn-logout"><i class="fas fa-sign-out-alt"></i> Log Out</a>
+  </div>
+ </header>
+
+ <main class="portal-main-content">
+  <aside class="sidebar">
+   <h2 class="sidebar-title">Teacher Dashboard</h2>
+   <ul>
+    <li><a href="#dashboard" class="active"><i class="fas fa-home"></i> Home</a></li>
+    <li><a href="#profile"><i class="fas fa-user-circle"></i> My Profile</a></li>
+    <li><a href="#students"><i class="fas fa-users"></i> Learner Management</a></li>
+    <li><a href="#classes"><i class="fas fa-chalkboard-teacher"></i> My Classes</a></li>
+    <li><a href="#materials"><i class="fas fa-book-open"></i> Course Materials</a></li>
+    <li><a href="#communication"><i class="fas fa-comments"></i> Communication</a></li>
+    <li><a href="#parents-data"><i class="fas fa-handshake"></i> Parent Contacts</a></li>
+    <li><a href="#reports"><i class="fas fa-chart-line"></i> Reports & Analytics</a></li>
+    <li><a href="#calendar"><i class="fas fa-calendar-alt"></i> School Calendar</a></li>
+        <li><a href="#announcements"><i class="fas fa-bullhorn"></i> Announcements</a></li>
+    <li><a href="#settings"><i class="fas fa-cog"></i> Settings</a></li>
+   </ul>
+  </aside>
+
+  <section class="portal-content-wrapper">
+   <h1 class="portal-title">Welcome, <span id="teacher-name-display">Teacher!</span></h1>
+
+   <div id="dashboard" class="portal-section active-section">
+    <h2>Dashboard Overview</h2>
+    <div class="grid-container dashboard-cards">
+     <div class="tool-card accent-1">
+      <h3><i class="fas fa-calendar-check"></i> Upcoming Events</h3>
+      <p><strong>Today:</strong> No events.</p>
+      <p><strong>Tomorrow, 9 AM:</strong> Math Class (Grade 10B)</p>
+      <p><strong>Tomorrow, 3 PM:</strong> Parent-Teacher Conference (via Zoom)</p>
+            <a href="#calendar" class="cta-button-small">View Full Calendar</a>
+     </div>
+     <div class="tool-card accent-2">
+      <h3><i class="fas fa-bell"></i> Notifications</h3>
+      <p><i class="fas fa-envelope"></i> You have **2 new messages** from parents.</p>
+      <p><i class="fas fa-exclamation-circle"></i> **1 new assignment** submitted for review.</p>
+      <p><i class="fas fa-bell"></i> Important: All grades must be submitted by Friday.</p>
+            <a href="#communication" class="cta-button-small">Go to Messages</a>
+     </div>
+     <div class="tool-card accent-3">
+      <h3><i class="fas fa-running"></i> Quick Actions</h3>
+      <a href="#attendance-form" class="cta-button primary-green">Mark Attendance</a>
+      <a href="#grades-form" class="cta-button primary-red">Enter Grades</a>
+     </div>
+    </div>
+   </div>
+
+   <div id="profile" class="portal-section hidden-section">
+    <h2>My Profile</h2>
+    <div class="profile-card">
+     <img src="../../../images/placeholder-teacher.png" alt="Teacher Profile Picture" class="profile-pic">
+     <div class="profile-details">
+      <p class="profile-surname"><strong>Surname:</strong> Loading...</p>
+      <p class="profile-preferred-name"><strong>Preferred Name:</strong> Loading...</p>
+      <p class="profile-email"><strong>Email:</strong> Loading...</p>
+            <p class="profile-contact"><strong>Contact:</strong> Loading...</p>
+     </div>
+          <a href="#" class="cta-button-edit">Edit Profile</a>
+    </div>
+   </div>
+
+   <div id="students" class="portal-section hidden-section">
+    <h2>Learner Management</h2>
+    <div class="grid-container dashboard-cards">
+     <div class="tool-card accent-3">
+      <h3><i class="fas fa-check-square"></i> Attendance</h3>
+      <p>Mark daily attendance for your classes. </p>
+      <a href="#attendance-form" class="cta-button-small">Mark Attendance</a>
+     </div>
+     <div class="tool-card accent-1">
+      <h3><i class="fas fa-edit"></i> Grading</h3>
+      <p>Enter and update grades for assignments and tests. </p>
+      <a href="#grades-form" class="cta-button-small">Manage Grades</a>
+     </div>
+     <div class="tool-card accent-2">
+      <h3><i class="fas fa-address-book"></i> Learner Directory</h3>
+      <p>View learner profiles, contact info, and academic history.</p>
+      <a href="#" class="cta-button-small">View Learners</a>
+     </div>
+    </div>
+   </div>
+      
+      <div id="parents-data" class="portal-section hidden-section">
+        <h2>Parent Information</h2>
+        <p>View contact information for the parents of your learners. Click an email to send a message to the parent.</p>
+        <div id="parent-data-container">
+          <p>Loading parent data...</p>
+        </div>
+        <a href="javascript:void(0);" class="cta-button" onclick="loadParentData()">Load Parent Data</a>
+      </div>
+   
+   <div id="attendance-form" class="portal-section hidden-section">
+    <h2>Mark Attendance</h2>
+    <form action="#" method="POST" class="form-grid">
+     <label for="class-select">Select Class:</label>
+     <select id="class-select" name="class">
+      <option value="physics-10">Grade 10 Physics</option>
+      <option value="chemistry-11">Grade 11 Chemistry</option>
+     </select>
+     <table class="data-table">
+      <thead>
+       <tr>
+        <th>Learner Name</th>
+        <th>Status</th>
+       </tr>
+      </thead>
+      <tbody>
+       <tr>
+        <td>John Smith</td>
+        <td>
+         <input type="radio" id="js-present" name="js-status" value="present" checked> <label for="js-present" class="status-present">Present</label>
+         <input type="radio" id="js-absent" name="js-status" value="absent"> <label for="js-absent" class="status-absent">Absent</label>
+        </td>
+       </tr>
+       <tr>
+        <td>Jane Williams</td>
+        <td>
+         <input type="radio" id="jw-present" name="jw-status" value="present" checked> <label for="jw-present" class="status-present">Present</label>
+         <input type="radio" id="jw-absent" name="jw-status" value="absent"> <label for="jw-absent" class="status-absent">Absent</label>
+        </td>
+       </tr>
+      </tbody>
+     </table>
+     <button type="submit" class="cta-button primary-green"><i class="fas fa-save"></i> Submit Attendance</button>
+    </form>
+   </div>
+
+   <div id="grades-form" class="portal-section hidden-section">
+    <h2>Manage Grades</h2>
+    <form action="#" method="POST" class="form-grid">
+     <label for="class-grade">Select Class:</label>
+     <select id="class-grade" name="class">
+      <option value="physics-10">Grade 10 Physics</option>
+      <option value="chemistry-11">Grade 11 Chemistry</option>
+     </select>
+     <label for="assignment-select">Select Assignment:</label>
+     <select id="assignment-select" name="assignment">
+      <option value="lab-report-1">Lab Report 1</option>
+      <option value="quiz-2">Quiz 2</option>
+     </select>
+     <table class="data-table">
+      <thead>
+       <tr>
+        <th>Learner Name</th>
+        <th>Grade (e.g., A+)</th>
+       </tr>
+      </thead>
+      <tbody>
+       <tr>
+        <td>John Smith</td>
+        <td><input type="text" name="js-grade" placeholder="A+"></td>
+        <td><input type="text" name="js-score" placeholder="95/100"></td>
+       </tr>
+       <tr>
+        <td>Jane Williams</td>
+        <td><input type="text" name="jw-grade" placeholder="B"></td>
+        <td><input type="text" name="jw-score" placeholder="82/100"></td>
+       </tr>
+      </tbody>
+     </table>
+     <button type="submit" class="cta-button primary-red"><i class="fas fa-upload"></i> Save Grades</button>
+    </form>
+   </div>
+   
+   <div id="classes" class="portal-section hidden-section">
+    <h2>My Classes</h2>
+    <div class="grid-container class-cards">
+     <div class="tool-card accent-1">
+      <h3><i class="fas fa-flask"></i> Grade 10 Physics</h3>
+      <p><strong>Learners:</strong> 25</p>
+      <p><strong>Schedule:</strong> Mon, Wed, Fri (9:00 AM - 10:30 AM)</p>
+      <a href="#" class="cta-button-small">View Class Roster</a>
+     </div>
+     <div class="tool-card accent-2">
+      <h3><i class="fas fa-vial"></i> Grade 11 Chemistry</h3>
+      <p><strong>Learners:</strong> 22</p>
+      <p><strong>Schedule:</strong> Tue, Thu (1:00 PM - 2:30 PM)</p>
+      <a href="#" class="cta-button-small">View Class Roster</a>
+     </div>
+    </div>
+   </div>
+
+   <div id="materials" class="portal-section hidden-section">
+    <h2>Course Materials</h2>
+    <div class="grid-container materials-area">
+     <div class="tool-card accent-3">
+      <h3><i class="fas fa-upload"></i> Upload New Materials</h3>
+      <p>Share lesson plans, notes, and other resources with your learners.</p>
+      <form action="#" method="POST" enctype="multipart/form-data" class="upload-form">
+       <input type="file" name="course-material-file">
+       <button type="submit" class="cta-button primary-blue">Upload File</button>
+      </form>
+     </div>
+     <div class="tool-card accent-1">
+      <h3><i class="fas fa-folder-open"></i> View Shared Resources</h3>
+      <ul class="resource-list">
+       <li><i class="far fa-file-pdf"></i><a href="#">Physics - Chapter 1 Notes (PDF)</a></li>
+       <li><i class="far fa-file-word"></i><a href="#">Chemistry - Lab Safety Guidelines (DOC)</a></li>
+       <li><i class="far fa-file-pdf"></i><a href="#">Physics - Practice Problems (PDF)</a></li>
+      </ul>
+     </div>
+    </div>
+   </div>
+
+   <div id="communication" class="portal-section hidden-section">
+    <h2>Communication Center</h2>
+    <div class="grid-container dashboard-cards">
+     <div class="tool-card accent-2">
+      <h3><i class="fas fa-envelope-open-text"></i> Message Parents</h3>
+      <p>Send secure messages regarding learner progress or behavioral concerns.</p>
+      <a href="#parents-data" class="cta-button-small">Contact Parents</a>
+     </div>
+     <div class="tool-card accent-3">
+      <h3><i class="fas fa-users-cog"></i> Message Colleagues</h3>
+      <p>Collaborate and communicate with other teachers and staff members.</p>
+      <a href="#" class="cta-button-small">Contact Colleagues</a>
+     </div>
+    </div>
+   </div>
+
+   <div id="reports" class="portal-section hidden-section">
+    <h2>Reports & Analytics</h2>
+    <div class="grid-container dashboard-cards">
+     <div class="tool-card accent-1">
+      <h3><i class="fas fa-graduation-cap"></i> Learner Report Cards</h3>
+      <p>Generate detailed report cards for your learners at the end of each term.</p>
+      <a href="#" class="cta-button-small">Generate Report Card</a>
+     </div>
+     <div class="tool-card accent-2">
+      <h3><i class="fas fa-chart-bar"></i> Class Performance</h3>
+      <p>View performance trends, grade distributions, and attendance statistics for your classes.</p>
+      <a href="#" class="cta-button-small">View Class Analytics</a>
+     </div>
+    </div>
+   </div>
+
+   <div id="calendar" class="portal-section hidden-section">
+    <h2>School Calendar</h2>
+    <div class="tool-card">
+     <p>Stay updated with school events, holidays, and important deadlines.</p>
+     <iframe src="https://calendar.google.com/calendar/embed?src=en.south_africa%23holiday%40group.v.calendar.google.com&ctz=Africa%2FJohannesburg" style="border: 0" width="100%" height="400" frameborder="0" scrolling="no"></iframe>
+    </div>
+   </div>
+   
+      <div id="announcements" class="portal-section hidden-section">
+    <h2>School Announcements</h2>
+    <p>The latest news and updates from the school administration. Check here frequently!</p>
+    <div id="announcements-list">
+     <p>Loading announcements...</p>
+    </div>
+   </div>
+
+   <div id="settings" class="portal-section hidden-section">
+    <h2>Settings</h2>
+    <div class="grid-container dashboard-cards">
+     <div class="tool-card accent-3">
+      <h3><i class="fas fa-lock"></i> Change Password</h3>
+      <p>Update your password to ensure your account security.</p>
+      <form action="#" method="POST">
+       <label for="current-password">Current Password:</label>
+       <input type="password" id="current-password" name="current-password" required>
+       <label for="new-password">New Password:</label>
+       <input type="password" id="new-password" name="new-password" required>
+       <button type="submit" class="cta-button primary-blue">Update Password</button>
+      </form>
+     </div>
+     <div class="tool-card accent-1">
+      <h3><i class="fas fa-sliders-h"></i> Notification Preferences</h3>
+      <p>Customize how you receive notifications for new messages or assignments.</p>
+      <a href="#" class="cta-button-small">Edit Preferences</a>
+     </div>
+    </div>
+   </div>
+  </section>
+ </main>
+ 
+  <footer>
+  <p>© 2023 Toronto Primary School. All rights reserved.</p>
+ </footer>
+ <script src="../../../js/portals/teachers-portal/teachers-portal.js"></script>
+ <script type="module" src="../../../js/auth/auth.js"></script>
+  <script src="../../../js/announcements/announcements.js"></script>
+</body>
+</html>
