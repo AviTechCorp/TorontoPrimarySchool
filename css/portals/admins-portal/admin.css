@@ -1,0 +1,155 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+
+:root {
+    --primary-red: #ef4444;
+    --primary-green: #10b981;
+    --primary-blue: #3b82f6;
+    --primary-indigo: #4f46e5;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: #f3f4f6; /* Light gray background */
+}
+
+/* Adjust main content for the fixed header (h-16) */
+.portal-main-content {
+    padding-top: 64px; 
+}
+
+.sidebar {
+    transition: transform 0.3s ease-in-out;
+}
+
+/* Responsive sidebar for mobile */
+@media (max-width: 767px) {
+    .sidebar {
+        transform: translateX(-100%);
+        position: fixed;
+        z-index: 20;
+    }
+    .sidebar.is-open {
+        transform: translateX(0);
+    }
+    /* Overlay effect when sidebar is open */
+    .portal-content-wrapper.overlay-active {
+            opacity: 0.5;
+            pointer-events: none;
+    }
+}
+
+/* Style for active sidebar link */
+.sidebar a.active-link {
+    background-color: rgba(67, 56, 202, 0.2); /* Indigo-700 with opacity */
+    border-left: 4px solid #4f46e5; /* Indigo-600 accent */
+    color: #ffffff !important;
+}
+
+/* Table Styling for all dashboard tables */
+#sams-data-table th, #active-learners-table th, #unassigned-learners-table th, #assigned-learners-table th {
+    padding: 12px 16px;
+    background-color: #eef2ff; /* Light indigo header */
+    color: #1e3a8a; /* Dark blue text */
+    text-align: left;
+    font-weight: 600;
+    border-bottom: 2px solid #c7d2fe;
+}
+#sams-data-table td, #active-learners-table td, #unassigned-learners-table td, #assigned-learners-table td {
+    padding: 12px 16px;
+    border-bottom: 1px solid #e5e7eb;
+}
+#sams-data-table tbody tr:nth-child(even), #active-learners-table tbody tr:nth-child(even), #unassigned-learners-table tbody tr:nth-child(even), #assigned-learners-table tbody tr:nth-child(even) {
+    background-color: #f9fafb; /* Light stripe */
+}
+
+/* Generic CTA Button Style */
+.cta-button {
+    padding: 10px 20px;
+    font-weight: 600;
+    border-radius: 8px;
+    transition: background-color 0.3s, box-shadow 0.3s;
+    display: inline-block;
+    background-color: var(--primary-indigo);
+    color: white;
+}
+.cta-button:hover {
+    background-color: #4338ca; /* Slightly darker indigo */
+}
+
+.cta-button-small {
+    padding: 8px 16px;
+    font-weight: 500;
+    border-radius: 6px;
+    transition: background-color 0.3s, box-shadow 0.3s;
+    display: inline-block;
+}
+
+/* Secondary/Back button style used in JS */
+.cta-button-secondary {
+    background-color: #e5e7eb;
+    color: #374151;
+    padding: 8px 16px;
+    font-weight: 500;
+    border-radius: 6px;
+    transition: background-color 0.3s, box-shadow 0.3s;
+    display: inline-block;
+}
+.cta-button-secondary:hover {
+    background-color: #d1d5db;
+}
+
+/* Kebab menu styles */
+.kebab-menu-container {
+    position: relative;
+    display: inline-block;
+}
+.kebab-menu-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px 8px;
+    font-size: 16px;
+}
+.kebab-menu-dropdown {
+    position: absolute;
+    right: 0;
+    z-index: 10;
+    background-color: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    min-width: 150px;
+    display: none;
+}
+.kebab-menu-dropdown a {
+    display: block;
+    padding: 8px 12px;
+    color: #374151;
+    text-decoration: none;
+    font-size: 0.9rem;
+}
+.kebab-menu-dropdown a:hover {
+    background-color: #f3f4f6;
+}
+.kebab-menu-container.open .kebab-menu-dropdown {
+    display: block;
+}
+
+/* Status Message Box for Firebase operations */
+.status-message-box {
+    padding: 12px;
+    border-radius: 6px;
+    font-weight: 500;
+    margin-top: 15px;
+    display: none; /* Controlled by JS */
+}
+.status-message-box.success {
+    background-color: #d1fae5;
+    color: #065f46;
+    border: 1px solid #34d399;
+}
+.status-message-box.error {
+    background-color: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #f87171;
+}
