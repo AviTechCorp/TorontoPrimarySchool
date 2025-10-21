@@ -131,3 +131,85 @@ header img {
 .cta-button:hover {
     background-color: #e6b800;
 }
+
+/* Carousel (horizontal card slider) - show only one announcement at a time */
+.carousel-container {
+    max-width: 100%;
+    margin: 28px auto 12px;
+    overflow: hidden; /* hide other slides so only one shows */
+    position: relative;
+    padding-bottom: 6px;
+}
+
+.carousel-container::-webkit-scrollbar { height: 8px; }
+.carousel-container::-webkit-scrollbar-thumb {
+    background: rgba(2,6,23,0.12);
+    border-radius: 6px;
+}
+
+/* track and slides */
+.carousel-track {
+    display: flex;
+    gap: 20px;
+    align-items: stretch;
+    padding: 6px 6px;
+    /* transition applied so moving the track with transform is smooth */
+    transition: transform 600ms cubic-bezier(.22,.98,.38,.99);
+    will-change: transform;
+}
+
+.carousel-slide {
+    flex: 0 0 100%; /* one slide occupies full container width */
+    scroll-snap-align: start;
+    display: flex;
+    align-items: stretch;
+}
+
+/* make announcement card fill the slide */
+.carousel-slide .announcement-item {
+    margin: 0;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+/* remove multi-per-view responsive rules so only one at a time is visible */
+/* ...existing code... */
+
+/* Carousel indicators (dots) */
+.carousel-indicators {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    align-items: center;
+    margin-top: 12px;
+    user-select: none;
+}
+
+.carousel-indicators button {
+    width: 12px;
+    height: 12px;
+    padding: 0;
+    border-radius: 50%;
+    border: none;
+    background: rgba(0,0,0,0.18);
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.12s ease;
+}
+
+.carousel-indicators button:hover { transform: scale(1.08); }
+.carousel-indicators button:focus {
+    outline: 2px solid rgba(255,255,255,0.9);
+    outline-offset: 3px;
+}
+
+.carousel-indicators button.active,
+.carousel-indicators button[aria-current="true"] {
+    background: goldenrod;
+    box-shadow: 0 0 0 6px rgba(218,165,32,0.08);
+}
+
+/* keep indicators readable on dark backgrounds */
+@media (prefers-contrast: more) {
+    .carousel-indicators button { background: rgba(0,0,0,0.36); }
+}
