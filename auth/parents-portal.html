@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+ <meta charset="UTF-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0">
+ <title>Parents Portal</title>
+ <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+ <link rel="stylesheet" href="../../styles.css">
+ <link rel="stylesheet" href="../../css/portals/parents-portal/parents-portal.css">
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+ <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+</head>
+<body>
+ <header>
+  <div class="logo">
+   <a href="../../index.html"><img src="../../images/Logo.png" alt="Royal High School Logo"></a>
+  </div>
+  <div class="auth-buttons">
+   <a href="#" class="btn-login btn-logout"><i class="fas fa-sign-out-alt"></i> Log Out</a>
+  </div>
+ </header>
+
+ <main class="portal-main-content">
+  <aside class="sidebar">
+   <h3 class="sidebar-title">Parents Menu</h3>
+   <ul>
+    <li><a href="#dashboard" class="active"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+    <li><a href="#profile"><i class="fas fa-user-circle"></i> Your Profile</a></li>
+    <li><a href="#learner-section"><i class="fas fa-child"></i> Learner Section</a></li>
+    <li><a href="#forum"><i class="fas fa-comments"></i> Parent-Teacher Forum</a></li>
+    <li><a href="#resources"><i class="fas fa-book-open"></i> Useful Resources</a></li>
+        <li><a href="#announcements"><i class="fas fa-bullhorn"></i> Announcements</a></li>
+   </ul>
+  </aside>
+
+  <div class="portal-content-wrapper">
+   <h1 class="portal-title">Welcome, Parent!</h1>
+      
+      <section id="dashboard" class="portal-section active-section">
+    <h2>Quick Summary for <span id="learner-name-display">Learner</span></h2>
+        <div class="dashboard-cards grid-container">
+          <div class="tool-card accent-1">
+            <h3><i class="fas fa-exclamation-circle"></i> Overdue Tasks</h3>
+            <p id="dashboard-overdue">0 (Excellent!)</p>
+            <a href="#learner-section" class="cta-button-small">Check Assignments</a>
+          </div>
+          <div class="tool-card accent-2">
+            <h3><i class="fas fa-chart-line"></i> Latest Grade</h3>
+            <p id="dashboard-grade">85% (Maths)</p>
+            <a href="#learner-section" class="cta-button-small">View Report</a>
+          </div>
+          <div class="tool-card accent-3">
+            <h3><i class="fas fa-calendar-alt"></i> School Event</h3>
+            <p id="dashboard-event">Sports Day 01 Dec</p>
+            <a href="#resources" class="cta-button-small">View Calendar</a>
+          </div>
+        </div>
+      </section>
+    <section id="profile" class="portal-section hidden-section">
+    <h2>Your Profile</h2>
+    <div class="profile-card">
+     <img src="../../images/placeholder-profile.png" alt="Parent Profile Picture" class="profile-pic">
+     <div class="profile-details">
+      <p class="profile-name"><strong>Name:</strong> Loading...</p>
+      <p class="profile-email"><strong>Email:</strong> Loading...</p>
+      <p class="profile-contact"><strong>Contact:</strong> Loading...</p>
+      <p class="profile-relationship"><strong>Relationship:</strong> Loading...</p>
+      <p class="note-blue"><strong>Please fill out the form below for contact purposes:</strong></p>
+      <form id="parent-profile-form" action="https://script.google.com/macros/s/AKfycbwknJUMHtoGLVTXzb_mB_qL4-0ik6tkKfnKdAkkOfxr2AtrwYp_mHdItGWHWjd__OkB5g/exec" method="post">
+       
+       <label for="parent-name">Your Full Name:</label>
+       <input type="text" id="parent-name" name="parentName" required>
+
+       <label for="parent-email">Email Address:</label>
+       <input type="email" id="parent-email" name="parentEmail" required>
+       
+       <label for="contact">Contact Number:</label>
+       <input type="tel" id="contact" name="contact">
+       
+       <label for="relationship">Relationship to Learner:</label>
+       <input type="text" id="relationship" name="relationship" placeholder="e.g., Mother, Father" required>
+
+       <label for="learner-name">Learner's Full Name:</label>
+       <input type="text" id="learner-name" name="learnerName" required>
+
+       <button type="submit" class="cta-button">Save Profile Details</button>
+
+       </form>
+     </div>
+    </div>
+    </section>   
+   <section id="learner-section" class="portal-section hidden-section">
+    <h2>Learner Progress & Files</h2>
+    <div class="grid-container dashboard-cards">
+     <div class="tool-card accent-1">
+      <h3><i class="fas fa-graduation-cap"></i> Academics Summary</h3>
+      <p>View your child's academic performance at a glance. </p>
+      <a href="#" class="cta-button-small">View Summary</a>
+      <div id="learner-info-display">
+             </div>
+     </div>
+     <div class="tool-card accent-2">
+      <h3><i class="fas fa-file-pdf"></i> Report Card</h3>
+      <p>Access and download your child's full report cards from previous terms.</p>
+      <a href="#" class="cta-button-small">Download Report</a>
+     </div>
+     <div class="tool-card accent-3">
+      <h3><i class="fas fa-user-edit"></i> Learner Details</h3>
+      <p>Review and update your child's personal and medical information on file with the school.</p>
+      <a href="#" class="cta-button-small">Edit Details</a>
+     </div>
+    </div>
+   </section>
+
+   <section id="forum" class="portal-section hidden-section">
+    <h2>Parent-Teacher Forum</h2>
+    <p>This space facilitates secure, documented communication between you and your child's educators.</p>
+        <div class="message-card">
+          <div class="message-header">
+            <i class="fas fa-envelope-open-text"></i> New Thread: **Maths Concerns**
+          </div>
+          <div class="message-details">
+            <p><strong>Teacher:</strong> Ms. N. Dlamini</p>
+            <p><strong>Last Reply:</strong> 2 days ago</p>
+          </div>
+          <a href="#" class="cta-button-small primary-blue">Continue Discussion</a>
+        </div>
+        <div class="message-card">
+          <div class="message-header">
+            <i class="fas fa-check-circle"></i> Closed Thread: **Attendance Check**
+          </div>
+          <div class="message-details">
+            <p><strong>Teacher:</strong> Mr. S. Jones</p>
+            <p><strong>Last Reply:</strong> 1 week ago</p>
+          </div>
+          <a href="#" class="cta-button-small primary-blue">View History</a>
+        </div>
+    <a href="#" class="cta-button primary-blue" style="margin-top: 20px;"><i class="fas fa-plus-circle"></i> Start New Conversation</a>
+   </section>
+
+   <section id="resources" class="portal-section hidden-section">
+    <h2>Useful Resources</h2>
+    <p>Quick links to essential school documents and financial information.</p>
+    <div class="resource-list-container">
+          <ul class="resource-list">
+            <li>
+              <i class="fas fa-calendar-alt accent-1"></i> 
+              <div>
+                <h3>School Calendar (2025/2026)</h3>
+                <p>Stay updated on school holidays, events, and important dates.</p>
+              </div>
+              <a href="#" class="cta-button-small">View Calendar</a>
+            </li>
+            <li>
+              <i class="fas fa-money-check-alt accent-2"></i> 
+              <div>
+                <h3>Fee Payments & Statements</h3>
+                <p>View your current fee statement and payment history.</p>
+              </div>
+              <a href="#" class="cta-button-small">View Financials</a>
+            </li>
+            <li>
+              <i class="fas fa-handshake accent-3"></i> 
+              <div>
+                <h3>Parent Handbook</h3>
+                <p>Download the latest version of the school rules and policies.</p>
+              </div>
+              <a href="#" class="cta-button-small">Download PDF</a>
+            </li>
+          </ul>
+    </div>
+   </section>
+
+    <section id="announcements" class="portal-section hidden-section">
+    <h2>School Announcements</h2>
+    <p>The latest news and updates from the school administration.</p>
+    <div id="announcements-list">
+     <p>Loading announcements...</p>
+    </div>
+    </section>
+  </div>
+ </main>
+
+ <footer>
+  <p>© 2023 Toronto Primary School. All rights reserved.</p>
+  <a href="#"><i class="fa-brands fa-x-twitter"></i></a>
+  <a href="#"><i class="fa-brands fa-facebook-f"></i></a>
+  <a href="#"><i class="fa-brands fa-instagram"></i></a>
+  <a href="#"><i class="fa-brands fa-linkedin-in"></i></a>
+  <a href="#"><i class="fa-brands fa-square-youtube"></i></a>
+ </footer>
+ <script src="../../js/portals/parents-portal/parents-portal.js"></script>
+ <script type="module" src="../../js/auth/auth.js"></script>
+  <script src="../../js/announcements/announcements.js"></script>
+</body>
+</html>
