@@ -16,16 +16,19 @@
 
     <script src="../../js/portals/admins-portal/firebase-config.js"></script> 	
     <script type="module" src="../../js/portals/admins-portal/announcement-manager.js"></script>
-    <script src="../../js/portals/admins-portal/navigation-ui.js"></script> 	
+    <script src="../../js/portals/admins-portal/data-functions.js"></script>
+    <script src="../../js/portals/admins-portal/ui-handlers.js"></script> 	
     <script src="../../js/portals/admins-portal/sams-data-loaders.js"></script> 	
     <script src="../../js/portals/admins-portal/lms-manager.js"></script> 	
-    <script src="../../js/portals/admins-portal/grade-assignment-tool.js"></script> 	
-
-    <!-- auth.js uses ES module imports — load it as a module and expose logout to window (see auth.js change) -->
-    <script type="module" src="../../js/auth/auth.js"></script>
+    <script src="../../js/portals/admins-portal/grade-assignment-tool.js"></script> 
+    <script type="module" src="../../js/portals/admins-portal/ems-manager.js"></script>	
+    <!-- Removed redundant data loading scripts, consolidated into data-functions.js -->
 
     <!-- initialization relies on globals from the portal scripts above -->
     <script src="../../js/portals/admins-portal/main-initialization.js"></script>
+
+    <!-- auth.js uses ES module imports — load it as a module and expose logout to window (see auth.js change) -->
+    <script type="module" src="../../js/auth/auth.js"></script>
 
 </head>
 <body>
@@ -68,6 +71,7 @@
             <li><a href="#sams-applications"><i class="fas fa-clipboard-check"></i> Accepted Applications</a></li>
             <li><a href="#sams-learners"><i class="fas fa-user-graduate"></i> Learner Management</a></li>
             <li><a href="#grade-assignment"><i class="fas fa-pencil-alt"></i> Class Assignment</a></li>
+            <li><a href="#grade-sections"><i class="fas fa-layer-group"></i> Grade Sections</a></li>
             <li><a href="#sams-educators"><i class="fas fa-chalkboard-teacher"></i> Educator Management</a></li>
           </ul>
         </li>
@@ -152,6 +156,11 @@
 
         <div class="tool-card all-learners-container" id="all-learners-list-view" style="margin-top: 15px;">
           
+          <div class="lms-actions" style="margin-bottom: 20px; display: flex; gap: 10px;">
+            <button id="show-add-learner-form" class="cta-button-small">
+                <i class="fas fa-plus"></i> Add New Learner
+            </button>
+          </div>
           <div id="all-active-learners-list" style="margin-top: 0;">
             <h3>Active Learners Summary</h3>
 
@@ -184,6 +193,36 @@
             <p class="data-status-message" id="active-learners-status">Loading all active learners...</p>
           </div>
         </div>
+
+        <div id="add-learner-form-section" class="tool-card" style="display: none; margin-top: 20px;">
+            <h3>Add a New Learner Manually</h3>
+            <p>Use this form to create a new learner profile directly in the system.</p>
+            <form id="add-learner-form">
+                <div class="grid-container" style="grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));">
+                    <div class="form-group">
+                        <label for="new-admission-id">Admission ID (Unique)</label>
+                        <input type="text" id="new-admission-id" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="new-learner-name">First Name</label>
+                        <input type="text" id="new-learner-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="new-learner-surname">Last Name</label>
+                        <input type="text" id="new-learner-surname" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="new-grade">Grade (R/1-7)</label>
+                        <input type="text" id="new-grade" required style="text-transform: uppercase;" maxlength="1">
+                    </div>
+                </div>
+                <p id="add-learner-status" class="status-message-box" style="display: none;"></p>
+                <button type="submit" class="cta-button">
+                    <i class="fas fa-user-plus"></i> Create Learner Profile
+                </button>
+            </form>
+        </div>
+
       </section>
       
       <section id="grade-assignment" class="portal-section">
@@ -268,15 +307,99 @@
 
       </section>
 
-      <section id="sams-educators" class="portal-section">
-        <h2>Educator Management System (EMS)</h2>
-        <p>This area will handle all staff profiles, qualifications, and professional development records.</p>
-        <div class="tool-card">
-          <p>EMS content will go here. (e.g., Staff table, Add New Educator form)</p>
-          <button class="cta-button-small">View All Staff (Coming Soon)</button>
+      <section id="grade-sections" class="portal-section">
+        <h2>Learners by Grade Section</h2>
+        <p>Select a grade to view all learners currently assigned to it.</p>
+        
+        <div class="grade-section-filters" style="display: flex; gap: 20px; margin-bottom: 20px; flex-wrap: wrap;">
+            <div class="form-group" style="flex: 1; min-width: 200px;">
+                <label for="grade-section-grade-filter">Filter by Grade</label>
+                <select id="grade-section-grade-filter">
+                    <option value="">-- Select a Grade --</option>
+                    <option value="R">Grade R</option>
+                    <option value="1">Grade 1</option>
+                    <option value="2">Grade 2</option>
+                    <option value="3">Grade 3</option>
+                    <option value="4">Grade 4</option>
+                    <option value="5">Grade 5</option>
+                    <option value="6">Grade 6</option>
+                    <option value="7">Grade 7</option>
+                </select>
+            </div>
+            <div class="form-group" style="flex: 1; min-width: 200px;">
+                <label for="grade-section-class-filter">Filter by Class</label>
+                <select id="grade-section-class-filter" disabled>
+                    <option value="All">All Classes</option>
+                </select>
+            </div>
+        </div>
+
+        <div id="grade-section-display" class="tool-card">
+            <h3 id="grade-section-header">Select a Grade to Begin</h3>
+
+            <table id="grade-section-learners-table">
+                <thead>
+                    <tr>
+                        <th>Adm No.</th>
+                        <th>Name</th>
+                        <th>Current Class</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+            <p class="data-status-message" id="grade-section-learners-status">Please select a grade from the buttons above.</p>
         </div>
       </section>
-      
+
+      <section id="sams-educators" class="portal-section">
+          <h2>Educator Management System</h2>
+          
+          <div id="all-teachers-list" class="data-list-container">
+              <div class="form-group" style="max-width: 250px; margin-bottom: 20px;">
+                  <label for="teacher-grade-filter">Filter by Assigned Grade:</label>
+                  <select id="teacher-grade-filter" style="padding: 10px; border: 1px solid #ccc; border-radius: 5px; width: 100%;">
+                      <option value="All">All Grades</option>
+                      <option value="R">Grade R</option>
+                      <option value="1">Grade 1</option>
+                      <option value="2">Grade 2</option>
+                      <option value="3">Grade 3</option>
+                      <option value="4">Grade 4</option>
+                      <option value="5">Grade 5</option>
+                      <option value="6">Grade 6</option>
+                      <option value="7">Grade 7</option>
+                  </select>
+              </div>
+              <p id="teachers-data-status" class="status-message">Loading...</p>
+              
+              <div class="overflow-x-auto">
+                  <table id="teachers-data-table" class="min-w-full divide-y divide-gray-200">
+                      <thead>
+                          <tr>
+                              <th>Name</th> 
+                              <th>Email</th>
+                              <th>Assigned Grade/Subject</th>
+                              <th>Action</th>
+                          </tr>
+                      </thead>
+                      <tbody>
+                          </tbody>
+                  </table>
+              </div>
+              
+              <button id="load-more-teachers-btn" class="cta-button-secondary" style="display: none; margin-top: 15px;">
+                  Load More Educators
+              </button>
+          </div>
+          
+          <div id="teacher-details-display" class="details-view-container" style="display: none;">
+              </div>
+      </section>
+
+      <section id="edit-teacher-profile" class="portal-section">
+          <!-- Content will be dynamically injected by showEditTeacherForm() in ui-handlers.js -->
+      </section>
+
+
       <section id="finance" class="portal-section">
         <h2>Finance</h2>
         <div class="tool-card">

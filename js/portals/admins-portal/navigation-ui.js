@@ -106,8 +106,25 @@ function handleNavigation() {
         }
     }
 
+    // Check for the new sections
     if (targetId === 'sams-educators') {
         console.log("Loading Educator Management System...");
+        // This function call is now defined in ems-manager.js
+        if (typeof loadAllTeachers === 'function') {
+            loadAllTeachers(); // Initial load of all teachers list
+        }
+    }
+
+    // New case for the teacher details view
+    if (targetId === 'teacher-details') {
+        if (selectedTeacherData && typeof displayTeacherDetails === 'function') {
+            // Render the details using the data stored by showTeacherDetails()
+            displayTeacherDetails(); 
+        } else {
+            // If no data is selected, redirect to the list
+            window.location.hash = '#sams-educators';
+            handleNavigation();
+        }
     }
 }
 
@@ -123,4 +140,16 @@ function showSamsDetails(data, targetId) {
     selectedLearnerData = { ...data }; 
     window.location.hash = `#${targetId}`;
     handleNavigation(); 
+}
+
+/**
+ * Helper function used by the teachers table to store data and transition to the detail view
+ * @param {Object} data The teacher data object.
+ * @param {string} targetId The target section hash ('teacher-details').
+ */
+function showTeacherDetails(data, targetId) {
+    // selectedTeacherData is a global state variable defined in firebase-config.js
+    selectedTeacherData = { ...data }; 
+    window.location.hash = `#${targetId}`;
+    handleNavigation(); // Trigger the navigation update
 }

@@ -64,23 +64,8 @@ function createKebabMenu(data) {
     dropdown.appendChild(editOption);
     dropdown.appendChild(removeOption);
     
-    button.addEventListener('click', (e) => {
-        e.stopPropagation();
-        
-        document.querySelectorAll('.kebab-menu-container.active').forEach(openMenu => {
-            if (openMenu !== menuContainer) {
-                openMenu.classList.remove('active');
-            }
-        });
-        menuContainer.classList.toggle('active');
-    });
-
-    document.addEventListener('click', (e) => {
-        if (!menuContainer.contains(e.target) && menuContainer.classList.contains('active')) {
-            menuContainer.classList.remove('active');
-        }
-    });
-
+    button.addEventListener('click', (e) => handleKebabMenuClick(e, menuContainer, button));
+    document.addEventListener('click', (e) => handleKebabMenuOutsideClick(e, menuContainer));
     menuContainer.appendChild(button);
     menuContainer.appendChild(dropdown);
     return menuContainer;
@@ -109,7 +94,7 @@ function createTeacherKebabMenu(data) {
     
     // Option 1: View Profile 
     const viewOption = document.createElement('a');
-    viewOption.textContent = 'View Profile';
+    viewOption.textContent = 'View Details';
     viewOption.href = '#';
     viewOption.addEventListener('click', (e) => {
         e.preventDefault();
@@ -119,7 +104,7 @@ function createTeacherKebabMenu(data) {
 
     // Option 2: Edit Teacher Info
     const editOption = document.createElement('a');
-    editOption.textContent = 'Edit Teacher Info';
+    editOption.textContent = 'Edit Details';
     editOption.href = '#';
     editOption.addEventListener('click', (e) => {
         e.preventDefault();
@@ -127,42 +112,93 @@ function createTeacherKebabMenu(data) {
         menuContainer.classList.remove('active');
     });
 
-    // Option 3: Reset Password (Placeholder)
-    const resetPasswordOption = document.createElement('a');
-    resetPasswordOption.textContent = 'Reset Password';
-    resetPasswordOption.className = 'menu-option-secondary';
-    resetPasswordOption.href = '#';
-    resetPasswordOption.addEventListener('click', (e) => {
+    // Option 3: Assign Subject(s)
+    const assignSubjectOption = document.createElement('a');
+    assignSubjectOption.textContent = 'Assign Subject(s)';
+    assignSubjectOption.href = '#';
+    assignSubjectOption.addEventListener('click', (e) => {
+        e.preventDefault();
+        // This navigates to the edit form where subjects/grades can be assigned.
+        navigateToEditTeacherForm(data);
+        menuContainer.classList.remove('active');
+    });
+
+    // Option 4: Remove Teacher
+    const removeOption = document.createElement('a');
+    removeOption.textContent = 'Remove Teacher';
+    removeOption.className = 'menu-option-red';
+    removeOption.href = '#';
+    removeOption.addEventListener('click', (e) => {
         e.preventDefault();
         menuContainer.classList.remove('active');
-        // Placeholder for actual reset logic
-        alert(`Reset password link sent to: ${data.email}`);
+        confirmAndRemoveTeacher(data);
     });
 
     dropdown.appendChild(viewOption);
     dropdown.appendChild(editOption);
-    dropdown.appendChild(resetPasswordOption);
-    
-    button.addEventListener('click', (e) => {
-        e.stopPropagation();
-        
-        document.querySelectorAll('.kebab-menu-container.active').forEach(openMenu => {
-            if (openMenu !== menuContainer) {
-                openMenu.classList.remove('active');
-            }
-        });
-        menuContainer.classList.toggle('active');
-    });
+    dropdown.appendChild(assignSubjectOption);
+    dropdown.appendChild(removeOption);
 
-    document.addEventListener('click', (e) => {
-        if (!menuContainer.contains(e.target) && menuContainer.classList.contains('active')) {
-            menuContainer.classList.remove('active');
-        }
-    });
-
+    // Use common handler for click events to ensure dynamic positioning
+    button.addEventListener('click', (e) => handleKebabMenuClick(e, menuContainer, button));
+    document.addEventListener('click', (e) => handleKebabMenuOutsideClick(e, menuContainer));
     menuContainer.appendChild(button);
     menuContainer.appendChild(dropdown);
     return menuContainer;
+}
+
+// =========================================================
+// === COMMON KEBAB MENU LOGIC ===
+// =========================================================
+
+/**
+ * Handles the click event for a kebab menu button, toggling its active state
+ * and determining if it should open upwards or downwards.
+ * @param {Event} e - The click event.
+ * @param {HTMLElement} menuContainer - The .kebab-menu-container element.
+ * @param {HTMLElement} button - The .kebab-menu-btn element.
+ */
+function handleKebabMenuClick(e, menuContainer, button) {
+    e.stopPropagation();
+
+    // Close other open menus and remove 'open-up' class
+    document.querySelectorAll('.kebab-menu-container.active').forEach(openMenu => {
+        if (openMenu !== menuContainer) {
+            openMenu.classList.remove('active');
+            openMenu.querySelector('.kebab-menu-dropdown').classList.remove('open-up');
+        }
+    });
+
+    menuContainer.classList.toggle('active');
+
+    if (menuContainer.classList.contains('active')) {
+        // Menu is now open, determine if it should open upwards
+        const dropdown = menuContainer.querySelector('.kebab-menu-dropdown');
+        const buttonRect = button.getBoundingClientRect();
+        const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+        const dropdownHeight = dropdown.offsetHeight; // This should be accurate as display is 'block' via CSS
+
+        const spaceBelow = viewportHeight - buttonRect.bottom;
+        const spaceAbove = buttonRect.top;
+
+        // If not enough space below (with a small buffer), AND there's enough space above, open upwards
+        const buffer = 20; // Pixels buffer
+        if (spaceBelow < (dropdownHeight + buffer) && spaceAbove > (dropdownHeight + buffer)) {
+            dropdown.classList.add('open-up');
+        } else {
+            dropdown.classList.remove('open-up'); // Ensure it opens downwards by default
+        }
+    } else {
+        // Menu is closing, ensure open-up class is removed
+        menuContainer.querySelector('.kebab-menu-dropdown').classList.remove('open-up');
+    }
+}
+
+function handleKebabMenuOutsideClick(e, menuContainer) {
+    if (!menuContainer.contains(e.target) && menuContainer.classList.contains('active')) {
+        menuContainer.classList.remove('active');
+        menuContainer.querySelector('.kebab-menu-dropdown').classList.remove('open-up');
+    }
 }
 
 // =========================================================
@@ -219,7 +255,7 @@ function handleNavigation() {
     }
 
     // Reset pagination and state if leaving detail/assignment/management views
-    if (!['grade-assignment', 'sams-learners', 'edit-learner-profile', 'teacher-management', 'edit-teacher-profile', 'teacher-details'].includes(targetId)) {
+    if (!['grade-assignment', 'sams-learners', 'edit-learner-profile', 'sams-educators', 'edit-teacher-profile', 'teacher-details', 'grade-sections'].includes(targetId)) {
         lastVisibleUnassigned = null;
         lastVisibleAssigned = null;
         lastVisibleAll = null;
@@ -270,6 +306,11 @@ function handleNavigation() {
         const addFormSection = document.getElementById('add-learner-form-section');
         const removeSection = document.getElementById('remove-learner-section');
         if (addFormSection) addFormSection.style.display = 'none';
+        // If the add form is being displayed, don't let navigation hide it.
+        if (addFormSection && addFormSection.style.display === 'block') {
+            listContainer.style.display = 'none';
+            return;
+        }
         if (removeSection) removeSection.style.display = 'none';
 
         if (!selectedLearnerData) {
@@ -316,37 +357,43 @@ function handleNavigation() {
     }
     
     // EMS Teacher Management Handler
-    if (targetId === 'teacher-management') {
-        const listContainer = document.getElementById('teachers-data-table').closest('.tool-card'); 
+    if (targetId === 'sams-educators') {
+        const listContainer = document.getElementById('all-teachers-list'); 
         const detailsContainer = document.getElementById('teacher-details-display'); 
         
         if (listContainer) listContainer.style.display = 'block';
         if (detailsContainer) detailsContainer.style.display = 'none';
-
+        
         if (lastVisibleTeachers === null) {
-            loadAllTeachers(true); 
+            loadAllTeachers('All', true); 
         }
     }
 
     // Teacher Details View
     if (targetId === 'teacher-details') {
-        const listContainer = document.getElementById('teachers-data-table').closest('.tool-card'); 
+        const listContainer = document.getElementById('all-teachers-list'); 
         if (listContainer) listContainer.style.display = 'none';
         
         const detailsContainer = document.getElementById('teacher-details-display');
         if (detailsContainer) {
             detailsContainer.style.display = 'block';
+            // This function renders the details using the globally stored selectedTeacherData
             displayTeacherDetails(selectedTeacherData); 
         }
     }
     
     // Teacher Edit View
     if (targetId === 'edit-teacher-profile') {
-        const listContainer = document.getElementById('teachers-data-table').closest('.tool-card'); 
+        const listContainer = document.getElementById('all-teachers-list'); 
         if (listContainer) listContainer.style.display = 'none';
         
         document.getElementById('teacher-details-display').style.display = 'none';
         showEditTeacherForm(); 
+    }
+
+    // Grade Sections View
+    if (targetId === 'grade-sections') {
+        // Initial state is handled by the event listeners, no initial data load needed.
     }
 }
 
@@ -528,18 +575,15 @@ function showEditLearnerForm() {
 /**
  * Displays the full teacher profile details.
  */
-function displayTeacherDetails(data) {
+function displayTeacherDetails() { // Removed 'data' parameter
     const container = document.getElementById('teacher-details-display');
-    const listContainer = document.getElementById('teachers-data-table').closest('.tool-card'); 
-    
-    if (listContainer) listContainer.style.display = 'none';
-    container.style.display = 'block';
 
-    if (!data) {
+    if (!selectedTeacherData) { // Check global variable
         container.innerHTML = '<p>No teacher data found. Please select a teacher.</p>';
         return;
     }
     
+    const data = selectedTeacherData; // Use the global data
     const contentHTML = `
         <button id="back-to-teacher-list" class="cta-button-secondary" style="margin-bottom: 15px;">
             ← Back to Teacher Profiles List
@@ -552,7 +596,7 @@ function displayTeacherDetails(data) {
         <hr>
 
         <h3>Professional Information: </h3>
-        <p><strong>Current Grade Assignment:</strong> <span id="display-assigned-grade" style="font-weight: bold; color: ${!data.assignedGrade ? 'var(--primary-red)' : 'var(--primary-green)'};">${data.assignedGrade || 'None'}</span></p>
+        <p><strong>Current Grade Assignment:</strong> <span id="display-assigned-grade" style="font-weight: bold; color: ${!(data.assignedGrades && data.assignedGrades.length > 0) ? 'var(--primary-red)' : 'var(--primary-green)'};">${(data.assignedGrades && data.assignedGrades.length > 0) ? data.assignedGrades.join(', ') : 'None'}</span></p>
         <p><strong>Qualifications:</strong> ${data.qualifications || 'N/A'}</p>
         
         <button id="edit-teacher-details-btn" class="cta-button" style="margin-top: 20px;">
@@ -564,7 +608,7 @@ function displayTeacherDetails(data) {
     
     document.getElementById('back-to-teacher-list').addEventListener('click', () => {
         selectedTeacherData = null; 
-        window.location.hash = `#teacher-management`; 
+        window.location.hash = `#sams-educators`; 
         handleNavigation(); 
     });
 
@@ -614,8 +658,16 @@ function showEditTeacherForm() {
                     <input type="text" id="edit-teacher-contact" value="${data.contactNumber || ''}">
                 </div>
                 <div class="form-group">
-                    <label for="edit-teacher-grade">Assigned Grade/Subject</label>
-                    <input type="text" id="edit-teacher-grade" value="${data.assignedGrade || ''}">
+                    <label for="edit-teacher-grades">Assigned Grades (comma-separated)</label>
+                    <input type="text" id="edit-teacher-grades" value="${(data.assignedGrades || []).join(', ')}">
+                </div>
+                <div class="form-group">
+                    <label for="edit-teacher-classes">Assigned Classes (e.g., 6A, 7B)</label>
+                    <input type="text" id="edit-teacher-classes" value="${(data.assignedClasses || []).join(', ')}">
+                </div>
+                <div class="form-group">
+                    <label for="edit-teacher-subjects">Assigned Subjects (e.g., Maths, Science)</label>
+                    <input type="text" id="edit-teacher-subjects" value="${(data.assignedSubjects || []).join(', ')}">
                 </div>
                 <div class="form-group" style="grid-column: 1 / -1;">
                     <label for="edit-teacher-qualifications">Qualifications/Notes</label>
@@ -636,7 +688,7 @@ function showEditTeacherForm() {
     // Attach event listeners after rendering the form
     document.getElementById('back-to-teacher-list-edit').addEventListener('click', () => {
         selectedTeacherData = null; 
-        window.location.hash = `#teacher-management`; 
+        window.location.hash = `#sams-educators`; 
         handleNavigation(); 
     });
     
@@ -843,14 +895,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const showAddFormBtn = document.getElementById('show-add-learner-form');
     if (showAddFormBtn) {
         showAddFormBtn.addEventListener('click', () => {
-            if (addFormSection.style.display === 'block') {
-                addFormSection.style.display = 'none';
-                allLearnersList.style.display = 'block';
-            } else {
-                addFormSection.style.display = 'block';
-                removeSection.style.display = 'none'; 
-                allLearnersList.style.display = 'none'; 
-            }
+            // Hide the list and show the form.
+            allLearnersList.style.display = 'none';
+            addFormSection.style.display = 'block';
+            // The "Back" button inside the form will handle returning to the list.
         });
     }
 
@@ -934,11 +982,79 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     // EMS Teacher Management Listener
+    const teacherGradeFilter = document.getElementById('teacher-grade-filter');
     const loadMoreTeachersBtn = document.getElementById('load-more-teachers-btn'); 
     
+    if (teacherGradeFilter) {
+        teacherGradeFilter.addEventListener('change', (e) => {
+            if (typeof loadAllTeachers === 'function') {
+                loadAllTeachers(e.target.value, true);
+            }
+        });
+    }
+
     if (loadMoreTeachersBtn) {
         loadMoreTeachersBtn.addEventListener('click', () => {
-            loadAllTeachers(false); 
+            // Calls loadAllTeachers with resetPage = false to fetch the next batch
+            if (typeof loadAllTeachers === 'function') {
+                const selectedGrade = teacherGradeFilter ? teacherGradeFilter.value : 'All';
+                loadAllTeachers(selectedGrade, false); 
+            }
+        });
+    }
+
+    // --- GRADE SECTIONS LISTENERS ---
+    const gradeSectionGradeFilter = document.getElementById('grade-section-grade-filter');
+    const gradeSectionClassFilter = document.getElementById('grade-section-class-filter');
+
+    if (gradeSectionGradeFilter) {
+        gradeSectionGradeFilter.addEventListener('change', async (e) => {
+            const selectedGrade = e.target.value;
+            gradeSectionClassFilter.innerHTML = '<option value="All">All Classes</option>'; // Reset
+
+            if (!selectedGrade) {
+                gradeSectionClassFilter.disabled = true;
+                loadLearnersByGradeAndClass(null); // Clear the table
+                return;
+            }
+
+            gradeSectionClassFilter.disabled = true; // Disable while loading classes
+
+            // 1. Load all learners for the selected grade to show them immediately
+            await loadLearnersByGradeAndClass(selectedGrade, 'All');
+
+            // 2. Find unique sections for the class filter
+            try {
+                const gradeValue = (selectedGrade === 'R') ? 'R' : parseInt(selectedGrade, 10);
+                const snapshot = await db.collection('sams_registrations').where('grade', '==', gradeValue).get();
+                const sections = new Set();
+                snapshot.forEach(doc => {
+                    const section = doc.data().section;
+                    if (section && section.trim() !== '') {
+                        sections.add(section);
+                    }
+                });
+
+                // Populate the class filter dropdown
+                Array.from(sections).sort().forEach(section => {
+                    const option = new Option(section, section);
+                    gradeSectionClassFilter.add(option);
+                });
+
+                gradeSectionClassFilter.disabled = false; // Re-enable the filter
+            } catch (error) {
+                console.error("Error populating class filter:", error);
+            }
+        });
+    }
+
+    if (gradeSectionClassFilter) {
+        gradeSectionClassFilter.addEventListener('change', (e) => {
+            const selectedGrade = gradeSectionGradeFilter.value;
+            const selectedClass = e.target.value;
+            if (selectedGrade) {
+                loadLearnersByGradeAndClass(selectedGrade, selectedClass);
+            }
         });
     }
 });

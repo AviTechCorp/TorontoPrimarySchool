@@ -143,16 +143,9 @@ async function loadAllActiveLearners(filterGrade = 'All', reset = false) {
             
             const actionCell = row.insertCell();
             
-            // NOTE: createKebabMenu is assumed to be defined in ui-handlers.js
-            if (typeof createKebabMenu === 'function') {
-                actionCell.appendChild(createKebabMenu(data)); 
-            } else {
-                const viewBtn = document.createElement('button');
-                viewBtn.textContent = 'View';
-                viewBtn.className = 'cta-button-small';
-                viewBtn.onclick = () => showSamsDetails(data, 'sams-learners');
-                actionCell.appendChild(viewBtn);
-            }
+            // Always append the kebab menu for consistent actions.
+            // createKebabMenu is defined in ui-handlers.js
+            actionCell.appendChild(createKebabMenu(data));
         });
         
         if (!snapshot.empty) {
@@ -173,6 +166,80 @@ async function loadAllActiveLearners(filterGrade = 'All', reset = false) {
     } catch (error) {
         console.error("Error loading All Active Learners data from Firebase: ", error);
         statusMessage.textContent = 'Error loading data. Check console for details.';
+    }
+}
+
+// =========================================================
+// === GRADE SECTIONS VIEW FUNCTIONS ===
+// =========================================================
+
+/**
+ * Loads and displays learners based on grade and optional class section filters.
+ * @param {string} grade - The grade to filter by.
+ * @param {string} classSection - The class section to filter by ('All' for no filter).
+ */
+async function loadLearnersByGradeAndClass(grade, classSection = 'All') {
+    const tableBody = document.querySelector('#grade-section-learners-table tbody');
+    const statusMessage = document.getElementById('grade-section-learners-status');
+    const header = document.getElementById('grade-section-header');
+
+    tableBody.innerHTML = '';
+
+    if (!grade) {
+        header.textContent = 'Select a Grade to Begin';
+        statusMessage.textContent = 'Please select a grade from the filter above.';
+        return;
+    }
+
+    let headerText = `Loading Learners for Grade ${grade}`;
+    if (classSection !== 'All') {
+        headerText += `, Class ${classSection}`;
+    }
+    header.textContent = headerText + '...';
+    statusMessage.textContent = 'Fetching learner data...';
+
+    try {
+        const gradeValue = (grade === 'R') ? 'R' : parseInt(grade, 10);
+        let query = db.collection('sams_registrations').where('grade', '==', gradeValue);
+
+        if (classSection !== 'All') {
+            query = query.where('section', '==', classSection);
+        }
+
+        const snapshot = await query.get();
+
+        if (snapshot.empty) {
+            header.textContent = `No Learners Found for Grade ${grade}` + (classSection !== 'All' ? ` in Class ${classSection}` : '');
+            statusMessage.textContent = 'There are no learners matching the current filter criteria.';
+            return;
+        }
+
+        let learnerCount = 0;
+        const sortedDocs = snapshot.docs.sort((a, b) => {
+            const nameA = `${a.data().learnerSurname || ''} ${a.data().learnerName || ''}`;
+            const nameB = `${b.data().learnerSurname || ''} ${b.data().learnerName || ''}`;
+            return nameA.localeCompare(nameB);
+        });
+
+        sortedDocs.forEach(doc => {
+            const data = doc.data();
+            const row = tableBody.insertRow();
+            row.insertCell().textContent = data.admissionId;
+            row.insertCell().textContent = `${data.learnerName || ''} ${data.learnerSurname || ''}`;
+            row.insertCell().textContent = data.fullGradeSection || data.grade;
+            learnerCount++;
+        });
+
+        header.textContent = `Displaying Learners for Grade ${grade}` + (classSection !== 'All' ? `, Class ${classSection}` : '');
+        statusMessage.textContent = `Found ${learnerCount} learner(s).`;
+
+    } catch (error) {
+        console.error(`Error loading learners for Grade ${grade}:`, error);
+        header.textContent = `Error Loading Data`;
+        statusMessage.textContent = 'An error occurred. Check the console for details.';
+        if (error.code === 'failed-precondition') {
+            statusMessage.innerHTML += '<br><strong>Action Required:</strong> This query may require a composite index. Please check the browser console for a link to create it in Firebase.';
+        }
     }
 }
 
@@ -713,7 +780,7 @@ async function updateLearnerDetails(admissionId) {
 /**
  * Queries Firebase for all active users with the role 'teacher' for the EMS list view.
  */
-async function loadAllTeachers(reset = false) {
+async function loadAllTeachers(filterGrade = 'All', reset = false) {
     const tableBody = document.querySelector('#teachers-data-table tbody');
     const statusMessage = document.getElementById('teachers-data-status');
     let loadMoreBtn = document.getElementById('load-more-teachers-btn');
@@ -724,13 +791,16 @@ async function loadAllTeachers(reset = false) {
         if(loadMoreBtn) loadMoreBtn.style.display = 'none';
     }
     
-    statusMessage.textContent = 'Fetching teacher profiles...';
+    statusMessage.textContent = `Fetching teacher profiles for ${filterGrade === 'All' ? 'All Grades' : 'Grade ' + filterGrade}...`;
     
     try {
         let query = db.collection('users')
-                      .where('role', '==', 'teacher')
-                      .orderBy('surname') 
-                      .orderBy('preferredName');
+                      .where('role', '==', 'teacher');
+
+        if (filterGrade !== 'All') {
+            query = query.where('assignedGrades', 'array-contains', filterGrade);
+        }
+        // query = query.orderBy('surname').orderBy('preferredName'); // This requires a composite index. Sorting will be done client-side.
         
         if (lastVisibleTeachers) {
             query = query.startAfter(lastVisibleTeachers);
@@ -740,15 +810,22 @@ async function loadAllTeachers(reset = false) {
         const snapshot = await query.limit(PAGE_SIZE).get(); 
 
         if (snapshot.empty && tableBody.rows.length === 0) {
-            statusMessage.textContent = 'No teacher profiles found.';
+            statusMessage.textContent = `No teacher profiles found for ${filterGrade === 'All' ? 'All Grades' : 'Grade ' + filterGrade}.`;
             if (loadMoreBtn) loadMoreBtn.style.display = 'none';
             return;
         }
         
         const existingEmails = new Set(Array.from(tableBody.querySelectorAll('tr')).map(row => row.getAttribute('data-email')));
 
-        snapshot.forEach(doc => {
-            const data = { ...doc.data(), uid: doc.id }; // Include Firestore Document ID as UID
+        // Sort the documents client-side by surname, then preferredName
+        const sortedDocs = snapshot.docs.sort((a, b) => {
+            const nameA = `${a.data().surname} ${a.data().preferredName}`;
+            const nameB = `${b.data().surname} ${b.data().preferredName}`;
+            return nameA.localeCompare(nameB);
+        });
+
+        sortedDocs.forEach(doc => {
+            const data = { ...doc.data(), uid: doc.id }; 
             const email = data.email;
 
             if (existingEmails.has(email)) {
@@ -756,16 +833,19 @@ async function loadAllTeachers(reset = false) {
             }
             
             const row = tableBody.insertRow();
-            row.setAttribute('data-email', email); 
+            row.setAttribute('data-email', email);
             
+            // Column 1: Name
             row.insertCell().textContent = `${data.preferredName || ''} ${data.surname || ''}`;
+            // Column 2: Email
             row.insertCell().textContent = data.email;
-            row.insertCell().textContent = data.assignedGrade || 'None Assigned'; // Show current assignment
+            // Column 3: Assigned Grade
+            row.insertCell().textContent = (data.assignedGrades && data.assignedGrades.length > 0) ? data.assignedGrades.join(', ') : 'None Assigned';
             
+            // Column 4: Action Menu
             const actionCell = row.insertCell();
             
             // Use the kebab menu for actions (View, Edit/Assign)
-            // NOTE: Assumes createTeacherKebabMenu is defined in ui-handlers.js
             if (typeof createTeacherKebabMenu === 'function') {
                 actionCell.appendChild(createTeacherKebabMenu(data)); 
             } else {
@@ -791,14 +871,13 @@ async function loadAllTeachers(reset = false) {
         }
         
         const currentTotal = tableBody.rows.length;
-        statusMessage.textContent = `Displaying ${currentTotal} teacher profile(s).`;
+        statusMessage.textContent = `Displaying ${currentTotal} teacher profile(s) for ${filterGrade === 'All' ? 'All Grades' : 'Grade ' + filterGrade}.`;
 
     } catch (error) {
         console.error("Error loading Teacher data from Firebase: ", error);
         statusMessage.textContent = 'Error loading data. Check console for details.';
     }
 }
-
 
 /**
  * Updates a teacher's profile details and assigned grade in Firestore.
@@ -815,7 +894,9 @@ async function assignTeacherGrade(teacherUid) {
     const newAssignedSurname = document.getElementById('edit-teacher-surname').value.trim();
     const newAssignedContact = document.getElementById('edit-teacher-contact').value.trim();
     const newAssignedQualifications = document.getElementById('edit-teacher-qualifications').value.trim();
-    const newAssignedGrade = document.getElementById('edit-teacher-grade').value.trim(); // The field to assign the grade
+    const newAssignedGradesString = document.getElementById('edit-teacher-grades').value.trim();
+    const newAssignedClassesString = document.getElementById('edit-teacher-classes').value.trim();
+    const newAssignedSubjectsString = document.getElementById('edit-teacher-subjects').value.trim();
     
     // Reset status message
     statusMessage.style.display = 'none';
@@ -827,6 +908,11 @@ async function assignTeacherGrade(teacherUid) {
         return;
     }
 
+    // Convert comma-separated string to a clean array of strings
+    const newAssignedGrades = newAssignedGradesString.split(',').map(g => g.trim().toUpperCase()).filter(g => g);
+    const newAssignedClasses = newAssignedClassesString.split(',').map(c => c.trim().toUpperCase()).filter(c => c);
+    const newAssignedSubjects = newAssignedSubjectsString.split(',').map(s => s.trim()).filter(s => s);
+
     try {
         const teacherRef = db.collection('users').doc(teacherUid);
         
@@ -835,21 +921,27 @@ async function assignTeacherGrade(teacherUid) {
             surname: newAssignedSurname,
             contactNumber: newAssignedContact,
             qualifications: newAssignedQualifications,
-            // --- CORE NEW FIELD ---
-            assignedGrade: newAssignedGrade || null, 
-            // ----------------------
+            assignedGrades: newAssignedGrades,
+            assignedClasses: newAssignedClasses,
+            assignedSubjects: newAssignedSubjects,
+            assignedGrade: firebase.firestore.FieldValue.delete(), // Remove the old field
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         };
         
         await teacherRef.update(updateData);
 
-        statusMessage.textContent = `Success! Teacher profile and Assigned Grade updated to: ${newAssignedGrade || 'None'}.`;
+        statusMessage.textContent = `Success! Teacher profile and Assigned Grades updated.`;
         statusMessage.style.backgroundColor = '#dfd';
         statusMessage.style.display = 'block';
         
         // Update the globally stored data to reflect the change immediately
         if (selectedTeacherData && selectedTeacherData.uid === teacherUid) {
             Object.assign(selectedTeacherData, updateData);
+            // Directly re-render the details view with the new data
+            // NOTE: Assumes displayTeacherDetails is defined in ui-handlers.js
+            if (typeof displayTeacherDetails === 'function') {
+                displayTeacherDetails();
+            }
         }
         
         // Reset pagination for list refresh
@@ -870,5 +962,38 @@ async function assignTeacherGrade(teacherUid) {
         statusMessage.textContent = `Update failed: ${error.message}`;
         statusMessage.style.backgroundColor = '#fdd';
         statusMessage.display = 'block';
+    }
+}
+
+/**
+ * Prompts for confirmation and then permanently removes a teacher's profile from Firestore.
+ * Note: This does not delete the user from Firebase Authentication, only their profile data.
+ * @param {Object} data - The teacher data object, containing the UID.
+ */
+async function confirmAndRemoveTeacher(data) {
+    const teacherName = `${data.preferredName || ''} ${data.surname || ''}`.trim();
+    const teacherUid = data.uid;
+
+    if (!confirm(`WARNING: Are you sure you want to PERMANENTLY remove the teacher profile for "${teacherName}"? This action cannot be undone.`)) {
+        return;
+    }
+
+    if (!teacherUid) {
+        alert('Error: Teacher UID not found. Cannot remove profile.');
+        return;
+    }
+
+    try {
+        const teacherRef = db.collection('users').doc(teacherUid);
+        await teacherRef.delete();
+
+        alert(`Success! Teacher profile for "${teacherName}" has been removed.`);
+
+        lastVisibleTeachers = null; // Reset pagination
+        loadAllTeachers(true); // Refresh the teacher list
+
+    } catch (error) {
+        console.error("Error removing teacher profile:", error);
+        alert("An error occurred while removing the teacher. Please check the console for details.");
     }
 }
