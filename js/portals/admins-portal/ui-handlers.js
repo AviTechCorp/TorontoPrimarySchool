@@ -201,6 +201,32 @@ function handleKebabMenuOutsideClick(e, menuContainer) {
     }
 }
 
+/**
+ * Sets up the mobile sidebar toggle functionality.
+ */
+function setupMobileSidebar() {
+    const menuToggle = document.getElementById('menu-toggle');
+    const sidebar = document.querySelector('.sidebar');
+    const contentWrapper = document.querySelector('.portal-content-wrapper');
+
+    if (menuToggle && sidebar && contentWrapper) {
+        menuToggle.addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent the contentWrapper click from firing
+            sidebar.classList.toggle('is-open');
+            contentWrapper.classList.toggle('overlay-active');
+        });
+
+        // Close sidebar when clicking on the content overlay
+        contentWrapper.addEventListener('click', () => {
+            if (sidebar.classList.contains('is-open')) {
+                sidebar.classList.remove('is-open');
+                contentWrapper.classList.remove('overlay-active');
+            }
+        });
+    }
+}
+
+
 // =========================================================
 // === NAVIGATION & UI LOGIC ===
 // =========================================================
@@ -845,6 +871,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     handleNavigation(); 
     window.addEventListener('hashchange', handleNavigation);
+
+    // --- MOBILE SIDEBAR TOGGLE ---
+    setupMobileSidebar();
 
     // --- LOG OUT LISTENER ---
     const logOutButton = document.querySelector('.btn-logout');
