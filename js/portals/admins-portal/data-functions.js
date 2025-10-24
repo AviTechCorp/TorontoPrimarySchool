@@ -480,7 +480,7 @@ async function setLearnerSection(admissionId, grade, newSection) {
         const docRef = snapshot.docs[0].ref;
         
         await docRef.update({
-            section: finalSection,      
+            section: finalSection,   
             fullGradeSection: fullGradeSection 
         });
 

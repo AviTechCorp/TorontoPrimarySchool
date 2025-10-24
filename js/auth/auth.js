@@ -291,7 +291,7 @@ onAuthStateChanged(auth, (user) => {
     // Check if the current page is a protected page and the user is not logged in
     if (protectedPages.some(page => currentPath.endsWith(page)) && !isLoggedIn) {
         alert("You must be logged in to view this page.");
-        window.location.href = "auth.html";
+        window.location.href = "../../html/auth/auth.html";
     }
 });
 

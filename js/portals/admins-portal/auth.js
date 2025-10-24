@@ -1,22 +1,16 @@
 // auth.js
-// Import the functions you need from the Modular SDK v12.4.0
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
-import { 
-    getAuth, 
-    createUserWithEmailAndPassword, 
-    signInWithEmailAndPassword, 
-    signOut, 
-    onAuthStateChanged 
-} from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
-import { 
-    getFirestore, 
-    doc, 
-    setDoc, 
-    getDoc 
-} from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
+
+// =========================================================
+// === FIREBASE IMPORTS, CONFIGURATION, AND INITIALIZATION ===
+// =========================================================
+
+// Import the functions you need from the SDKs you need
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
+import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
 
 
-// Your web app's Firebase configuration (Keep your current config)
+// Your web app's Firebase configuration
 const firebaseConfig = {
     apiKey: "AIzaSyAJlr-6eTCCpQtWHkPics3-tbOS_X5xA84",
     authDomain: "school-website-66326.firebaseapp.com",
@@ -30,230 +24,260 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app); // Get the auth service instance
-const db = getFirestore(app); // Get the firestore service instance
+const db = getFirestore(app); // Get the Firestore service instance
 
 // =========================================================
-// === USER REGISTRATION FUNCTION ===
+// === DOM-DEPENDENT LOGIC - initialize on DOMContentLoaded ===
 // =========================================================
 
-const registerForm = document.getElementById('register-form');
-const registerEmailInput = document.getElementById('registerEmail');
-const registerPasswordInput = document.getElementById('registerPassword');
-const confirmPasswordInput = document.getElementById('confirmPassword');
-const registerRoleSelect = document.getElementById('register-role-select');
-const registerMessage = document.getElementById('register-message');
-const registerSubmitButton = document.getElementById('registerSubmit');
+document.addEventListener('DOMContentLoaded', () => {
+  // Get references to elements for form switching
+  const loginLink = document.getElementById('show-login');
+  const registerLink = document.getElementById('show-register');
+  const loginForm = document.getElementById('login-form');
+  const registerForm = document.getElementById('register-form');
 
-if (registerForm) {
-    registerForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
-        const email = registerEmailInput.value;
-        const password = registerPasswordInput.value;
-        const confirmPassword = confirmPasswordInput.value;
-        const role = registerRoleSelect.value;
-        
-        if (password !== confirmPassword) {
-            registerMessage.textContent = "Error: Passwords do not match.";
-            return;
+  // Get references to elements for the Register form
+  const registerRoleSelect = document.getElementById('role-select');
+  const learnerFields = document.getElementById('learner-fields'); 
+  const parentFields = document.getElementById('parent-fields');
+  const teacherFields = document.getElementById('teacher-fields');
+  const admissionsTeamFields = document.getElementById('admissions-team-fields'); 
+  const adminFields = document.getElementById('admin-fields');
+  const registerPasswordInput = document.getElementById('registerPassword');
+  const confirmPasswordInput = document.getElementById('confirmPassword');
+  const registerSubmitButton = document.getElementById('registerSubmit');
+
+  // Get references to elements for the Login form
+  const loginRoleSelect = document.getElementById('login-role-select');
+  const loginEmailInput = document.getElementById('loginEmail');
+  const loginPasswordInput = document.getElementById('loginPassword');
+  const loginSubmitButton = document.getElementById('loginSubmit');
+
+  // Role-select -> show role-specific fields (registration form)
+  if (registerRoleSelect) {
+    const roleFields = Array.from(document.querySelectorAll('.role-fields'));
+    function showRoleFields(value) {
+      roleFields.forEach(el => {
+        el.style.display = 'none';
+        el.setAttribute('aria-hidden', 'true');
+      });
+      if (!value) return;
+      const id = `${value}-fields`;
+      const target = document.getElementById(id);
+      if (target) {
+        target.style.display = 'grid';
+        target.setAttribute('aria-hidden', 'false');
+      }
+    }
+    registerRoleSelect.addEventListener('change', () => showRoleFields(registerRoleSelect.value));
+    // initialize if already selected
+    showRoleFields(registerRoleSelect.value);
+  }
+
+  // Helper: collect user data (kept local to DOMContentLoaded)
+  function collectUserData(role) {
+    let userData = { role };
+    try {
+      if (role === 'learner') { 
+        userData.fullName = document.querySelector('input[name="learner-fullName"]')?.value || '';
+        userData.admissionNumber = document.querySelector('input[name="learner-admissionNumber"]')?.value || '';
+        userData.email = document.querySelector('input[name="learner-email"]')?.value || ''; 
+        userData.dob = document.querySelector('input[name="learner-dob"]')?.value || '';
+        userData.grade = document.querySelector('select[name="learner-grade"]')?.value || '';
+        userData.gender = document.querySelector('select[name="learner-gender"]')?.value || '';
+      } else if (role === 'parent') {
+        userData.email = document.querySelector('input[name="parent-email"]')?.value || '';
+        userData.surname = document.querySelector('input[name="parent-surname"]')?.value || '';
+        userData.name = document.querySelector('input[name="parent-name"]')?.value || '';
+        userData.contact = document.querySelector('input[name="parent-contact"]')?.value || '';
+        userData.relationship = document.querySelector('input[name="relationship"]')?.value || '';
+        userData.admissionNumber = document.querySelector('input[name="admission-number"]')?.value || '';
+        userData.learnerSurname = document.querySelector('input[name="learner-surname"]')?.value || '';
+        userData.learnerFirstName = document.querySelector('input[name="learner-first-name"]')?.value || '';
+        userData.learnerMiddleName = document.querySelector('input[name="learner-middle-name"]')?.value || '';
+        userData.learnerDOB = document.querySelector('input[name="learner-dob"]')?.value || '';
+        userData.learnerGender = document.querySelector('select[name="learner-gender"]')?.value || '';
+        userData.learnerGrade = document.querySelector('select[name="learner-grade"]')?.value || '';
+      } else if (role === 'teacher') {
+        userData.email = document.querySelector('input[name="teacher-email"]')?.value || '';
+        userData.surname = document.querySelector('input[name="teacher-surname"]')?.value || '';
+        userData.preferredName = document.querySelector('input[name="teacher-preferred-name"]')?.value || '';
+      } else if (role === 'admissions-team') { 
+        userData.email = document.querySelector('input[name="admissions-email"]')?.value || '';
+        userData.surname = document.querySelector('input[name="admissions-surname"]')?.value || '';
+        userData.preferredName = document.querySelector('input[name="admissions-preferred-name"]')?.value || '';
+        userData.specialId = document.querySelector('input[name="admissions-special-id"]')?.value || '';
+      } else if (role === 'admin') {
+        userData.email = document.querySelector('input[name="admin-email"]')?.value || '';
+        userData.surname = document.querySelector('input[name="admin-surname"]')?.value || '';
+        userData.preferredName = document.querySelector('input[name="admin-preferred-name"]')?.value || '';
+        userData.specialId = document.querySelector('input[name="admin-special-id"]')?.value || '';
+      }
+    } catch (err) {
+      console.warn('collectUserData: missing field', err);
+    }
+    return userData;
+  }
+
+  // Registration handler
+  if (registerSubmitButton) {
+    registerSubmitButton.addEventListener('click', async function(event) {
+      event.preventDefault();
+      const role = registerRoleSelect?.value;
+      const userData = collectUserData(role);
+      const email = userData.email;
+      const password = registerPasswordInput?.value || '';
+      const confirmPassword = confirmPasswordInput?.value || '';
+
+      if (!email || !password || !confirmPassword || !role) {
+        alert('Please fill in all required fields.');
+        return;
+      }
+      if (password !== confirmPassword) {
+        alert('Passwords do not match!');
+        return;
+      }
+
+      // validate role-specific required inputs
+      const roleForm = document.getElementById(`${role}-fields`);
+      const requiredInputs = roleForm ? roleForm.querySelectorAll('[required]') : [];
+      for (let input of requiredInputs) {
+        if (!input.value) {
+          alert('Please fill in all required fields for your role.');
+          return;
         }
+      }
 
-        if (role === "") {
-            registerMessage.textContent = "Error: Please select a role.";
-            return;
-        }
-
-        registerMessage.textContent = "Registering...";
-        registerSubmitButton.disabled = true;
-
-        try {
-            // 1. Create user in Firebase Authentication
-            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-            const user = userCredential.user;
-
-            // 2. Add user role/profile to Firestore
-            await setDoc(doc(db, "user_roles", user.uid), {
-                email: email,
-                role: role,
-                createdAt: new Date().toISOString()
-            });
-
-            registerMessage.textContent = "Registration successful! You can now log in.";
-            // Optionally clear the form
-            registerForm.reset(); 
-
-        } catch (error) {
-            console.error("Registration Error:", error);
-            // Firebase error codes provide context (e.g., 'auth/email-already-in-use')
-            let errorMessage = "Registration failed.";
-            if (error.code === 'auth/email-already-in-use') {
-                errorMessage = "This email is already registered.";
-            } else if (error.code === 'auth/weak-password') {
-                errorMessage = "Password must be at least 6 characters.";
-            } else if (error.message) {
-                errorMessage = error.message;
-            }
-            registerMessage.textContent = `Error: ${errorMessage}`;
-        } finally {
-            registerSubmitButton.disabled = false;
-        }
+      try {
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
+        await setDoc(doc(db, "users", user.uid), userData);
+        alert(`Registration successful! Welcome, ${userData.name || userData.preferredName || userData.surname || userData.admissionNumber || userData.fullName}!`);
+        // switch to login view if available
+        if (loginLink) loginLink.click();
+      } catch (error) {
+        console.error("Registration Error:", error);
+        alert(`Registration Error: ${error.message}`);
+      }
     });
-}
+  }
 
+  // Login handler
+  if (loginSubmitButton) {
+    loginSubmitButton.addEventListener('click', async function(event) {
+      event.preventDefault();
+      const email = loginEmailInput?.value || '';
+      const password = loginPasswordInput?.value || '';
+      const role = loginRoleSelect?.value || '';
 
-// =========================================================
-// === USER LOGIN FUNCTION ===
-// =========================================================
+      if (!email || !password || !role) {
+        alert('Please enter your email, password, and select your role.');
+        return;
+      }
 
-const loginForm = document.getElementById('login-form');
-const loginEmailInput = document.getElementById('loginEmail');
-const loginPasswordInput = document.getElementById('loginPassword');
-const loginRoleSelect = document.getElementById('login-role-select');
-const loginMessage = document.getElementById('login-message');
-const loginSubmitButton = document.getElementById('loginSubmit');
+      try {
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
+        const userDocRef = doc(db, 'users', user.uid);
+        const userDocSnap = await getDoc(userDocRef);
 
-
-if (loginForm) {
-    loginForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-
-        const email = loginEmailInput.value;
-        const password = loginPasswordInput.value;
-        const selectedRole = loginRoleSelect.value;
-        
-        if (selectedRole === "") {
-            loginMessage.textContent = "Error: Please select your role.";
-            return;
+        if (userDocSnap.exists()) {
+          const userData = userDocSnap.data();
+          if (userData.role === role) {
+            sessionStorage.setItem('currentUser', JSON.stringify(userData));
+            alert(`Welcome back, ${userData.name || userData.preferredName || userData.surname || userData.admissionNumber || userData.fullName || 'User'}!`);
+            let portalPath = '';
+            switch(role) {
+              case 'learner': portalPath = "learners-portal.html"; break;
+              case 'parent': portalPath = "parents-portal.html"; break;
+              case 'teacher': portalPath = "teachers-portal.html"; break;
+              case 'admissions-team': portalPath = "admission-team-portal.html"; break;
+              case 'admin': portalPath = "admins-portal.html"; break;
+              default: portalPath = "index.html"; break;
+            }
+            window.location.href = portalPath;
+          } else {
+            alert("The role you selected does not match the role you registered as. Please try again.");
+            await signOut(auth);
+          }
+        } else {
+          alert("User data not found. Please contact support.");
+          await signOut(auth);
         }
-
-        loginMessage.textContent = "Logging in...";
-        loginSubmitButton.disabled = true;
-
-        try {
-            // 1. Sign in with Firebase Authentication
-            const userCredential = await signInWithEmailAndPassword(auth, email, password);
-            const user = userCredential.user;
-            
-            // 2. Fetch user role from Firestore
-            const roleDoc = await getDoc(doc(db, "user_roles", user.uid));
-            
-            if (!roleDoc.exists()) {
-                // If role is missing, sign out and show error
-                await signOut(auth);
-                loginMessage.textContent = "Error: User profile not found. Contact administrator.";
-                return;
-            }
-
-            const userData = roleDoc.data();
-            const actualRole = userData.role;
-
-            // 3. Role Check: Ensure selected role matches the stored role
-            if (actualRole !== selectedRole) {
-                await signOut(auth); // Sign out if role mismatch
-                loginMessage.textContent = `Error: Credentials correct, but you logged in as a '${selectedRole}' which does not match your registered role of '${actualRole}'.`;
-                return;
-            }
-
-            // 4. Successful Login - Store role and redirect
-            // Store the user data (including role) in session storage for portal access
-            const currentUser = {
-                uid: user.uid,
-                email: user.email,
-                role: actualRole
-            };
-            sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
-            
-            loginMessage.textContent = "Login successful. Redirecting...";
-
-            // Determine redirect page based on role
-            let redirectPage = 'auth.html'; 
-            switch (actualRole) {
-                case 'learner':
-                    redirectPage = '../portals/learners-portal.html';
-                    break;
-                case 'parent':
-                    redirectPage = '../portals/parents-portal.html';
-                    break;
-                case 'teacher':
-                    redirectPage = '../portals/teachers-portal.html';
-                    break;
-                case 'admissions-team':
-                    redirectPage = '../portals/admission-team-portal.html';
-                    break;
-                case 'admin':
-                    redirectPage = '../portals/admins-portal.html';
-                    break;
-                default:
-                    // If an unknown role, redirect to the login page and sign out
-                    await signOut(auth);
-                    loginMessage.textContent = "Error: Unknown user role. Contact administrator.";
-                    return;
-            }
-
-            // Redirect to the appropriate portal page
-            window.location.href = redirectPage;
-
-        } catch (error) {
-            console.error("Login Error:", error);
-            let errorMessage = "Invalid email or password.";
-            if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
-                errorMessage = "Invalid email or password.";
-            } else if (error.message) {
-                 errorMessage = error.message;
-            }
-            loginMessage.textContent = `Error: ${errorMessage}`;
-        } finally {
-            loginSubmitButton.disabled = false;
-        }
+      } catch (error) {
+        console.error("Login Error:", error);
+        alert(`Login Error: ${error.message}`);
+      }
     });
-}
+  }
 
+  // =========================================================
+  // === Inserted form switching & role toggle snippet ===
+  // This restores accessible switching and hash-based initial state
+  // =========================================================
 
-// =========================================================
-// === UI/FORM SWITCHING (REGISTER/LOGIN) ===
-// =========================================================
+  const register = registerForm;
+  const login = loginForm;
+  const showRegister = registerLink;
+  const showLogin = loginLink;
 
-const showRegisterLink = document.getElementById('show-register');
-const showLoginLink = document.getElementById('show-login');
-const registerFormDiv = document.getElementById('register-form');
-const loginFormDiv = document.getElementById('login-form');
-const registerLink = document.getElementById('show-register');
-const loginLink = document.getElementById('show-login');
+  function setVisible(formToShow) {
+    const showRegisterForm = formToShow === 'register';
 
-// Initial state and link click handlers
-if (registerFormDiv && loginFormDiv && registerLink && loginLink) {
-    // Set initial state to Login
-    loginFormDiv.style.display = 'block';
-    registerFormDiv.style.display = 'none';
-    loginLink.classList.add('active');
-    registerLink.classList.remove('active');
+    if (showRegisterForm) {
+      register?.classList.remove('hidden'); register?.classList.add('active-form');
+      register?.setAttribute('aria-hidden', 'false');
+      login?.classList.add('hidden'); login?.classList.remove('active-form');
+      login?.setAttribute('aria-hidden', 'true');
+      const focusEl = register?.querySelector('input, select, button');
+      if (focusEl) focusEl.focus();
+    } else {
+      login?.classList.remove('hidden'); login?.classList.add('active-form');
+      login?.setAttribute('aria-hidden', 'false');
+      register?.classList.add('hidden'); register?.classList.remove('active-form');
+      register?.setAttribute('aria-hidden', 'true');
+      const focusEl = login?.querySelector('input, select, button');
+      if (focusEl) focusEl.focus();
+    }
+  }
 
-    // Show Register handler
-    showRegisterLink.addEventListener('click', () => {
-        loginFormDiv.style.display = 'none';
-        registerFormDiv.style.display = 'block';
-        registerLink.classList.add('active');
-        loginLink.classList.remove('active');
+  if (location.hash === '#login') setVisible('login');
+  else setVisible('register');
+
+  if (showRegister) {
+    showRegister.addEventListener('click', (e) => {
+      e.preventDefault();
+      setVisible('register');
+      history.replaceState(null, '', '#register');
     });
-
-    // Show Login handler
-    showLoginLink.addEventListener('click', () => {
-        loginFormDiv.style.display = 'block';
-        registerFormDiv.style.display = 'none';
-        loginLink.classList.add('active');
-        registerLink.classList.remove('active');
+  }
+  if (showLogin) {
+    showLogin.addEventListener('click', (e) => {
+      e.preventDefault();
+      setVisible('login');
+      history.replaceState(null, '', '#login');
     });
-}
+  }
 
+  // Logout button attachment (requires DOM)
+  document.querySelectorAll('.btn-logout').forEach(button => {
+    button.addEventListener('click', (e) => {
+      e.preventDefault();
+      handleLogout();
+    });
+  });
+
+}); // end DOMContentLoaded
 
 // =========================================================
-// === AUTH STATE CHECK & REDIRECT ===
+// === AUTH STATE LISTENER & PAGE PROTECTION ===
 // =========================================================
 
-    // Check for authentication state change to redirect users who are not logged in.
-    onAuthStateChanged(auth, (user) => {
-        const currentPath = window.location.pathname;
-        const isLoggedIn = !!user;
+// Check for authentication state change to redirect users who are not logged in.
+onAuthStateChanged(auth, (user) => {
+    const currentPath = window.location.pathname;
+    const isLoggedIn = !!user;
 
     // List of protected portal pages
     const protectedPages = [
@@ -261,7 +285,7 @@ if (registerFormDiv && loginFormDiv && registerLink && loginLink) {
         'parents-portal.html',
         'teachers-portal.html',
         'admins-portal.html',
-        'admission-team-portal.html' // NEW PORTAL ADDED
+        'admission-team-portal.html' 
     ];
 
     // Check if the current page is a protected page and the user is not logged in
@@ -271,33 +295,24 @@ if (registerFormDiv && loginFormDiv && registerLink && loginLink) {
     }
 });
 
-
 // =========================================================
 // === LOGOUT FUNCTIONALITY ===
 // =========================================================
 
 /**
- * Handle user logout.
- * This function signs the user out of Firebase and redirects them to the login page.
- */
+* Handle user logout.
+* This function signs the user out of Firebase and redirects them to the login page.
+*/
 function handleLogout() {
     signOut(auth).then(() => {
-        // Clear user data from session storage on logout
         sessionStorage.removeItem('currentUser');
         alert("You have been logged out successfully.");
-        // Redirect to the auth page from any nested folder
-        window.location.href = "../../html/auth/auth.html"; 
+        window.location.href = "auth.html"; 
     }).catch((error) => {
-        // An error happened.
         console.error("Logout Error:", error);
         alert("Logout failed. Please try again.");
     });
 }
 
-// Attach the logout function to all buttons with the class 'btn-logout'
-document.querySelectorAll('.btn-logout').forEach(button => {
-    button.addEventListener('click', (e) => {
-        e.preventDefault();
-        handleLogout();
-    });
-});
+// make the function available to non-module scripts
+window.handleLogout = handleLogout;

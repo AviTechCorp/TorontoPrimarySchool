@@ -882,7 +882,7 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             auth.signOut().then(() => { 
                 sessionStorage.removeItem('currentUser');
-                window.location.href = 'index.html';
+                window.location.href = '../../../html/auth/auth.html';
             }).catch(error => {
                 alert("Logout failed: " + error.message);
             });
