@@ -185,7 +185,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (userDocSnap.exists()) {
           const userData = userDocSnap.data();
           if (userData.role === role) {
-            sessionStorage.setItem('currentUser', JSON.stringify(userData));
+            // *** FIX: Include the user UID in the session storage data ***
+            const sessionData = { ...userData, uid: user.uid };
+            sessionStorage.setItem('currentUser', JSON.stringify(sessionData));
             alert(`Welcome back, ${userData.name || userData.preferredName || userData.surname || userData.admissionNumber || userData.fullName || 'User'}!`);
             let portalPath = '';
             switch(role) {
