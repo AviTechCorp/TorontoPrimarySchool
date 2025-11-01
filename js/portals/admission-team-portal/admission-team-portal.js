@@ -145,7 +145,7 @@ function renderApplicantTable(container, filteredApplications) {
     table.className = "data-table admissions-table";
     
     let tableHTML = `
-        <thead>
+        <thead class="bg-gray-50">
             <tr>
                 <th>Date/Time</th>
                 <th>Learner Name</th>
@@ -177,8 +177,8 @@ function renderApplicantTable(container, filteredApplications) {
                 <td>${learnerName}</td>
                 <td>${grade}</td>
                 <td><span class="status-badge status-${statusClass}">${status}</span></td>
-                <td>
-                    <button onclick="viewApplicantDetails(${originalIndex})" class="applicant-action-btn"><i class="fas fa-search"></i> Details</button>
+                <td class="py-2">
+                    <button onclick="viewApplicantDetails(${originalIndex})" class="cta-button-small"><i class="fas fa-search mr-2"></i> Details</button>
                 </td>
             </tr>
         `;
@@ -187,6 +187,22 @@ function renderApplicantTable(container, filteredApplications) {
     tableHTML += `</tbody>`;
     table.innerHTML = tableHTML;
     container.appendChild(table);
+
+    // Apply Tailwind classes to the dynamically generated table to match admin portal style
+    const newTable = container.querySelector('.data-table');
+    if (newTable) {
+        newTable.classList.add('min-w-full', 'divide-y', 'divide-gray-200', 'shadow-md');
+        newTable.querySelectorAll('th').forEach(th => {
+            th.classList.add('px-6', 'py-3', 'text-left', 'text-xs', 'font-medium', 'text-gray-500', 'uppercase', 'tracking-wider', 'bg-gray-50');
+        });
+        newTable.querySelectorAll('td').forEach(td => {
+            td.classList.add('px-6', 'py-4', 'whitespace-nowrap', 'text-sm', 'text-gray-800');
+        });
+        newTable.querySelectorAll('tbody tr:nth-child(even)').forEach(tr => {
+            tr.classList.add('bg-gray-50');
+        });
+    }
+
 }
 
 
@@ -248,7 +264,7 @@ function viewApplicantDetails(index) {
                     <option value="${status}" ${currentStatus === status ? 'selected' : ''}>${status}</option>
                 `).join('')}
             </select>
-            <button onclick="updateApplicantStatus(${sheetRowNumber})" class="btn-primary update-btn">Update Status</button>
+            <button onclick="updateApplicantStatus(${sheetRowNumber})" class="cta-button">Update Status</button>
         </div>
     `;
 
@@ -315,11 +331,11 @@ function setupPortalNavigation() {
 
     function showSection(targetId) {
         sections.forEach(section => {
-            section.classList.remove('active-section');
-            section.classList.add('hidden-section');
+            section.classList.remove('active-section'); // This class adds the top border color
+            section.style.display = 'none'; // We use direct style to hide/show
             if (section.id === targetId) {
                 section.classList.add('active-section');
-                section.classList.remove('hidden-section');
+                section.style.display = 'block';
             }
         });
     }
@@ -327,8 +343,8 @@ function setupPortalNavigation() {
     sidebarLinks.forEach(link => {
         link.addEventListener('click', function(e) {
             e.preventDefault();
-            sidebarLinks.forEach(l => l.classList.remove('active'));
-            this.classList.add('active');
+            sidebarLinks.forEach(l => l.classList.remove('active-link'));
+            this.classList.add('active-link');
             const targetId = this.getAttribute('href').substring(1);
             showSection(targetId);
         });
@@ -338,19 +354,18 @@ function setupPortalNavigation() {
     showSection(initialHash);
     const initialLink = document.querySelector(`.sidebar ul li a[href="#${initialHash}"]`);
     if (initialLink) {
-        initialLink.classList.add('active');
+        initialLink.classList.add('active-link');
     }
 }
 
 // --- Initialization ---
 document.addEventListener('DOMContentLoaded', () => {
-    setupPortalNavigation();
-    
-    // 💥 FIX: Load ALL data automatically upon page load 💥
-    window.loadAllApplications(); 
-    
     // Expose functions to the global scope for HTML event handlers
     window.viewApplicantDetails = viewApplicantDetails;
     window.loadAllApplications = loadAllApplications;
     window.updateApplicantStatus = updateApplicantStatus; 
+
+    setupPortalNavigation();
+    // Load all data automatically upon page load
+    window.loadAllApplications();
 });

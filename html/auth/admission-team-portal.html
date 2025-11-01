@@ -4,98 +4,149 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admissions Team Portal</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLMDJc5f85p8kK37k8L8N9wG9g3x4r3t5aP/d8a8J8zJg4A7X1j3u4G5w8Q5r5P7w==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-    <link rel="stylesheet" href="../../css/portals/admission-team-portal/admission-team-portal.css"> 
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="../../css/portals/admins-portal/admins-portal.css">
     <link rel="shortcut icon" href="../../images/44.png" type="image/x-icon">
-    </head>
+</head>
+<style>
+    /* Styles for the Applicant Details Modal */
+    .modal {
+        display: none; /* Hidden by default */
+        position: fixed; /* Stay in place */
+        z-index: 1000; /* Sit on top */
+        left: 0;
+        top: 0;
+        width: 100%; /* Full width */
+        height: 100%; /* Full height */
+        overflow: auto; /* Enable scroll if needed */
+        background-color: rgba(0,0,0,0.6); /* Black w/ opacity */
+        padding-top: 60px;
+    }
+
+    .modal-content {
+        background-color: #fefefe;
+        margin: 5% auto; /* 5% from the top and centered */
+        padding: 25px;
+        border: 1px solid #888;
+        width: 80%; /* Could be more or less, depending on screen size */
+        max-width: 900px;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2),0 6px 20px 0 rgba(0,0,0,0.19);
+        animation: animatetop 0.4s;
+    }
+
+    /* Add Animation */
+    @keyframes animatetop {
+        from {top: -300px; opacity: 0}
+        to {top: 0; opacity: 1}
+    }
+
+</style>
 <body>
 
-    <header class="admissions-header">
-        <div class="logo">
-            <a href="../../index.html"><img src="../../images/Logo.png" alt="Royal High School Logo"></a>
+    <header class="fixed top-0 left-0 w-full bg-indigo-700 text-white shadow-xl z-20">
+        <div class="flex items-center justify-between p-4 max-w-7xl mx-auto">
+          <div class="flex items-center space-x-4">
+            <button id="menu-toggle" class="md:hidden p-1 focus:outline-none focus:ring-2 focus:ring-white rounded-md">
+              <i class="fas fa-bars text-xl"></i>
+            </button>
+            <div class="logo font-bold text-2xl tracking-tight">
+              <a href="../../index.html" class="text-white hover:text-gray-200">TORONTO PRIMARY SCHOOL</a>
+            </div>
+          </div>
+          
+          <div class="relative group">
+            <button class="flex items-center space-x-2 text-white p-2 rounded-full hover:bg-indigo-600 transition duration-150">
+              <i class="fas fa-user-circle text-2xl"></i>
+              <span class="hidden sm:inline">Admissions</span>
+              <i class="fas fa-chevron-down text-xs ml-1"></i>
+            </button>
+    
+            <div class="absolute right-0 top-full mt-1 w-48 bg-white rounded-md shadow-lg py-1 z-30 invisible group-hover:visible opacity-0 group-hover:opacity-100 translate-y-1 group-hover:translate-y-0 transition-all duration-200">
+              <a href="#settings" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" onclick="window.location.hash='#settings'; handleNavigation();">Settings</a>
+              <hr class="my-1">
+              <a href="../auth/auth.html" class="btn-logout block px-4 py-2 text-sm text-red-600 hover:bg-red-50"><i class="fas fa-sign-out-alt mr-2"></i>Logout</a>
+            </div>
+          </div>
         </div>
-        <div class="auth-buttons">
-            <a href="#" class="btn-login btn-logout"><i class="fas fa-sign-out-alt"></i> Log Out</a>
-        </div>
-    </header>
+      </header>
 
     <main class="portal-main-content">
         <aside class="sidebar">
-            <h2 class="sidebar-title">Admissions Navigation</h2>
+            <h3 class="sidebar-title">Admissions Menu</h3>
             <ul>
-                <li><a href="#dashboard" class="active"><i class="fas fa-chart-line"></i> Dashboard</a></li>
-                <li><a href="#new-applications"><i class="fas fa-file-alt"></i> New Applications</a></li>
-                <li><a href="#accepted-applications"><i class="fas fa-check-circle"></i> Accepted Applicants</a></li>
-                <li><a href="#rejected-applications"><i class="fas fa-times-circle"></i> Rejected Applications</a></li>
+                <li><a href="#dashboard"><i class="fas fa-chart-line"></i> Overview</a></li>
+                <li><a href="#new-applicants"><i class="fas fa-file-invoice"></i> New Submissions</a></li>
+                <li><a href="#review-in-progress"><i class="fas fa-tasks"></i> In Review</a></li>
+                <li><a href="#offers-extended"><i class="fas fa-check-circle"></i> Offers/Accepted</a></li>
+                <li><a href="#waitlist-pool"><i class="fas fa-hourglass-half"></i> Waitlisted</a></li>
+                <li><a href="#rejected-applications"><i class="fas fa-times-circle"></i> Rejected</a></li>
                 <li><a href="#settings"><i class="fas fa-cog"></i> Settings</a></li>
+                <li class="sidebar-footer-item">
+                    <a href="auth.html" class="btn-logout" style="color: var(--primary-red);"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                </li>
             </ul>
         </aside>
 
         <section class="portal-content-wrapper">
-            <div id="dashboard" class="portal-section">
-                <h1>Admissions Team Dashboard</h1>
-                <p class="portal-description">Welcome to the Admissions Team Portal. Use the navigation to manage student applications.</p>
-                
+            <h1 class="portal-title">Admissions Portal Dashboard</h1>
+        
+            <div id="dashboard" class="portal-section active-section">
+                <h2>Admissions Overview</h2>
                 <div class="grid-container dashboard-cards">
-                    <div class="dashboard-card accent-1">
-                        <i class="fas fa-users-class fa-3x"></i>
-                        <h3>Total Applications</h3>
-                        <p id="total-applications">--</p>
+                    <div class="tool-card card-admissions-1">
+                        <h3><i class="fas fa-inbox"></i> New Submissions</h3>
+                        <p class="metric-number" id="metric-new-count">0</p>
+                        <a href="#new-applicants" class="cta-button-small">Review Now</a>
                     </div>
-                    <div class="dashboard-card accent-2">
-                        <i class="fas fa-file-check fa-3x"></i>
-                        <h3>Accepted</h3>
-                        <p id="accepted-applications-count">--</p>
+                    <div class="tool-card card-admissions-2">
+                        <h3><i class="fas fa-users"></i> Total Applicants</h3>
+                        <p class="metric-number" id="metric-total-count">0</p>
+                        <a onclick="loadAllApplications()" class="cta-button-small">Refresh Data</a>
                     </div>
-                    <div class="dashboard-card accent-3">
-                        <i class="fas fa-clock fa-3x"></i>
-                        <h3>Pending Review</h3>
-                        <p id="pending-review-count">--</p>
+                    <div class="tool-card card-admissions-3">
+                        <h3><i class="fas fa-check-circle"></i> Offers Extended</h3>
+                        <p class="metric-number" id="metric-offers-count">0</p>
+                        <a href="#offers-extended" class="cta-button-small">View Offers</a>
                     </div>
-                    <div class="dashboard-card accent-4">
-                        <i class="fas fa-user-times fa-3x"></i>
-                        <h3>Rejected</h3>
-                        <p id="rejected-applications-count">--</p>
-                    </div>
-                </div>
-
-                <div class="recent-activity">
-                    <h2>Recent Activity</h2>
-                    <ul>
-                        <li><i class="fas fa-check-circle primary-green"></i> Application #1005 accepted by [Team Member].</li>
-                        <li><i class="fas fa-file-alt primary-blue"></i> New application received from John Smith.</li>
-                        <li><i class="fas fa-user-times primary-red"></i> Application #1001 marked for rejection.</li>
-                        <li><i class="fas fa-clock accent-gold"></i> Review criteria updated by Admin.</li>
-                    </ul>
                 </div>
             </div>
 
-            <div id="new-applications" class="portal-section hidden-section">
-                <h2>New Applications for Review</h2>
-                <div class="filter-controls">
-                    <label for="new-grade-filter">Filter by Grade:</label>
-                    <select id="new-grade-filter">
-                        <option value="All">All Grades</option>
-                        <option value="R">Grade R</option>
-                        <option value="1">Grade 1</option>
-                        <option value="2">Grade 2</option>
-                        <option value="3">Grade 3</option>
-                        <option value="4">Grade 4</option>
-                        <option value="5">Grade 5</option>
-                        <option value="6">Grade 6</option>
-                        <option value="7">Grade 7</option>
-                    </select>
-                </div>
+            <div id="new-applicants" class="portal-section hidden-section">
+                <h2>Unprocessed Applications</h2>
+                <p>Applicants currently awaiting initial screening. Click the button below to fetch the latest data from the sheet.</p>
+                
+                <button id="load-data-btn" class="btn-primary update-btn" onclick="loadAllApplications()">
+                    <i class="fas fa-database"></i> Load Latest Applications Data
+                </button>
+
                 <div id="applicant-list-new" class="data-table-container">
-                    <p class="info-message">Loading new applications...</p>
+                    <p class="info-message">Click 'Load Latest Applications Data' to view submissions.</p>
                 </div>
-                <button id="load-more-new-btn" class="cta-button secondary-blue hidden">Load More</button>
+            </div>
+            
+            <div id="review-in-progress" class="portal-section hidden-section">
+                <h2>Applications in Review</h2>
+                <p>Applications currently in the detailed documentation review or interview stage.</p>
+                <div id="applicant-list-review" class="data-table-container">
+                    <p class="info-message">Load data on the 'New Applications' tab to populate this section.</p>
+                </div>
             </div>
 
-            <div id="accepted-applications" class="portal-section hidden-section">
-                <h2>Accepted Applicants</h2>
-                <p>Learners who have been accepted and are ready for SA-SAMS registration.</p>
-                <div id="applicant-list-accepted" class="data-table-container">
+            <div id="offers-extended" class="portal-section hidden-section">
+                <h2>Offers Extended/Accepted</h2>
+                <p>Applicants who have received and/or accepted an offer.</p>
+                <div id="applicant-list-offers" class="data-table-container">
+                    <p class="info-message">Load data on the 'New Applications' tab to populate this section.</p>
+                </div>
+            </div>
+
+            <div id="waitlist-pool" class="portal-section hidden-section">
+                <h2>Waitlisted Applications</h2>
+                <p>Applicants placed in the waiting pool.</p>
+                <div id="applicant-list-waitlist" class="data-table-container">
                     <p class="info-message">Load data on the 'New Applications' tab to populate this section.</p>
                 </div>
             </div>
@@ -115,7 +166,12 @@
     </main>
     
     <footer>
-        <p>© 2023 Royal High School. All rights reserved.</p>
+        <p>© 2023 Toronto Primary School. All rights reserved.</p>
+        <a href="#"><i class="fa-brands fa-x-twitter"></i></a>
+        <a href="#"><i class="fa-brands fa-facebook-f"></i></a>
+        <a href="#"><i class="fa-brands fa-instagram"></i></a>
+        <a href="#"><i class="fa-brands fa-linkedin-in"></i></a>
+        <a href="#"><i class="fa-brands fa-square-youtube"></i></a>
     </footer>
     
     <div id="applicant-details-modal" class="modal">
