@@ -21,8 +21,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Sidebar navigation logic
-    const sidebarLinks = document.querySelectorAll('.sidebar ul li a');
+    // Select all links intended for section navigation, both in the sidebar and main content
+    const navLinks = document.querySelectorAll('.sidebar a[href^="#"], .portal-content-wrapper a[href^="#"]');
     const sections = document.querySelectorAll('.portal-section');
+    const sidebarLinks = document.querySelectorAll('.sidebar a[href^="#"]');
+
 
   // Function to show the target section and hide others
   function showSection(targetId) {
@@ -37,16 +40,21 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // Handle link clicks
-  sidebarLinks.forEach(link => {
+  navLinks.forEach(link => {
     link.addEventListener('click', function (e) {
       e.preventDefault();
 
-      // Remove active class from all links
-      sidebarLinks.forEach(l => l.classList.remove('active'));
-      // Add active class to the clicked link
-      this.classList.add('active');
-
       const targetId = this.getAttribute('href').substring(1);
+
+      // Remove active class from all sidebar links
+      sidebarLinks.forEach(l => l.classList.remove('active'));
+      
+      // Find the corresponding sidebar link and make it active
+      const correspondingSidebarLink = document.querySelector(`.sidebar a[href="#${targetId}"]`);
+      if (correspondingSidebarLink) {
+        correspondingSidebarLink.classList.add('active');
+      }
+      
       showSection(targetId);
       
       // Update URL hash
@@ -174,6 +182,9 @@ async function loadTeacherClassesAndLearners(db, teacherAuthData) {
         // 4. Populate the class filter dropdown
         populateClassFilter(assignedClasses);
 
+        // 5. Set up the attendance register dropdown
+        setupAttendanceRegister(db, assignedClasses);
+
         // Clear the loading message
         const rostersContainer = document.getElementById('class-rosters-container');
         rostersContainer.innerHTML = '';
@@ -206,10 +217,13 @@ function populateClassFilter(assignedClasses) {
     const filterSelect = document.getElementById('teacher-class-filter');
     if (!filterSelect) return;
 
-    // Clear existing options (except the first "Show All")
-    filterSelect.innerHTML = '<option value="all">Show All Classes</option>';
+    // Clear existing options and set the default prompt
+    filterSelect.innerHTML = '<option value="">Please select a class to show list of names</option>';
 
-    // Add an option for each assigned class
+    // Add "Show All" as the first real option
+    filterSelect.innerHTML += '<option value="all">Show All Classes</option>';
+
+    // Add an option for each specific assigned class
     assignedClasses.forEach(className => {
         const option = document.createElement('option');
         option.value = className;
@@ -223,13 +237,92 @@ function populateClassFilter(assignedClasses) {
         const rostersContainer = document.getElementById('class-rosters-container');
         const allRosterCards = rostersContainer.querySelectorAll('.tool-card');
 
-        allRosterCards.forEach(card => {
-            if (selectedClass === 'all' || card.dataset.className === selectedClass) {
-                card.style.display = 'flex'; // Use 'flex' as per .tool-card styles
-            } else {
-                card.style.display = 'none';
+        // First, handle the visibility of the main container
+        if (selectedClass) {
+            rostersContainer.style.display = 'grid'; // Make the container visible
+        } else {
+            rostersContainer.style.display = 'none'; // Hide it if no selection
+        }
+
+        if (selectedClass === "") {
+            // If the default prompt is selected, hide all cards
+            allRosterCards.forEach(card => card.style.display = 'none');
+        } else {
+            // Then, handle the visibility of individual cards inside the container
+            allRosterCards.forEach(card => {
+                if (selectedClass === 'all' || card.dataset.className === selectedClass) {
+                    card.style.display = 'flex'; // Use 'flex' as per .tool-card styles
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+    });
+}
+
+/**
+ * Populates the attendance class dropdown and sets up the listener to load learners.
+ * @param {firebase.firestore.Firestore} db - The Firestore database instance.
+ * @param {Array<string>} assignedClasses - An array of class names.
+ */
+function setupAttendanceRegister(db, assignedClasses) {
+    const classSelect = document.getElementById('attendance-class-select');
+    const tableBody = document.getElementById('attendance-table-body');
+
+    if (!classSelect || !tableBody) return;
+
+    // Populate the dropdown
+    assignedClasses.forEach(className => {
+        const option = document.createElement('option');
+        option.value = className;
+        option.textContent = `Class: ${className}`;
+        classSelect.appendChild(option);
+    });
+
+    // Add event listener to load learners on selection
+    classSelect.addEventListener('change', async (e) => {
+        const selectedClass = e.target.value;
+
+        if (!selectedClass) {
+            tableBody.innerHTML = '<tr><td colspan="2" class="info-message">Please select a class to view the attendance register.</td></tr>';
+            return;
+        }
+
+        tableBody.innerHTML = '<tr><td colspan="2" class="info-message"><i class="fas fa-sync fa-spin"></i> Loading learners...</td></tr>';
+
+        try {
+            const learnersQuery = db.collection('sams_registrations').where('fullGradeSection', '==', selectedClass);
+            const learnersSnapshot = await learnersQuery.get();
+
+            if (learnersSnapshot.empty) {
+                tableBody.innerHTML = '<tr><td colspan="2" class="info-message">No learners found for this class.</td></tr>';
+                return;
             }
-        });
+
+            let tableRowsHTML = '';
+            learnersSnapshot.forEach(doc => {
+                const learner = doc.data();
+                const learnerId = doc.id; // Use the unique document ID for the radio button name
+                const learnerName = `${learner.learnerName || ''} ${learner.learnerSurname || ''}`.trim();
+
+                tableRowsHTML += `
+                    <tr>
+                        <td>${learnerName}</td>
+                        <td>
+                            <input type="radio" id="${learnerId}-present" name="${learnerId}-status" value="present" checked>
+                            <label for="${learnerId}-present" class="status-present">Present</label>
+                            <input type="radio" id="${learnerId}-absent" name="${learnerId}-status" value="absent">
+                            <label for="${learnerId}-absent" class="status-absent">Absent</label>
+                        </td>
+                    </tr>
+                `;
+            });
+            tableBody.innerHTML = tableRowsHTML;
+
+        } catch (error) {
+            console.error("Error loading learners for attendance:", error);
+            tableBody.innerHTML = '<tr><td colspan="2" class="error-message">Failed to load learners. Please try again.</td></tr>';
+        }
     });
 }
 
@@ -273,4 +366,13 @@ function renderClassRoster(container, className, learners) {
     }
     card.innerHTML = tableHTML;
     container.appendChild(card);
+
+    // Hide the individual card by default. The filter will show it when needed.
+    card.style.display = 'none';
+
+    // After rendering, re-apply the filter logic in case the user has already selected a class
+    const filterSelect = document.getElementById('teacher-class-filter');
+    if (filterSelect.value !== "") {
+        filterSelect.dispatchEvent(new Event('change'));
+    }
 }

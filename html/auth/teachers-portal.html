@@ -117,9 +117,8 @@
     <h2>Mark Attendance</h2>
     <form action="#" method="POST" class="form-grid">
      <label for="class-select">Select Class:</label>
-     <select id="class-select" name="class">
-      <option value="physics-10">Grade 10 Physics</option>
-      <option value="chemistry-11">Grade 11 Chemistry</option>
+     <select id="attendance-class-select" name="class">
+      <option value="">-- Select a Class to Load Roster --</option>
      </select>
      <table class="data-table">
       <thead>
@@ -128,21 +127,8 @@
         <th>Status</th>
        </tr>
       </thead>
-      <tbody>
-       <tr>
-        <td>John Smith</td>
-        <td>
-         <input type="radio" id="js-present" name="js-status" value="present" checked> <label for="js-present" class="status-present">Present</label>
-         <input type="radio" id="js-absent" name="js-status" value="absent"> <label for="js-absent" class="status-absent">Absent</label>
-        </td>
-       </tr>
-       <tr>
-        <td>Jane Williams</td>
-        <td>
-         <input type="radio" id="jw-present" name="jw-status" value="present" checked> <label for="jw-present" class="status-present">Present</label>
-         <input type="radio" id="jw-absent" name="jw-status" value="absent"> <label for="jw-absent" class="status-absent">Absent</label>
-        </td>
-       </tr>
+      <tbody id="attendance-table-body">
+        <tr><td colspan="2" class="info-message">Please select a class to view the attendance register.</td></tr>
       </tbody>
      </table>
      <button type="submit" class="cta-button primary-green"><i class="fas fa-save"></i> Submit Attendance</button>
@@ -194,7 +180,7 @@
     <div class="form-group" style="max-width: 300px; margin-bottom: 20px;">
         <label for="teacher-class-filter">Filter by Class:</label>
         <select id="teacher-class-filter">
-            <option value="all">Show All Classes</option>
+            <option value="">Please select a class to show list of names</option>
         </select>
     </div>
 
