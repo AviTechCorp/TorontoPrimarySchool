@@ -281,7 +281,7 @@ function handleNavigation() {
     }
 
     // Reset pagination and state if leaving detail/assignment/management views
-    if (!['grade-assignment', 'sams-learners', 'edit-learner-profile', 'sams-educators', 'edit-teacher-profile', 'teacher-details', 'grade-sections'].includes(targetId)) {
+    if (!['grade-assignment', 'sams-learners', 'edit-learner-profile', 'sams-educators', 'edit-teacher-profile', 'teacher-details', 'grade-sections', 'sams-parents'].includes(targetId)) {
         lastVisibleUnassigned = null;
         lastVisibleAssigned = null;
         lastVisibleAll = null;
@@ -420,6 +420,15 @@ function handleNavigation() {
     // Grade Sections View
     if (targetId === 'grade-sections') {
         // Initial state is handled by the event listeners, no initial data load needed.
+    }
+
+    // Parent Data View
+    if (targetId === 'sams-parents') {
+        // The initial load is now handled by the 'change' event listener logic
+        // to prevent double-loading. We can trigger it manually if needed.
+        const gradeFilter = document.getElementById('parent-grade-filter');
+        const classFilter = document.getElementById('parent-class-filter');
+        loadAllParentData(gradeFilter.value, classFilter.value);
     }
 }
 
@@ -1028,6 +1037,57 @@ document.addEventListener('DOMContentLoaded', () => {
             if (typeof loadAllTeachers === 'function') {
                 const selectedGrade = teacherGradeFilter ? teacherGradeFilter.value : 'All';
                 loadAllTeachers(selectedGrade, false); 
+            }
+        });
+    }
+
+    // --- PARENT DATA LISTENERS ---
+    const parentGradeFilter = document.getElementById('parent-grade-filter');
+    const parentClassFilter = document.getElementById('parent-class-filter');
+
+    if (parentGradeFilter) {
+        parentGradeFilter.addEventListener('change', async (e) => {
+            const selectedGrade = e.target.value;
+            parentClassFilter.innerHTML = '<option value="All">All Classes</option>'; // Reset
+
+            if (window.location.hash !== '#sams-parents') return;
+
+            if (selectedGrade === 'All') {
+                parentClassFilter.disabled = true;
+                await loadAllParentData('All', 'All');
+                return;
+            }
+
+            parentClassFilter.disabled = true; // Disable while loading
+
+            // Load parent data for the whole grade first
+            await loadAllParentData(selectedGrade, 'All');
+
+            // Then, find unique sections to populate the class filter
+            try {
+                const gradeValue = (selectedGrade === 'R') ? 'R' : parseInt(selectedGrade, 10);
+                const snapshot = await db.collection('sams_registrations').where('grade', '==', gradeValue).get();
+                const sections = new Set();
+                snapshot.forEach(doc => {
+                    const section = doc.data().section;
+                    if (section && section.trim() !== '') sections.add(section);
+                });
+
+                Array.from(sections).sort().forEach(section => {
+                    parentClassFilter.add(new Option(section, section));
+                });
+
+                parentClassFilter.disabled = false; // Re-enable
+            } catch (error) {
+                console.error("Error populating parent class filter:", error);
+            }
+        });
+    }
+
+    if (parentClassFilter) {
+        parentClassFilter.addEventListener('change', (e) => {
+            if (window.location.hash === '#sams-parents') {
+                loadAllParentData(parentGradeFilter.value, e.target.value);
             }
         });
     }

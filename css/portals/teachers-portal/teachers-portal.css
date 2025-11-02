@@ -334,6 +334,19 @@ body {
     background-color: #4338ca;
 }
 
+.communication-note {
+    margin-top: 15px;
+    padding: 12px;
+    background-color: #eef2ff; /* Light indigo background */
+    border-left: 4px solid var(--primary-indigo);
+    border-radius: 4px;
+}
+
+.communication-note p {
+    margin: 0;
+    color: #374151; /* Darker gray text */
+}
+
 /* ==========================================================================
    Forms & Tables
    ========================================================================== */
@@ -374,16 +387,17 @@ input:focus, select:focus {
     outline: none;
 }
 
-.data-table {
+.data-table, #teacher-parents-data-table {
     width: 100%;
     border-collapse: collapse;
-    margin-top: 15px;
+    margin-top: 20px;
     background-color: var(--color-surface);
     border-radius: 8px;
     overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
-.data-table th {
+.data-table th, #teacher-parents-data-table th {
     padding: 12px 16px;
     background-color: #eef2ff;
     color: #1e3a8a;
@@ -394,14 +408,14 @@ input:focus, select:focus {
     font-size: 0.85em;
 }
 
-.data-table td {
+.data-table td, #teacher-parents-data-table td {
     padding: 12px 16px;
     border-bottom: 1px solid var(--color-border);
     vertical-align: middle;
     font-size: 0.9em;
 }
 
-.data-table tbody tr:hover {
+.data-table tbody tr:hover, #teacher-parents-data-table tbody tr:hover {
     background-color: #f1f5f9;
 }
 
@@ -451,6 +465,98 @@ input[type="radio"] {
 .resource-list li a:hover {
     text-decoration: underline;
     color: var(--primary-indigo);
+}
+
+/* ==========================================================================
+   Contact Modal
+   ========================================================================== */
+
+.modal {
+    display: none; /* Hidden by default */
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.6);
+    padding-top: 60px;
+}
+
+.modal-content {
+    background-color: #fefefe;
+    margin: 5% auto;
+    padding: 25px;
+    border: 1px solid #888;
+    width: 90%;
+    max-width: 700px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2),0 6px 20px 0 rgba(0,0,0,0.19);
+    position: relative;
+    animation: animatetop 0.4s;
+}
+
+@keyframes animatetop {
+    from {top: -300px; opacity: 0}
+    to {top: 0; opacity: 1}
+}
+
+.modal-close-btn {
+    color: #aaa;
+    position: absolute;
+    top: 10px;
+    right: 20px;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.modal-close-btn:hover,
+.modal-close-btn:focus {
+    color: black;
+    text-decoration: none;
+}
+
+.contact-method-switcher {
+    display: flex;
+    gap: 10px;
+    margin: 20px 0;
+    border-bottom: 1px solid var(--color-border);
+    padding-bottom: 15px;
+}
+
+.contact-method-btn {
+    padding: 10px 15px;
+    border: 1px solid var(--color-border);
+    background-color: #f9fafb;
+    cursor: pointer;
+    border-radius: 6px;
+    font-weight: 600;
+    color: #555;
+    transition: all 0.2s;
+}
+
+.contact-method-btn.active {
+    background-color: var(--primary-indigo);
+    color: white;
+    border-color: var(--primary-indigo);
+}
+
+.contact-form textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    box-sizing: border-box;
+    font-size: 1em;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.contact-form textarea:focus {
+    border-color: var(--primary-indigo);
+    box-shadow: 0 0 0 1px var(--primary-indigo);
+    outline: none;
 }
 
 /* ==========================================================================

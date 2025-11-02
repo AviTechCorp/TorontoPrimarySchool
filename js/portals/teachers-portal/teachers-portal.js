@@ -1,3 +1,239 @@
+
+// js/portals/teachers-portal/teachers-portal.js
+
+// NOTE: This script relies on the global 'db' variable from firebase-config.js
+
+/**
+ * Fetches and displays parent contact information for a specific class.
+ * @param {string} selectedClass - The class to filter by (e.g., 'RA', '1B').
+ */
+async function loadParentContactsForClass(selectedClass) {
+    const container = document.getElementById('teacher-parents-data-container');
+    const statusMessage = document.getElementById('teacher-parents-data-status');
+
+    container.innerHTML = ''; // Clear previous results
+
+    if (!selectedClass) {
+        statusMessage.textContent = 'Please select a class to view parent contacts.';
+        statusMessage.style.display = 'block';
+        return;
+    }
+
+    statusMessage.textContent = `Fetching parent contacts for Class ${selectedClass}...`;
+    statusMessage.style.display = 'block';
+
+    try {
+        const db = firebase.firestore();
+        // Query the sams_registrations collection for learners in the selected class
+        const snapshot = await db.collection('sams_registrations')
+            .where('fullGradeSection', '==', selectedClass)
+            .get();
+
+        if (snapshot.empty) {
+            statusMessage.textContent = `No learners (and therefore no parents) found for class ${selectedClass}.`;
+            return;
+        }
+
+        const parentsData = [];
+        const uniqueParentEmails = new Set();
+
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            // Add parent if they have an email and haven't been added yet
+            if (data.parent1Email && !uniqueParentEmails.has(data.parent1Email)) {
+                parentsData.push(data);
+                uniqueParentEmails.add(data.parent1Email);
+            }
+        });
+
+        if (parentsData.length === 0) {
+            statusMessage.textContent = 'No parent contact information found for this class.';
+            return;
+        }
+
+        // Sort by parent name for consistency
+        parentsData.sort((a, b) => (a.parent1Name || '').localeCompare(b.parent1Name || ''));
+
+        const table = document.createElement('table');
+        table.id = 'teacher-parents-data-table'; // ID for styling
+        table.innerHTML = `
+            <thead>
+                <tr>
+                    <th>Parent Name</th>
+                    <th>Parent Email</th>
+                    <th>Parent Contact</th>
+                    <th>Learner Name</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${parentsData.map(data => `
+                    <tr>
+                        <td>${data.parent1Name || 'N/A'}</td>
+                        <td><a href="mailto:${data.parent1Email}">${data.parent1Email || 'N/A'}</a></td>
+                        <td>${data.parent1Contact || 'N/A'}</td>
+                        <td>${data.learnerName || ''} ${data.learnerSurname || ''}</td>
+                        <td>
+                            <button class="cta-button-small" onclick='openContactModal(${JSON.stringify(data)})'>Contact</button>
+                        </td>
+                    </tr>
+                `).join('')}
+            </tbody>
+        `;
+
+        container.appendChild(table);
+        statusMessage.textContent = `Displaying ${parentsData.length} parent contact(s) for Class ${selectedClass}.`;
+
+    } catch (error) {
+        console.error("Error loading parent contacts:", error);
+        statusMessage.textContent = 'An error occurred while loading data. Please check the console.';
+        statusMessage.classList.add('error');
+    }
+}
+
+/**
+ * Opens the contact modal and populates it with parent/learner data.
+ * @param {object} data - The parent/learner data object from Firestore.
+ */
+function openContactModal(data) {
+    const modal = document.getElementById('contact-parent-modal');
+    if (!modal) return;
+
+    // --- Store data on the modal forms for easy access ---
+    const emailForm = document.getElementById('contact-email-form');
+    const smsForm = document.getElementById('contact-sms-form');
+    emailForm.dataset.parentData = JSON.stringify(data);
+    smsForm.dataset.parentData = JSON.stringify(data);
+
+    // --- Populate Email Form ---
+    document.getElementById('email-parent-name').textContent = data.parent1Name || 'N/A';
+    document.getElementById('email-parent-email').textContent = data.parent1Email || 'N/A';
+    document.getElementById('email-learner-name').textContent = `${data.learnerName || ''} ${data.learnerSurname || ''}`;
+    document.getElementById('email-subject').value = `Update regarding ${data.learnerName || 'your child'}`;
+    document.getElementById('email-message').value = '';
+
+    // --- Populate SMS Form ---
+    document.getElementById('sms-parent-name').textContent = data.parent1Name || 'N/A';
+    document.getElementById('sms-parent-contact').textContent = data.parent1Contact || 'N/A';
+    document.getElementById('sms-learner-name').textContent = `${data.learnerName || ''} ${data.learnerSurname || ''}`;
+    document.getElementById('sms-message').value = '';
+
+    // --- Show the modal ---
+    modal.style.display = 'block';
+
+    // --- Reset to email view by default ---
+    emailForm.style.display = 'block';
+    smsForm.style.display = 'none';
+    document.getElementById('contact-via-email-btn').classList.add('active');
+    document.getElementById('contact-via-sms-btn').classList.remove('active');
+}
+
+/**
+ * Sets up event listeners for the contact modal.
+ */
+function setupContactModalListeners() {
+    const modal = document.getElementById('contact-parent-modal');
+    if (!modal) return;
+
+    const closeBtn = modal.querySelector('.modal-close-btn');
+    const emailBtn = document.getElementById('contact-via-email-btn');
+    const smsBtn = document.getElementById('contact-via-sms-btn');
+    const emailForm = document.getElementById('contact-email-form');
+    const smsForm = document.getElementById('contact-sms-form');
+
+    // Close modal
+    const closeModal = () => modal.style.display = 'none';
+    closeBtn.onclick = closeModal;
+    window.onclick = (event) => {
+        if (event.target == modal) {
+            closeModal();
+        }
+    };
+
+    // Switch between forms
+    emailBtn.onclick = () => {
+        emailForm.style.display = 'block';
+        smsForm.style.display = 'none';
+        emailBtn.classList.add('active');
+        smsBtn.classList.remove('active');
+    };
+
+    smsBtn.onclick = () => {
+        smsForm.style.display = 'block';
+        emailForm.style.display = 'none';
+        smsBtn.classList.add('active');
+        emailBtn.classList.remove('active');
+    };
+
+    // Handle form submissions
+    emailForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const parentData = JSON.parse(e.target.dataset.parentData);
+        const teacherData = JSON.parse(sessionStorage.getItem('currentUser'));
+
+        if (!teacherData || !teacherData.email) {
+            alert('Error: Could not identify the sender (teacher). Please log in again.');
+            return;
+        }
+
+        const submitButton = emailForm.querySelector('button[type="submit"]');
+        submitButton.disabled = true;
+        submitButton.innerHTML = '<i class="fas fa-sync fa-spin"></i> Sending...';
+
+        // IMPORTANT: Replace this with the URL of your NEWLY deployed Google Apps Script
+        const scriptURL = 'https://script.google.com/macros/s/AKfycbyELV81r6M6MeGdclMhKKFBAvFVucm1WQC10YgqkCZSfbrK-JGM4wmTFGBa8-iUtRy1AA/exec'; // This is the correct URL for the teacher email script
+        const formData = new FormData(emailForm);
+
+        // Append additional data needed by the script
+        formData.append('teacherEmail', teacherData.email);
+        formData.append('parentEmail', parentData.parent1Email);
+        formData.append('parentName', parentData.parent1Name);
+        formData.append('teacherName', teacherData.preferredName || 'Toronto Primary Teacher');
+        formData.append('learnerName', `${parentData.learnerName || ''} ${parentData.learnerSurname || ''}`);
+
+        fetch(scriptURL, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => {
+            if (response.ok) {
+                return response.json();
+            }
+            throw new Error('Network response was not ok.');
+        })
+        .then(result => {
+            if (result.status === 'success') {
+                alert(result.message || 'Email sent successfully!');
+                closeModal();
+            } else {
+                throw new Error(result.message || 'The script reported an error.');
+            }
+        }).catch(error => {
+            console.error('Error sending email:', error);
+            alert('An error occurred while sending the email. Please try again.');
+        }).finally(() => {
+            submitButton.disabled = false;
+            submitButton.innerHTML = '<i class="fas fa-paper-plane"></i> Send Email';
+        });
+    });
+
+    smsForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const data = JSON.parse(e.target.dataset.parentData);
+        const body = document.getElementById('sms-message').value;
+        // Use sms: to open the user's default messaging app (works on mobile)
+        // On desktop, this may do nothing or prompt the user.
+        const contactNumber = (data.parent1Contact || '').replace(/\s+/g, ''); // Remove spaces
+        if (contactNumber) {
+            window.location.href = `sms:${contactNumber}?body=${encodeURIComponent(body)}`;
+        } else {
+            alert('No valid contact number available for this parent.');
+        }
+        closeModal();
+    });
+}
+
+// --- CORE DATA HANDLING & DISPLAY FUNCTIONS ---
 document.addEventListener('DOMContentLoaded', () => {
     const userData = JSON.parse(sessionStorage.getItem('currentUser'));
     
@@ -7,14 +243,14 @@ document.addEventListener('DOMContentLoaded', () => {
         // This check prevents errors if firebase is already initialized by another script.
         if (!firebase.apps.length) {
             firebase.initializeApp(firebaseConfig);
+        } else {
+            // If already initialized, get the default app
+            firebase.app();
         }
         const db = firebase.firestore();
 
         loadTeacherProfile(userData);
-        loadTeacherClassesAndLearners(db, userData);
-
-        // Expose functions to the global scope if needed, or handle events here
-        window.loadParentData = () => loadParentData(db);
+        loadTeacherClassesAndLearners(db, userData); // This populates class rosters
     } else {
         console.error("User data not found in session storage. Please log in again.");
         return; // Stop further script execution
@@ -62,6 +298,16 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
+    // --- PARENT CONTACTS FILTER LISTENER ---
+    const parentClassFilter = document.getElementById('teacher-parent-class-filter');
+    if (parentClassFilter) {
+        parentClassFilter.addEventListener('change', (e) => {
+            loadParentContactsForClass(e.target.value);
+        });
+    }
+    // --- CONTACT MODAL LISTENERS ---
+    setupContactModalListeners();
+
   // Handle page load based on URL hash (default to dashboard)
   const initialHash = window.location.hash.substring(1) || 'dashboard';
   showSection(initialHash);
@@ -71,69 +317,37 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyELV81r6M6MeGdclMhKKFBAvFVucm1WQC10YgqkCZSfbrK-JGM4wmTFGBa8-iUtRy1AA/exec"; 
-
-// Function to handle the click event on a parent's email.
-function loadParentData() {
-  const parentDataContainer = document.getElementById('parent-data-container');
-  
-  parentDataContainer.innerHTML = '<p>Loading parent data...</p>';
-
-  fetch(APPS_SCRIPT_URL)
-    .then(response => {
-      if (!response.ok) {
-        throw new Error('Network response was not ok');
-      }
-      return response.json();
-    })
-    .then(data => {
-      parentDataContainer.innerHTML = '';
-      const table = document.createElement('table');
-      let tableHTML = `<thead><tr><th>Parent Name</th><th>Email</th><th>Learner's Name</th><th>Contact</th></tr></thead><tbody>`;
-      data.forEach(parent => {
-        const parentEmail = parent["Parent's Email"];
-        const learnerName = parent["Learner's Full Name"];
-        
-        const encodedEmail = encodeURIComponent(parentEmail);
-        const encodedName = encodeURIComponent(learnerName);
-        
-        const contactURL = `${APPS_SCRIPT_URL}?page=compose-message&email=${encodedEmail}&name=${encodedName}`;
-
-        tableHTML += ` <tr>
-                 <td>${parent["Parent's Full Name"]}</td>
-                 <td>${parentEmail}</td>
-                 <td>${learnerName}</td>
-                 <td>
-                   <a href="${contactURL}" class="contact-link" target="_blank">Contact</a>
-                 </td>
-               </tr> `;
-      });
-      tableHTML += `</tbody>`;
-      table.innerHTML = tableHTML;
-      parentDataContainer.appendChild(table);
-    })
-    .catch(error => {
-      console.error('Error fetching parent data:', error);
-      parentDataContainer.innerHTML = '<p>Failed to load parent data. Please ensure the Apps Script URL is correct and deployed.</p>';
-    });
-}
-
 // Function to load and display teacher profile data
-function loadTeacherProfile(userData) {
+async function loadTeacherProfile(userData) {
+    const teacherNameDisplay = document.getElementById('teacher-name-display');
+    const profileSurname = document.querySelector('.profile-surname');
+    const profilePreferredName = document.querySelector('.profile-preferred-name');
+    const profileEmail = document.querySelector('.profile-email'); 
+    const parentClassFilter = document.getElementById('teacher-parent-class-filter');
+
   if (userData) {
-    // The 'auth.js' script now provides a complete user object with a role.
-    // We will fetch the full profile from the 'users' collection using the UID.
     const db = firebase.firestore();
-    db.collection('users').doc(userData.uid).get().then(doc => {
+    const doc = await db.collection('users').doc(userData.uid).get();
       if (doc.exists) {
-        const profile = doc.data();
-        document.querySelector('#teacher-name-display').textContent = profile.preferredName || 'Teacher';
-        document.querySelector('.profile-surname').innerHTML = `<strong>Surname:</strong> ${profile.surname || 'N/A'}`;
-        document.querySelector('.profile-preferred-name').innerHTML = `<strong>Preferred Name:</strong> ${profile.preferredName || 'N/A'}`;
-        document.querySelector('.profile-email').innerHTML = `<strong>Email:</strong> ${profile.email || 'N/A'}`;
-        document.querySelector('.profile-contact').innerHTML = `<strong>Contact:</strong> ${profile.contactNumber || 'N/A'}`;
+        const teacherData = doc.data();
+        const teacherName = teacherData.preferredName || 'Teacher';
+
+        if (teacherNameDisplay) teacherNameDisplay.textContent = teacherName;
+        if (profileSurname) profileSurname.innerHTML = `<strong>Surname:</strong> ${teacherData.surname || 'N/A'}`;
+        if (profilePreferredName) profilePreferredName.innerHTML = `<strong>Preferred Name:</strong> ${teacherData.preferredName || 'N/A'}`;
+        if (profileEmail) profileEmail.innerHTML = `<strong>Email:</strong> ${teacherData.email || 'N/A'}`;
+        document.querySelector('.profile-contact').innerHTML = `<strong>Contact:</strong> ${teacherData.contactNumber || 'N/A'}`;
+
+        // Populate the parent contact filter dropdown
+        if (parentClassFilter) {
+            parentClassFilter.innerHTML = '<option value="">-- Select a Class --</option>'; // Reset
+            if (teacherData.assignedClasses && teacherData.assignedClasses.length > 0) {
+                teacherData.assignedClasses.forEach(className => {
+                    parentClassFilter.add(new Option(className, className));
+                });
+            }
+        }
       }
-    });
   } else {
     console.error("User data not found in session storage. Please log in again.");
   }

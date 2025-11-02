@@ -32,7 +32,7 @@
       <div class="relative group">
         <button class="flex items-center space-x-2 text-white p-2 rounded-full hover:bg-indigo-600 transition duration-150">
           <i class="fas fa-user-circle text-2xl"></i>
-          <span class="hidden sm:inline">Admin</span>
+          <span class="hidden sm:inline">Teacher</span>
           <i class="fas fa-chevron-down text-xs ml-1"></i>
         </button>
 
@@ -130,11 +130,19 @@
       
       <div id="parents-data" class="portal-section hidden-section">
         <h2>Parent Information</h2>
-        <p>View contact information for the parents of your learners. Click an email to send a message to the parent.</p>
-        <div id="parent-data-container">
-          <p>Loading parent data...</p>
+        <p>View contact information for the parents of learners in your assigned classes.</p>
+
+        <div class="tool-card">
+            <div class="form-group" style="max-width: 300px; margin-bottom: 20px;">
+                <label for="teacher-parent-class-filter">Filter by Your Class:</label>
+                <select id="teacher-parent-class-filter">
+                    <option value="">-- Select a Class --</option>
+                </select>
+            </div>
+
+            <p class="data-status-message" id="teacher-parents-data-status">Please select a class to view parent contacts.</p>
+            <div id="teacher-parents-data-container"></div>
         </div>
-        <a href="javascript:void(0);" class="cta-button" onclick="loadParentData()">Load Parent Data</a>
       </div>
    
    <div id="attendance-form" class="portal-section hidden-section">
@@ -242,6 +250,12 @@
       <h3><i class="fas fa-envelope-open-text"></i> Message Parents</h3>
       <p>Send secure messages regarding learner progress or behavioral concerns.</p>
       <a href="#parents-data" class="cta-button-small">Contact Parents</a>
+      <div class="communication-note">
+        <p>
+          <i class="fas fa-info-circle"></i> 
+          <strong>Please Note:</strong> When a parent replies to your email, their response will be delivered directly to your personal email inbox, not inside this portal.
+        </p>
+      </div>
      </div>
      <div class="tool-card accent-3">
       <h3><i class="fas fa-users-cog"></i> Message Colleagues</h3>
@@ -305,6 +319,48 @@
     </div>
    </div>
   </section>
+
+      <!-- Contact Parent Modal -->
+      <div id="contact-parent-modal" class="modal">
+        <div class="modal-content">
+          <span class="modal-close-btn">&times;</span>
+          <div id="contact-modal-content">
+            <h2 id="contact-modal-title">Contact Parent</h2>
+            <p id="contact-modal-intro">Select a method to contact the parent.</p>
+
+            <div class="contact-method-switcher">
+              <button id="contact-via-email-btn" class="contact-method-btn active"><i class="fas fa-envelope"></i> Email</button>
+              <button id="contact-via-sms-btn" class="contact-method-btn"><i class="fas fa-mobile-alt"></i> SMS</button>
+            </div>
+
+            <!-- Email Form -->
+            <form id="contact-email-form" class="contact-form">
+              <p><strong>To:</strong> <span id="email-parent-name"></span> (<span id="email-parent-email"></span>)</p>
+              <p><strong>Regarding:</strong> <span id="email-learner-name"></span></p>
+              <div class="form-group">
+                <label for="email-subject">Subject</label>
+                <input type="text" id="email-subject" name="email-subject" value="Update regarding your child">
+              </div>
+              <div class="form-group">
+                <label for="email-message">Message</label>
+                <textarea id="email-message" name="email-message" rows="6" placeholder="Write your message here..."></textarea>
+              </div>
+              <button type="submit" class="cta-button primary-blue"><i class="fas fa-paper-plane"></i> Send Email</button>
+            </form>
+
+            <!-- SMS Form -->
+            <form id="contact-sms-form" class="contact-form" style="display: none;">
+              <p><strong>To:</strong> <span id="sms-parent-name"></span> (<span id="sms-parent-contact"></span>)</p>
+              <p><strong>Regarding:</strong> <span id="sms-learner-name"></span></p>
+              <div class="form-group">
+                <label for="sms-message">Message (SMS)</label>
+                <textarea id="sms-message" rows="6" placeholder="Write your SMS message here..."></textarea>
+              </div>
+              <button type="submit" class="cta-button primary-green"><i class="fas fa-sms"></i> Send SMS</button>
+            </form>
+          </div>
+        </div>
+      </div>
  </main>
  
   <footer>
