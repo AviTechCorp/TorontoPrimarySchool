@@ -309,10 +309,12 @@ function setupAttendanceRegister(db, assignedClasses) {
                     <tr>
                         <td>${learnerName}</td>
                         <td>
-                            <input type="radio" id="${learnerId}-present" name="${learnerId}-status" value="present" checked>
-                            <label for="${learnerId}-present" class="status-present">Present</label>
-                            <input type="radio" id="${learnerId}-absent" name="${learnerId}-status" value="absent">
-                            <label for="${learnerId}-absent" class="status-absent">Absent</label>
+                            <div class="attendance-status-container">
+                                <input type="radio" id="${learnerId}-present" name="${learnerId}-status" value="present" checked>
+                                <label for="${learnerId}-present" class="status-present">Present</label>
+                                <input type="radio" id="${learnerId}-absent" name="${learnerId}-status" value="absent">
+                                <label for="${learnerId}-absent" class="status-absent">Absent</label>
+                            </div>
                         </td>
                     </tr>
                 `;

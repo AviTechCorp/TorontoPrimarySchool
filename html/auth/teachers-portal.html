@@ -4,6 +4,10 @@
  <meta charset="UTF-8">
  <meta name="viewport" content="width=device-width, initial-scale=1.0">
  <title>Teachers Portal</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+
+
  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
  <link rel="stylesheet" href="../../global.css">
  <link rel="stylesheet" href="../../css/portals/teachers-portal/teachers-portal.css">
@@ -14,14 +18,32 @@
 </head>
 <body>
 
- <header>
-  <div class="logo">
-   <a href="../../index.html"><img src="../../images/Logo.png" alt="Royal High School Logo"></a>
-  </div>
-  <div class="auth-buttons">
-   <a href="#" class="btn-login btn-logout"><i class="fas fa-sign-out-alt"></i> Log Out</a>
-  </div>
- </header>
+  <header class="fixed top-0 left-0 w-full bg-indigo-700 text-white shadow-xl z-20">
+    <div class="flex items-center justify-between p-4 max-w-7xl mx-auto">
+      <div class="flex items-center space-x-4">
+        <button id="menu-toggle" class="md:hidden p-1 focus:outline-none focus:ring-2 focus:ring-white rounded-md">
+          <i class="fas fa-bars text-xl"></i>
+        </button>
+        <div class="logo font-bold text-2xl tracking-tight">
+          <a href="../../index.html" class="text-white hover:text-gray-200">TORONTO PRIMARY SCHOOL</a>
+        </div>
+      </div>
+      
+      <div class="relative group">
+        <button class="flex items-center space-x-2 text-white p-2 rounded-full hover:bg-indigo-600 transition duration-150">
+          <i class="fas fa-user-circle text-2xl"></i>
+          <span class="hidden sm:inline">Admin</span>
+          <i class="fas fa-chevron-down text-xs ml-1"></i>
+        </button>
+
+        <div class="absolute right-0 top-full mt-1 w-48 bg-white rounded-md shadow-lg py-1 z-30 invisible group-hover:visible opacity-0 group-hover:opacity-100 translate-y-1 group-hover:translate-y-0 transition-all duration-200">
+          <a href="#profile" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" onclick="window.location.hash='#profile'; handleNavigation();">Profile</a>
+          <hr class="my-1">
+          <a href="../auth/auth.html" class="btn-logout block px-4 py-2 text-sm text-red-600 hover:bg-red-50"><i class="fas fa-sign-out-alt mr-2"></i>Logout</a>
+        </div>
+      </div>
+    </div>
+  </header>
 
  <main class="portal-main-content">
   <aside class="sidebar">
@@ -38,6 +60,9 @@
     <li><a href="#calendar"><i class="fas fa-calendar-alt"></i> School Calendar</a></li>
         <li><a href="#announcements"><i class="fas fa-bullhorn"></i> Announcements</a></li>
     <li><a href="#settings"><i class="fas fa-cog"></i> Settings</a></li>
+    <li class="sidebar-footer-item">
+      <a href="#" class="btn-logout"><i class="fas fa-sign-out-alt"></i> Logout</a>
+    </li>
    </ul>
   </aside>
 
@@ -78,8 +103,7 @@
       <p class="profile-preferred-name"><strong>Preferred Name:</strong> Loading...</p>
       <p class="profile-email"><strong>Email:</strong> Loading...</p>
             <p class="profile-contact"><strong>Contact:</strong> Loading...</p>
-     </div>
-          <a href="#" class="cta-button-edit">Edit Profile</a>
+     </div><a href="#" class="cta-button-edit">Edit Profile</a>
     </div>
    </div>
 
@@ -158,8 +182,8 @@
       <tbody>
        <tr>
         <td>John Smith</td>
-        <td><input type="text" name="js-grade" placeholder="A+"></td>
-        <td><input type="text" name="js-score" placeholder="95/100"></td>
+        <td><input type="text" name="js-grade" placeholder="A+">
+        <input type="text" name="js-score" placeholder="95/100"></td>
        </tr>
        <tr>
         <td>Jane Williams</td>
@@ -284,8 +308,14 @@
  </main>
  
   <footer>
-  <p>© 2023 Toronto Primary School. All rights reserved.</p>
- </footer>
+    <p>© 2023 Toronto Primary School. All rights reserved.</p>
+    <a href="#"><i class="fa-brands fa-x-twitter"></i></a>
+    <a href="#"><i class="fa-brands fa-facebook-f"></i></a>
+    <a href="#"><i class="fa-brands fa-instagram"></i></a>
+    <a href="#"><i class="fa-brands fa-linkedin-in"></i></a>
+    <a href="#"><i class="fa-brands fa-square-youtube"></i></a>
+  </footer>
+
  <script src="../../js/portals/teachers-portal/teachers-portal.js"></script>
   <script type="module" src="../../js/auth/auth.js"></script>
   <script type="module" src="../../js/announcements/announcements.js"></script>
