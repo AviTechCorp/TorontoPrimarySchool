@@ -236,6 +236,7 @@ function setupContactModalListeners() {
 // --- CORE DATA HANDLING & DISPLAY FUNCTIONS ---
 document.addEventListener('DOMContentLoaded', () => {
     const userData = JSON.parse(sessionStorage.getItem('currentUser'));
+    let db; // Declare db at a higher scope
     
     // If no user data, stop execution. The auth.js script will handle the redirect.
     if (userData) {
@@ -247,7 +248,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // If already initialized, get the default app
             firebase.app();
         }
-        const db = firebase.firestore();
+        db = firebase.firestore(); // Initialize the db variable
 
         loadTeacherProfile(userData);
         loadTeacherClassesAndLearners(db, userData); // This populates class rosters
@@ -308,6 +309,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- CONTACT MODAL LISTENERS ---
     setupContactModalListeners();
 
+    // --- ATTENDANCE FORM LISTENER ---
+    const attendanceForm = document.getElementById('attendance-form');
+    if (attendanceForm) setupAttendanceFormListener(attendanceForm, db, userData);
+
   // Handle page load based on URL hash (default to dashboard)
   const initialHash = window.location.hash.substring(1) || 'dashboard';
   showSection(initialHash);
@@ -346,6 +351,14 @@ async function loadTeacherProfile(userData) {
                     parentClassFilter.add(new Option(className, className));
                 });
             }
+        }
+
+        // **NEW**: Conditionally show attendance features only for class teachers
+        if (teacherData.isClassTeacher) {
+            document.querySelectorAll('.class-teacher-only').forEach(el => {
+                // Use 'block' or 'flex' based on the element's intended display style
+                el.style.display = el.classList.contains('tool-card') ? 'flex' : 'block';
+            });
         }
       }
   } else {
@@ -560,12 +573,19 @@ function setupAttendanceRegister(db, assignedClasses) {
 
             let tableRowsHTML = '';
             learnersSnapshot.forEach(doc => {
-                const learner = doc.data();
+                const learnerData = doc.data();
                 const learnerId = doc.id; // Use the unique document ID for the radio button name
-                const learnerName = `${learner.learnerName || ''} ${learner.learnerSurname || ''}`.trim();
+                
+                // **FIX**: Ensure admissionId is correctly retrieved from the learner data object.
+                const admissionId = learnerData.admissionId || 'N/A';
+                const learnerName = `${learnerData.learnerName || ''} ${learnerData.learnerSurname || ''}`.trim();
 
+                // If the learner name is empty, we can skip adding them to the attendance list.
+                if (!learnerName) return;
+                
                 tableRowsHTML += `
-                    <tr>
+                    <tr data-admission-id="${admissionId}">
+                        <td>${admissionId}</td>
                         <td>${learnerName}</td>
                         <td>
                             <div class="attendance-status-container">
@@ -583,6 +603,82 @@ function setupAttendanceRegister(db, assignedClasses) {
         } catch (error) {
             console.error("Error loading learners for attendance:", error);
             tableBody.innerHTML = '<tr><td colspan="2" class="error-message">Failed to load learners. Please try again.</td></tr>';
+        }
+    });
+}
+
+/**
+ * Adds an event listener to the attendance form to handle submission.
+ * @param {HTMLFormElement} form - The attendance form element.
+ * @param {firebase.firestore.Firestore} db - The Firestore database instance.
+ * @param {object} teacherData - The current teacher's user data.
+ */
+function setupAttendanceFormListener(form, db, teacherData) {
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const submitButton = form.querySelector('button[type="submit"]');
+        const statusMessage = document.getElementById('attendance-submit-status');
+        const classSelect = document.getElementById('attendance-class-select');
+        const selectedClass = classSelect.value;
+
+        if (!selectedClass) {
+            alert("Please select a class before submitting attendance.");
+            return;
+        }
+
+        submitButton.disabled = true;
+        submitButton.innerHTML = '<i class="fas fa-sync fa-spin"></i> Submitting...';
+        statusMessage.style.display = 'none';
+
+        const attendanceBatch = db.batch();
+        const attendanceDate = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+        const absentLearners = [];
+
+        const rows = document.querySelectorAll('#attendance-table-body tr');
+        rows.forEach(row => {
+            const radio = row.querySelector('input[type="radio"]:checked');
+            if (radio && radio.value === 'absent') {
+                const learnerId = radio.name.replace('-status', '');
+                const learnerName = row.cells[1].textContent; // Learner name is in the second column (index 1)
+                const admissionId = row.dataset.admissionId;
+                
+                absentLearners.push({ learnerId, learnerName, admissionId });
+            }
+        });
+
+        if (absentLearners.length > 0) {
+            absentLearners.forEach(({ learnerId, learnerName, admissionId }) => {
+                // Create a unique doc ID based on date and learner to prevent duplicates for the same day
+                const docId = `${attendanceDate}_${learnerId}`;
+                const recordRef = db.collection('attendance_records').doc(docId);
+
+                const recordData = {
+                    date: attendanceDate,
+                    status: 'absent',
+                    learnerId: learnerId,
+                    learnerName: learnerName,
+                    admissionId: admissionId,
+                    fullGradeSection: selectedClass,
+                    markedBy: teacherData.uid,
+                    markedAt: firebase.firestore.FieldValue.serverTimestamp()
+                };
+                attendanceBatch.set(recordRef, recordData);
+            });
+        }
+
+        try {
+            await attendanceBatch.commit();
+            statusMessage.textContent = `Attendance for ${selectedClass} submitted successfully. ${absentLearners.length} learner(s) marked absent.`;
+            statusMessage.className = 'status-message-box success';
+            statusMessage.style.display = 'block';
+        } catch (error) {
+            console.error("Error submitting attendance:", error);
+            statusMessage.textContent = 'An error occurred while submitting attendance. Please try again.';
+            statusMessage.className = 'status-message-box error';
+            statusMessage.style.display = 'block';
+        } finally {
+            submitButton.disabled = false;
+            submitButton.innerHTML = '<i class="fas fa-save"></i> Submit Attendance';
         }
     });
 }

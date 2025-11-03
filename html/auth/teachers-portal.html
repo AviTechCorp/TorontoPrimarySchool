@@ -88,7 +88,7 @@
      </div>
      <div class="tool-card accent-3">
       <h3><i class="fas fa-running"></i> Quick Actions</h3>
-      <a href="#attendance-form" class="cta-button primary-green">Mark Attendance</a>
+      <a href="#attendance-form" class="cta-button primary-green class-teacher-only" style="display: none;">Mark Attendance</a>
       <a href="#grades-form" class="cta-button primary-red">Enter Grades</a>
      </div>
     </div>
@@ -110,7 +110,7 @@
    <div id="students" class="portal-section hidden-section">
     <h2>Learner Management</h2>
     <div class="grid-container dashboard-cards">
-     <div class="tool-card accent-3">
+     <div class="tool-card accent-3 class-teacher-only" style="display: none;">
       <h3><i class="fas fa-check-square"></i> Attendance</h3>
       <p>Mark daily attendance for your classes. </p>
       <a href="#attendance-form" class="cta-button-small">Mark Attendance</a>
@@ -145,7 +145,7 @@
         </div>
       </div>
    
-   <div id="attendance-form" class="portal-section hidden-section">
+   <div id="attendance-form" class="portal-section hidden-section class-teacher-only" style="display: none;">
     <h2>Mark Attendance</h2>
     <form action="#" method="POST" class="form-grid">
      <label for="class-select">Select Class:</label>
@@ -155,14 +155,16 @@
      <table class="data-table">
       <thead>
        <tr>
+        <th>Admission No.</th>
         <th>Learner Name</th>
         <th>Status</th>
        </tr>
       </thead>
       <tbody id="attendance-table-body">
-        <tr><td colspan="2" class="info-message">Please select a class to view the attendance register.</td></tr>
+        <tr><td colspan="3" class="info-message">Please select a class to view the attendance register.</td></tr>
       </tbody>
      </table>
+     <p id="attendance-submit-status" class="status-message-box" style="display: none; margin-top: 15px;"></p>
      <button type="submit" class="cta-button primary-green"><i class="fas fa-save"></i> Submit Attendance</button>
     </form>
    </div>

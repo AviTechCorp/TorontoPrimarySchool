@@ -166,4 +166,41 @@ document.addEventListener('DOMContentLoaded', () => {
             loadUnassignedLearners(assignmentGradeFilter.value, true);
         });
     }
+
+    // --- ATTENDANCE RECORDS LISTENER ---
+    const attendanceGradeFilter = document.getElementById('attendance-grade-filter');
+    const attendanceClassFilter = document.getElementById('attendance-class-filter');
+
+    if (attendanceGradeFilter) {
+        attendanceGradeFilter.addEventListener('change', async (e) => {
+            const selectedGrade = e.target.value;
+            attendanceClassFilter.innerHTML = '<option value="All">All Classes</option>'; // Reset
+
+            if (!selectedGrade) {
+                attendanceClassFilter.disabled = true;
+                loadAttendanceRecords(null); // Clear the table
+                return;
+            }
+
+            // Load all absences for the selected grade immediately
+            await loadAttendanceRecords(selectedGrade, 'All');
+
+            // Populate the class filter based on available classes
+            if (selectedGrade !== 'All') {
+                const allSections = await fetchAllUniqueClassSections();
+                const filteredSections = allSections.filter(section => section.startsWith(String(selectedGrade)));
+                filteredSections.forEach(section => {
+                    attendanceClassFilter.add(new Option(section, section));
+                });
+                attendanceClassFilter.disabled = false;
+            } else {
+                attendanceClassFilter.disabled = true;
+            }
+        });
+    }
+    if (attendanceClassFilter) {
+        attendanceClassFilter.addEventListener('change', (e) => {
+            loadAttendanceRecords(attendanceGradeFilter.value, e.target.value);
+        });
+    }
 });

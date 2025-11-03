@@ -137,9 +137,6 @@ async function loadAllActiveLearners(filterGrade = 'All', reset = false) {
             const row = tableBody.insertRow();
             row.setAttribute('data-id', admissionId); 
             
-            const selectCell = row.insertCell();
-            selectCell.innerHTML = `<input type="checkbox" class="learner-select-checkbox" value="${data.admissionId}" data-grade="${data.grade}">`;
-
             row.insertCell().textContent = admissionId;
             row.insertCell().textContent = `${data.learnerName || ''} ${data.learnerSurname || ''}`;
             row.insertCell().textContent = data.fullGradeSection || data.grade; 
@@ -314,10 +311,6 @@ async function loadUnassignedLearners(filterGrade = 'All', reset = false) {
 
         learnersToShow.forEach(data => {
             const row = tableBody.insertRow();
-
-            const selectCell = row.insertCell();
-            selectCell.innerHTML = `<input type="checkbox" class="learner-select-checkbox" value="${data.admissionId}" data-grade="${data.grade}">`;
-
             row.insertCell().textContent = data.admissionId;
             row.insertCell().textContent = `${data.learnerName || ''} ${data.learnerSurname || ''}`;
             row.insertCell().textContent = data.grade; 
@@ -423,9 +416,6 @@ async function loadAssignedLearners(filterGrade = 'All', reset = false) {
         learnersToShow.forEach(data => {
             const row = tableBody.insertRow();
             
-            const selectCell = row.insertCell();
-            selectCell.innerHTML = `<input type="checkbox" class="learner-select-checkbox" value="${data.admissionId}" data-grade="${data.grade}">`;
-
             row.insertCell().textContent = data.admissionId;
             row.insertCell().textContent = `${data.learnerName || ''} ${data.learnerSurname || ''}`;
             row.insertCell().textContent = data.fullGradeSection || data.grade; 
@@ -463,48 +453,82 @@ async function loadAssignedLearners(filterGrade = 'All', reset = false) {
 }
 
 /**
- * Updates multiple learner documents in a single batch operation.
- * @param {string[]} admissionIds - An array of learner admission IDs to update.
- * @param {string} fullGradeSection - The full class string (e.g., "6A").
+ * Fetches and displays absentee records for a specific date.
+ * @param {string} filterGrade - The grade to filter by.
+ * @param {string} filterClass - The class section to filter by.
  */
-async function bulkSetLearnerSection(admissionIds, fullGradeSection) {
-    if (!admissionIds || admissionIds.length === 0) {
-        alert("No learners selected for assignment.");
-        return;
-    }
-    if (!fullGradeSection) {
-        alert("No class selected for assignment.");
-        return;
-    }
+async function loadAttendanceRecords(filterGrade, filterClass = 'All') {
+    const tableBody = document.querySelector('#attendance-records-table tbody');
+    const statusMessage = document.getElementById('attendance-records-status');
 
-    const grade = fullGradeSection.match(/^\d+|[R]/)[0];
-    const section = fullGradeSection.replace(grade, '');
+    tableBody.innerHTML = '';
 
-    if (!confirm(`Are you sure you want to assign ${admissionIds.length} learner(s) to class ${fullGradeSection}?`)) {
+    if (!filterGrade) {
+        statusMessage.textContent = 'Please select a grade to view records.';
+        statusMessage.style.display = 'block';
         return;
     }
 
-    const batch = db.batch();
+    let statusText = `Fetching absentee records for Grade ${filterGrade}`;
+    if (filterClass !== 'All') {
+        statusText += `, Class ${filterClass}`;
+    }
+    statusMessage.textContent = statusText + '...';
+    statusMessage.style.display = 'block';
 
     try {
-        // Create a query to fetch all documents for the given admission IDs
-        const snapshot = await db.collection('sams_registrations').where('admissionId', 'in', admissionIds).get();
+        let query = db.collection('attendance_records').where('status', '==', 'absent');
+
+        if (filterGrade !== 'All') {
+            // Use a range query to find all classes for a given grade (e.g., >= '6' and < '7')
+            if (filterClass !== 'All') {
+                // If a specific class is selected, query for that exact class
+                query = query.where('fullGradeSection', '==', filterClass);
+            } else {
+                // Otherwise, query for all classes within the grade
+                const start = String(filterGrade);
+                const end = (filterGrade === 'R') ? 'S' : String(Number(filterGrade) + 1);
+                query = query.where('fullGradeSection', '>=', start).where('fullGradeSection', '<', end);
+            }
+        }
+
+        // Order by date descending to see the most recent absences first
+        const snapshot = await query.orderBy('fullGradeSection').orderBy('date', 'desc').get();
 
         if (snapshot.empty) {
-            alert("Error: Could not find the selected learners in the database.");
+            let emptyMessage = `No learners were marked absent for Grade ${filterGrade}`;
+            if (filterClass !== 'All') emptyMessage += ` in Class ${filterClass}`;
+            statusMessage.textContent = emptyMessage + '.';
             return;
         }
 
+        let absenteeCount = 0;
         snapshot.forEach(doc => {
-            batch.update(doc.ref, { section: section, fullGradeSection: fullGradeSection });
+            const data = doc.data();
+            const row = tableBody.insertRow();
+            row.insertCell().textContent = data.admissionId || 'N/A'; // Column 1: Admission No.
+            row.insertCell().textContent = data.date || 'N/A'; // Column 2: Date
+            row.insertCell().textContent = data.learnerName || 'N/A';
+            row.insertCell().textContent = data.fullGradeSection || 'N/A';
+
+            const statusCell = row.insertCell();
+            const status = data.status || 'unknown';
+            const statusClass = status.replace(/\s/g, '-').toLowerCase();
+            statusCell.innerHTML = `<span class="status-badge status-${statusClass}">${status}</span>`;
+
+            absenteeCount++;
         });
 
-        await batch.commit();
-        alert(`Successfully assigned ${admissionIds.length} learner(s) to class ${fullGradeSection}. The list will now refresh.`);
+        let successMessage = `Found ${absenteeCount} absent learner(s) for Grade ${filterGrade}`;
+        if (filterClass !== 'All') successMessage += ` in Class ${filterClass}`;
+        statusMessage.textContent = successMessage + '.';
 
     } catch (error) {
-        console.error("Error during bulk assignment:", error);
-        alert("An error occurred during the bulk assignment. Please check the console and try again.");
+        console.error("Error loading attendance records:", error);
+        statusMessage.textContent = 'An error occurred while loading attendance records. Please check the console.';
+        if (error.code === 'failed-precondition') {
+            statusMessage.innerHTML += '<br><strong>Action Required:</strong> A database index is required for this query. Please contact your system administrator and ask them to create the composite index for the `attendance_records` collection as specified in the browser console error log.';
+        }
     }
 }
 
@@ -658,82 +682,6 @@ async function addNewLearner() {
     } catch (error) {
         console.error("Error adding learner:", error);
         statusMessage.textContent = "An error occurred while adding the learner. Check console.";
-    }
-}
-
-/**
- * Finds learners with duplicate admission IDs in the sams_registrations collection.
- * @returns {Promise<Map<string, object[]>>} A promise that resolves to a Map where keys are
- * admission IDs and values are arrays of learner documents with that ID.
- */
-async function findDuplicateLearners() {
-    const statusMessage = document.getElementById('duplicates-status');
-    statusMessage.textContent = 'Scanning database for duplicates...';
-    
-    const learnersByAdmissionId = new Map();
-    const duplicates = new Map();
-
-    try {
-        const snapshot = await db.collection('sams_registrations').get();
-
-        if (snapshot.empty) {
-            statusMessage.textContent = 'Database is empty. No learners found.';
-            return duplicates;
-        }
-
-        snapshot.forEach(doc => {
-            const data = doc.data();
-            const docId = doc.id;
-            const admissionId = data.admissionId;
-
-            if (!admissionId) return; // Skip documents without an admission ID
-
-            if (!learnersByAdmissionId.has(admissionId)) {
-                learnersByAdmissionId.set(admissionId, []);
-            }
-            learnersByAdmissionId.get(admissionId).push({ ...data, docId });
-        });
-
-        // Filter for entries with more than one learner
-        for (const [admissionId, learners] of learnersByAdmissionId.entries()) {
-            if (learners.length > 1) {
-                duplicates.set(admissionId, learners);
-            }
-        }
-
-        if (duplicates.size === 0) {
-            statusMessage.textContent = 'Scan complete. No duplicate admission numbers found.';
-        } else {
-            statusMessage.textContent = `Scan complete. Found ${duplicates.size} admission number(s) with duplicate entries.`;
-        }
-
-        return duplicates;
-
-    } catch (error) {
-        console.error("Error finding duplicate learners:", error);
-        statusMessage.textContent = 'An error occurred during the scan. Check the console.';
-        return duplicates;
-    }
-}
-
-/**
- * Removes a specific learner document from Firestore by its document ID.
- * @param {string} docId - The unique Firestore document ID to remove.
- * @param {string} learnerName - The name of the learner for the confirmation prompt.
- */
-async function removeLearnerByDocId(docId, learnerName) {
-    if (!confirm(`Are you sure you want to PERMANENTLY remove the record for "${learnerName}" (Doc ID: ${docId})? This cannot be undone.`)) {
-        return;
-    }
-
-    try {
-        await db.collection('sams_registrations').doc(docId).delete();
-        alert(`Successfully removed the record for ${learnerName}.`);
-        // Re-run the scan to refresh the list
-        document.getElementById('scan-for-duplicates-btn').click();
-    } catch (error) {
-        console.error("Error removing learner document:", error);
-        alert("Failed to remove the learner record. Please check the console and try again.");
     }
 }
 
