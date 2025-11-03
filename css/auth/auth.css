@@ -266,3 +266,91 @@ legend {
   min-width: 84px;
   text-align: center;
 }
+
+.role-specific-fieldset {
+    border: 1px solid #e5e7eb;
+    padding: 15px;
+    border-radius: 8px;
+    margin-top: 15px;
+    grid-column: 1 / -1; /* Make it span all columns in the grid */
+}
+
+.checkbox-group {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 10px;
+    background-color: #f9fafb;
+    padding: 15px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+}
+
+.checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.checkbox-item input[type="checkbox"] {
+    width: auto; /* Override the default 100% width */
+    accent-color: var(--primary-indigo);
+    height: 18px;
+    width: 18px;
+}
+
+.assignment-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 2fr auto;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.remove-assignment-btn {
+    background-color: transparent;
+    border: none;
+    color: var(--primary-red);
+    cursor: pointer;
+    font-size: 1.2em;
+    padding: 5px;
+}
+.remove-assignment-btn:hover {
+    color: #991b1b; /* Darker red */
+}
+
+.forgot-password-link-container {
+    text-align: center;
+    margin-top: 15px;
+}
+
+.forgot-password-link-container a {
+    color: var(--primary-indigo);
+    font-size: 0.9em;
+    text-decoration: none;
+}
+
+.forgot-password-link-container a:hover {
+    text-decoration: underline;
+}
+
+
+.password-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.password-wrapper .toggle-password {
+    position: absolute;
+    top: 50%;
+    right: 15px;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: #6b7280; /* gray-500 */
+}
+.password-wrapper .toggle-password:hover {
+    color: var(--primary-indigo);
+}
+
+#forgot-password-form input[type="email"] {
+    width: 100%;
+}

@@ -137,14 +137,14 @@ async function loadAllActiveLearners(filterGrade = 'All', reset = false) {
             const row = tableBody.insertRow();
             row.setAttribute('data-id', admissionId); 
             
+            const selectCell = row.insertCell();
+            selectCell.innerHTML = `<input type="checkbox" class="learner-select-checkbox" value="${data.admissionId}" data-grade="${data.grade}">`;
+
             row.insertCell().textContent = admissionId;
             row.insertCell().textContent = `${data.learnerName || ''} ${data.learnerSurname || ''}`;
             row.insertCell().textContent = data.fullGradeSection || data.grade; 
             
             const actionCell = row.insertCell();
-            
-            // Always append the kebab menu for consistent actions.
-            // createKebabMenu is defined in ui-handlers.js
             actionCell.appendChild(createKebabMenu(data));
         });
         
@@ -261,6 +261,9 @@ async function loadUnassignedLearners(filterGrade = 'All', reset = false) {
         if(loadMoreBtn) loadMoreBtn.style.display = 'none';
     }
 
+    // FIX: Always clear the table body to prevent duplicates on re-load.
+    tableBody.innerHTML = '';
+
     if(listContainer.style.display !== 'block') return;
 
     statusMessage.textContent = `Fetching unassigned learners for Grade ${filterGrade === 'All' ? 'R - 7' : filterGrade}...`;
@@ -311,6 +314,10 @@ async function loadUnassignedLearners(filterGrade = 'All', reset = false) {
 
         learnersToShow.forEach(data => {
             const row = tableBody.insertRow();
+
+            const selectCell = row.insertCell();
+            selectCell.innerHTML = `<input type="checkbox" class="learner-select-checkbox" value="${data.admissionId}" data-grade="${data.grade}">`;
+
             row.insertCell().textContent = data.admissionId;
             row.insertCell().textContent = `${data.learnerName || ''} ${data.learnerSurname || ''}`;
             row.insertCell().textContent = data.grade; 
@@ -361,6 +368,9 @@ async function loadAssignedLearners(filterGrade = 'All', reset = false) {
         lastVisibleAssigned = null;
         if(loadMoreBtn) loadMoreBtn.style.display = 'none';
     }
+
+    // FIX: Always clear the table body to prevent duplicates on re-load.
+    tableBody.innerHTML = '';
 
     if(listContainer.style.display !== 'block') return;
 
@@ -413,6 +423,9 @@ async function loadAssignedLearners(filterGrade = 'All', reset = false) {
         learnersToShow.forEach(data => {
             const row = tableBody.insertRow();
             
+            const selectCell = row.insertCell();
+            selectCell.innerHTML = `<input type="checkbox" class="learner-select-checkbox" value="${data.admissionId}" data-grade="${data.grade}">`;
+
             row.insertCell().textContent = data.admissionId;
             row.insertCell().textContent = `${data.learnerName || ''} ${data.learnerSurname || ''}`;
             row.insertCell().textContent = data.fullGradeSection || data.grade; 
@@ -449,6 +462,51 @@ async function loadAssignedLearners(filterGrade = 'All', reset = false) {
     }
 }
 
+/**
+ * Updates multiple learner documents in a single batch operation.
+ * @param {string[]} admissionIds - An array of learner admission IDs to update.
+ * @param {string} fullGradeSection - The full class string (e.g., "6A").
+ */
+async function bulkSetLearnerSection(admissionIds, fullGradeSection) {
+    if (!admissionIds || admissionIds.length === 0) {
+        alert("No learners selected for assignment.");
+        return;
+    }
+    if (!fullGradeSection) {
+        alert("No class selected for assignment.");
+        return;
+    }
+
+    const grade = fullGradeSection.match(/^\d+|[R]/)[0];
+    const section = fullGradeSection.replace(grade, '');
+
+    if (!confirm(`Are you sure you want to assign ${admissionIds.length} learner(s) to class ${fullGradeSection}?`)) {
+        return;
+    }
+
+    const batch = db.batch();
+
+    try {
+        // Create a query to fetch all documents for the given admission IDs
+        const snapshot = await db.collection('sams_registrations').where('admissionId', 'in', admissionIds).get();
+
+        if (snapshot.empty) {
+            alert("Error: Could not find the selected learners in the database.");
+            return;
+        }
+
+        snapshot.forEach(doc => {
+            batch.update(doc.ref, { section: section, fullGradeSection: fullGradeSection });
+        });
+
+        await batch.commit();
+        alert(`Successfully assigned ${admissionIds.length} learner(s) to class ${fullGradeSection}. The list will now refresh.`);
+
+    } catch (error) {
+        console.error("Error during bulk assignment:", error);
+        alert("An error occurred during the bulk assignment. Please check the console and try again.");
+    }
+}
 
 /**
  * Updates the learner's document with the assigned section and the combined fullGradeSection.
@@ -507,52 +565,34 @@ async function setLearnerSection(admissionId, grade, newSection) {
     }
 }
 
-// =========================================================
-// === MANUAL LEARNER MANAGEMENT FUNCTIONS (DATA) ===
-// =========================================================
-
-async function confirmAndRemoveLearner(data) {
-    const admissionId = data.admissionId;
-    const learnerName = `${data.learnerName || data.Name} ${data.learnerSurname || ''}`.trim();
-
-    if (!confirm(`WARNING: Are you absolutely sure you want to PERMANENTLY remove the learner "${learnerName}" (ID: ${admissionId})? This cannot be undone.`)) {
-        return;
-    }
-
+/**
+ * Fetches all unique class sections from all teacher profiles.
+ * This is used to populate the class assignment dropdown.
+ * @returns {Promise<string[]>} A promise that resolves to an array of unique class names.
+ */
+async function fetchAllUniqueClassSections() {
+    const uniqueSections = new Set();
     try {
-        const snapshot = await db.collection('sams_registrations')
-            .where('admissionId', '==', admissionId)
-            .limit(1)
-            .get();
+        const snapshot = await db.collection('users').where('role', '==', 'teacher').get();
 
         if (snapshot.empty) {
-            alert(`Error: Learner with Admission ID ${admissionId} not found.`);
-            return;
+            console.warn("No teachers found to populate class sections.");
+            return [];
         }
 
-        const docRef = snapshot.docs[0].ref;
-        await docRef.delete();
-        
-        alert(`Success! Learner "${learnerName}" (ID: ${admissionId}) has been permanently removed.`);
-        
-        lastVisibleAll = null;
-        lastVisibleUnassigned = null;
-        lastVisibleAssigned = null;
-
-        // Call global UI refresh functions
-        if (document.getElementById('all-learners-list-view').style.display === 'block') {
-            const gradeFilter = document.getElementById('grade-filter');
-            loadAllActiveLearners(gradeFilter ? gradeFilter.value : 'All', true);
-        } else {
-            // NOTE: loadAssignmentToolLists is assumed to be defined in ui-handlers.js
-            if (typeof loadAssignmentToolLists === 'function') {
-                loadAssignmentToolLists(activeAssignmentView);
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            if (data.teachingAssignments && Array.isArray(data.teachingAssignments)) {
+                data.teachingAssignments.forEach(assignment => {
+                    if (assignment.fullClass) uniqueSections.add(assignment.fullClass);
+                });
             }
-        }
+        });
 
+        return Array.from(uniqueSections).sort();
     } catch (error) {
-        console.error("Error removing learner:", error);
-        alert("An error occurred while removing the learner. Check console.");
+        console.error("Error fetching unique class sections:", error);
+        return []; // Return empty array on error
     }
 }
 
@@ -621,24 +661,79 @@ async function addNewLearner() {
     }
 }
 
-async function removeLearner() {
-    const admissionId = document.getElementById('remove-admission-id').value.trim();
-    const statusMessage = document.getElementById('remove-learner-status');
+/**
+ * Finds learners with duplicate admission IDs in the sams_registrations collection.
+ * @returns {Promise<Map<string, object[]>>} A promise that resolves to a Map where keys are
+ * admission IDs and values are arrays of learner documents with that ID.
+ */
+async function findDuplicateLearners() {
+    const statusMessage = document.getElementById('duplicates-status');
+    statusMessage.textContent = 'Scanning database for duplicates...';
     
-    statusMessage.textContent = 'Processing...';
+    const learnersByAdmissionId = new Map();
+    const duplicates = new Map();
 
-    if (!admissionId) {
-        statusMessage.textContent = 'Please enter an Admission ID.';
+    try {
+        const snapshot = await db.collection('sams_registrations').get();
+
+        if (snapshot.empty) {
+            statusMessage.textContent = 'Database is empty. No learners found.';
+            return duplicates;
+        }
+
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            const docId = doc.id;
+            const admissionId = data.admissionId;
+
+            if (!admissionId) return; // Skip documents without an admission ID
+
+            if (!learnersByAdmissionId.has(admissionId)) {
+                learnersByAdmissionId.set(admissionId, []);
+            }
+            learnersByAdmissionId.get(admissionId).push({ ...data, docId });
+        });
+
+        // Filter for entries with more than one learner
+        for (const [admissionId, learners] of learnersByAdmissionId.entries()) {
+            if (learners.length > 1) {
+                duplicates.set(admissionId, learners);
+            }
+        }
+
+        if (duplicates.size === 0) {
+            statusMessage.textContent = 'Scan complete. No duplicate admission numbers found.';
+        } else {
+            statusMessage.textContent = `Scan complete. Found ${duplicates.size} admission number(s) with duplicate entries.`;
+        }
+
+        return duplicates;
+
+    } catch (error) {
+        console.error("Error finding duplicate learners:", error);
+        statusMessage.textContent = 'An error occurred during the scan. Check the console.';
+        return duplicates;
+    }
+}
+
+/**
+ * Removes a specific learner document from Firestore by its document ID.
+ * @param {string} docId - The unique Firestore document ID to remove.
+ * @param {string} learnerName - The name of the learner for the confirmation prompt.
+ */
+async function removeLearnerByDocId(docId, learnerName) {
+    if (!confirm(`Are you sure you want to PERMANENTLY remove the record for "${learnerName}" (Doc ID: ${docId})? This cannot be undone.`)) {
         return;
     }
 
-    const data = { admissionId: admissionId };
     try {
-        await confirmAndRemoveLearner(data);
-        statusMessage.textContent = `Attempted removal for ID ${admissionId}. Check alert for final status.`;
-        document.getElementById('remove-admission-id').value = '';
+        await db.collection('sams_registrations').doc(docId).delete();
+        alert(`Successfully removed the record for ${learnerName}.`);
+        // Re-run the scan to refresh the list
+        document.getElementById('scan-for-duplicates-btn').click();
     } catch (error) {
-        // Error handling is inside confirmAndRemoveLearner
+        console.error("Error removing learner document:", error);
+        alert("Failed to remove the learner record. Please check the console and try again.");
     }
 }
 
@@ -840,8 +935,18 @@ async function loadAllTeachers(filterGrade = 'All', reset = false) {
             // Column 2: Email
             row.insertCell().textContent = data.email;
             // Column 3: Assigned Grade
-            row.insertCell().textContent = (data.assignedGrades && data.assignedGrades.length > 0) ? data.assignedGrades.join(', ') : 'None Assigned';
-            
+            const roleCell = row.insertCell();
+            if (data.isClassTeacher) {
+                const subjects = (data.assignedSubjects && data.assignedSubjects.length > 0) ? `Teaches: ${data.assignedSubjects.join(', ')}` : 'No subjects listed';
+                roleCell.innerHTML = `<strong>Class Teacher: ${data.responsibleClass || 'N/A'}</strong><br><small>${subjects}</small>`;
+            } else {
+                const grades = (data.assignedGrades && data.assignedGrades.length > 0) 
+                    ? `Grades: ${data.assignedGrades.join(', ')}` 
+                    : 'No grades assigned';
+                roleCell.innerHTML = `<strong>Subject Teacher</strong><br><small>${grades}</small>`;
+            }
+
+
             // Column 4: Action Menu
             const actionCell = row.insertCell();
             

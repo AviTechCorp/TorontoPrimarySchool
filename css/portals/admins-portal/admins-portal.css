@@ -323,6 +323,13 @@ header {
     border: none;
     cursor: pointer;
 }
+
+.cta-button-small.danger {
+    background-color: var(--primary-red);
+    border-color: var(--primary-red);
+}
+
+
 .cta-button-small:hover {
     background-color: #4338ca;
 }
@@ -396,6 +403,15 @@ header {
     min-width: 80px;
     display: inline-block;
 }
+.role-tag {
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 0.8em;
+    font-weight: 600;
+    color: white;
+}
+.role-tag.class-teacher { background-color: var(--primary-indigo); }
+.role-tag.subject-teacher { background-color: var(--primary-green); }
 
 
 /* ==========================================================================
@@ -467,8 +483,9 @@ header {
    ========================================================================== */
 
 .form-group {
-    margin-bottom: 15px;
+    margin-bottom: 15px; /* Default margin for forms */
 }
+
 
 .form-group label {
     display: block;
@@ -585,6 +602,56 @@ select:focus {
     background-color: #fee2e2;
     color: #991b1b;
     border: 1px solid #f87171;
+}
+
+/* ==========================================================================
+   Bulk Action Bar (New)
+   ========================================================================== */
+
+.bulk-action-bar {
+    position: fixed;
+    bottom: 0;
+    left: var(--sidebar-width); /* Start after the sidebar */
+    right: 0;
+    background-color: var(--sidebar-bg);
+    color: white;
+    padding: 15px 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.2);
+    z-index: 20;
+    transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+}
+
+.bulk-action-controls {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+/* Make the label inside the bulk action bar white and readable */
+.bulk-action-controls .form-group label {
+    color: white;
+    font-weight: 500;
+}
+
+/* Remove bottom margin specifically for the form group inside the action bar */
+.bulk-action-controls .form-group {
+    margin-bottom: 0;
+}
+
+/* Fix dropdown text color inside the dark bulk action bar */
+.bulk-action-controls select {
+    color: var(--color-text); /* Use the default dark text color */
+    background-color: var(--color-surface); /* Ensure a white background */
+}
+
+
+@media (max-width: 768px) {
+    .bulk-action-bar {
+        left: 0; /* Full width on mobile */
+    }
 }
 
 /* ==========================================================================

@@ -386,7 +386,14 @@ async function loadTeacherClassesAndLearners(db, teacherAuthData) {
         }
 
         const teacherData = teacherDoc.data();
-        const assignedClasses = teacherData.assignedClasses || [];
+        // Derive assigned classes from the new teachingAssignments structure
+        const teachingAssignments = teacherData.teachingAssignments || [];
+        const assignedClasses = [...new Set(teachingAssignments.map(a => a.fullClass))].sort();
+
+
+        // New logic to display teacher's assignments
+        const myClassesContainer = document.getElementById('classes');
+        displayTeacherAssignments(myClassesContainer, teacherData);
 
         if (assignedClasses.length === 0) {
             document.getElementById('class-rosters-container').innerHTML = '<p class="info-message">You are not currently assigned to any classes.</p>';
@@ -421,6 +428,44 @@ async function loadTeacherClassesAndLearners(db, teacherAuthData) {
         console.error("Error loading teacher classes and learners:", error);
         document.getElementById('class-rosters-container').innerHTML = '<p class="error-message">An error occurred while loading class data. Please try again.</p>';
     }
+}
+
+/**
+ * Displays the teacher's role, responsible class, and all assigned grades/subjects.
+ * @param {HTMLElement} container - The container element for the "My Classes" section.
+ * @param {object} teacherData - The teacher's profile data from Firestore.
+ */
+function displayTeacherAssignments(container, teacherData) {
+    if (!container || !teacherData) return;
+
+    let assignmentsHTML = `
+        <h2>My Assignments</h2>
+        <div class="profile-card" style="flex-direction: column; align-items: flex-start;">
+    `;
+
+    if (teacherData.isClassTeacher && teacherData.responsibleClass) {
+        assignmentsHTML += `
+            <p><strong>Role:</strong> Class Teacher</p>
+            <p><strong>Primary Responsible Class:</strong> ${teacherData.responsibleClass || 'Not specified'}</p>
+        `;
+    } else {
+        assignmentsHTML += `<p><strong>Role:</strong> Subject Teacher</p>`;
+    }
+
+    // Display the detailed list of teaching assignments
+    if (teacherData.teachingAssignments && teacherData.teachingAssignments.length > 0) {
+        assignmentsHTML += `
+            <h4 style="margin-top: 15px; margin-bottom: 5px;">My Teaching Schedule:</h4>
+            <ul style="list-style-type: disc; padding-left: 20px; margin: 0;">
+                ${teacherData.teachingAssignments.map(a => `<li>${a.subject} for Class ${a.fullClass}</li>`).join('')}
+            </ul>
+        `;
+    } else {
+        assignmentsHTML += `<p><strong>Subjects Taught:</strong> Not specified</p>`;
+    }
+
+    assignmentsHTML += `</div><h2 style="margin-top: 30px;">Class Rosters</h2>`;
+    container.innerHTML = assignmentsHTML + container.innerHTML; // Prepend the new info
 }
 
 /**

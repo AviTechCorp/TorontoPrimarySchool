@@ -75,5 +75,95 @@ document.addEventListener('DOMContentLoaded', () => {
             loadAssignedLearners(e.target.value);
         });
     }
-});
 
+    // --- BULK ASSIGNMENT LISTENERS ---
+    const unassignedTableBody = document.querySelector('#unassigned-learners-table tbody');
+    const selectAllCheckbox = document.getElementById('select-all-unassigned');
+    const bulkActionBar = document.getElementById('bulk-action-bar');
+    const bulkActionCount = document.getElementById('bulk-action-count');
+    const bulkAssignSelect = document.getElementById('bulk-assign-section-select');
+    const bulkAssignButton = document.getElementById('bulk-assign-button');
+
+    let selectedLearnerIds = new Set();
+
+    function updateBulkActionBar() {
+        const count = selectedLearnerIds.size;
+        // Hide the bar by default and only show if items are selected.
+        if (!bulkActionBar) return;
+
+        if (count > 0) {
+            bulkActionBar.style.display = 'flex';
+            bulkActionCount.textContent = `${count} learner(s) selected`;
+        } else {
+            bulkActionBar.style.display = 'none';
+            if (selectAllCheckbox) selectAllCheckbox.checked = false; // Uncheck "select all" if nothing is selected
+        }
+    }
+
+    // Populate bulk assign dropdown based on selected grades
+    async function populateBulkAssignDropdown() {
+        const selectedCheckboxes = Array.from(unassignedTableBody.querySelectorAll('.learner-select-checkbox:checked'));
+        const selectedGrades = [...new Set(selectedCheckboxes.map(cb => cb.dataset.grade))];
+
+        bulkAssignSelect.innerHTML = '<option value="">-- Select a Class --</option>';
+
+        if (selectedGrades.length === 1) {
+            // Only populate if all selected learners are in the same grade
+            const grade = selectedGrades[0];
+            const allAvailableSections = await fetchAllUniqueClassSections();
+            const filteredSections = allAvailableSections.filter(section => section.startsWith(String(grade)));
+            
+            filteredSections.forEach(section => {
+                bulkAssignSelect.add(new Option(`Class ${section}`, section));
+            });
+            bulkAssignSelect.disabled = false;
+        } else if (selectedGrades.length > 1) {
+            bulkAssignSelect.innerHTML = '<option value="">Learners from multiple grades selected</option>';
+            bulkAssignSelect.disabled = true;
+        } else {
+            bulkAssignSelect.disabled = true;
+        }
+    }
+
+    if (unassignedTableBody) {
+        unassignedTableBody.addEventListener('change', (e) => {
+            if (e.target.classList.contains('learner-select-checkbox')) {
+                if (e.target.checked) {
+                    selectedLearnerIds.add(e.target.value);
+                } else {
+                    selectedLearnerIds.delete(e.target.value);
+                }
+                updateBulkActionBar();
+                populateBulkAssignDropdown();
+            }
+        });
+    }
+
+    if (selectAllCheckbox) {
+        selectAllCheckbox.addEventListener('change', (e) => {
+            const checkboxes = unassignedTableBody.querySelectorAll('.learner-select-checkbox');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = e.target.checked;
+                if (e.target.checked) {
+                    selectedLearnerIds.add(checkbox.value);
+                } else {
+                    selectedLearnerIds.delete(checkbox.value);
+                }
+            });
+            updateBulkActionBar();
+            populateBulkAssignDropdown();
+        });
+    }
+
+    if (bulkAssignButton) {
+        bulkAssignButton.addEventListener('click', async () => {
+            const selectedClass = bulkAssignSelect.value;
+            await bulkSetLearnerSection(Array.from(selectedLearnerIds), selectedClass);
+            // Refresh the list after assignment
+            selectedLearnerIds.clear();
+            selectAllCheckbox.checked = false;
+            updateBulkActionBar();
+            loadUnassignedLearners(assignmentGradeFilter.value, true);
+        });
+    }
+});

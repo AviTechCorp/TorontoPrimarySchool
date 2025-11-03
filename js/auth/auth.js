@@ -6,7 +6,8 @@
 
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
+// *** MODIFICATION: Import sendPasswordResetEmail ***
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
 import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
 
 
@@ -34,8 +35,16 @@ document.addEventListener('DOMContentLoaded', () => {
   // Get references to elements for form switching
   const loginLink = document.getElementById('show-login');
   const registerLink = document.getElementById('show-register');
+  // *** NEW: Get references for form links to switch to login/register after reset attempt ***
+  const formLinks = document.querySelector('.form-links'); 
   const loginForm = document.getElementById('login-form');
   const registerForm = document.getElementById('register-form');
+  // *** NEW: Get references for Forgot Password form elements ***
+  const forgotPasswordLink = document.getElementById('show-forgot-password');
+  const forgotPasswordForm = document.getElementById('forgot-password-form');
+  const forgotEmailInput = document.getElementById('forgotEmail');
+  const forgotSubmitButton = document.getElementById('forgotSubmit');
+
 
   // Get references to elements for the Register form
   const registerRoleSelect = document.getElementById('role-select');
@@ -54,12 +63,20 @@ document.addEventListener('DOMContentLoaded', () => {
   const loginPasswordInput = document.getElementById('loginPassword');
   const loginSubmitButton = document.getElementById('loginSubmit');
 
+  // Get references for new teacher fields
+  const isClassTeacherSelect = document.getElementById('is-class-teacher');
+  const classTeacherDetailsContainer = document.getElementById('class-teacher-details-container');
+  const teachingAssignmentsContainer = document.getElementById('teaching-assignments-container');
+  const responsiblePhaseSelect = document.getElementById('responsible-phase');
+  const responsibleGradeSelect = document.getElementById('responsible-grade');
+  const addAssignmentBtn = document.getElementById('add-assignment-btn');
+
   // Role-select -> show role-specific fields (registration form)
   if (registerRoleSelect) {
     const roleFields = Array.from(document.querySelectorAll('.role-fields'));
     function showRoleFields(value) {
       roleFields.forEach(el => {
-        el.style.display = 'none';
+        el.style.display = 'none'; // Use style for direct manipulation
         el.setAttribute('aria-hidden', 'true');
       });
       if (!value) return;
@@ -73,6 +90,126 @@ document.addEventListener('DOMContentLoaded', () => {
     registerRoleSelect.addEventListener('change', () => showRoleFields(registerRoleSelect.value));
     // initialize if already selected
     showRoleFields(registerRoleSelect.value);
+  }
+
+  // Class-teacher-select -> show responsible class dropdown
+  if (isClassTeacherSelect) {
+    isClassTeacherSelect.addEventListener('change', () => {
+      if (isClassTeacherSelect.value === 'yes') {
+        classTeacherDetailsContainer.style.display = 'grid';
+        teachingAssignmentsContainer.style.display = 'block';
+      } else if (isClassTeacherSelect.value === 'no') {
+        classTeacherDetailsContainer.style.display = 'none';
+        teachingAssignmentsContainer.style.display = 'block';
+      } else {
+        classTeacherDetailsContainer.style.display = 'none';
+        teachingAssignmentsContainer.style.display = 'none';
+      }
+    });
+  }
+
+  // Phase-select -> populate grade dropdown
+  if (responsiblePhaseSelect) {
+    responsiblePhaseSelect.addEventListener('change', () => {
+      const selectedPhase = responsiblePhaseSelect.value;
+      responsibleGradeSelect.innerHTML = ''; // Clear existing options
+      responsibleGradeSelect.disabled = true;
+
+      if (!selectedPhase) {
+        responsibleGradeSelect.add(new Option('-- Select Phase First --', ''));
+        return;
+      }
+
+      let grades = [];
+      if (selectedPhase === 'foundation') {
+        grades = [
+          { value: 'R', text: 'Grade R' },
+          { value: '1', text: 'Grade 1' },
+          { value: '2', text: 'Grade 2' },
+          { value: '3', text: 'Grade 3' },
+        ];
+      } else if (selectedPhase === 'intersen') {
+        grades = [
+          { value: '4', text: 'Grade 4' },
+          { value: '5', text: 'Grade 5' },
+          { value: '6', text: 'Grade 6' },
+          { value: '7', text: 'Grade 7' },
+        ];
+      }
+
+      responsibleGradeSelect.add(new Option('-- Select Grade --', ''));
+      grades.forEach(grade => responsibleGradeSelect.add(new Option(grade.text, grade.value)));
+      responsibleGradeSelect.disabled = false;
+    });
+  }
+
+  // Dynamic Teaching Assignments
+  if (addAssignmentBtn) {
+    addAssignmentBtn.addEventListener('click', () => {
+      addAssignmentRow();
+    });
+  }
+
+  function addAssignmentRow() {
+    const list = document.getElementById('assignments-list');
+    const row = document.createElement('div');
+    row.className = 'assignment-row';
+
+    row.innerHTML = `
+      <div class="form-group">
+        <select class="assignment-grade" name="assignment-grade">
+          <option value="">Grade</option>
+          <option value="R">R</option><option value="1">1</option><option value="2">2</option><option value="3">3</option>
+          <option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <input type="text" class="assignment-section" name="assignment-section" placeholder="Section (e.g., A)" maxlength="10" style="text-transform: uppercase;">
+      </div>
+      <div class="form-group">
+        <select class="assignment-subject" name="assignment-subject">
+          <option value="">Subject</option>
+          <option value="Sepedi HL">Sepedi HL</option>
+          <option value="Englis FAL">Englis FAL</option>
+          <option value="Mathematics">Mathematics</option>
+          <option value="NS-Tech">NS-Tech</option>
+          <option value="N.S">N.S</option>
+          <option value="Technology">Technology</option>
+          <option value="Creative Arts">Creative Arts</option>
+          <option value="L.O">L.O</option>
+          <option value="Life Skills">Life Skills</option>
+          <option value="Coding and Robotics">Coding and Robotics</option>
+          <option value="All Subjects (Foundation)">All Subjects (Foundation)</option>
+        </select>
+      </div>
+      <button type="button" class="remove-assignment-btn"><i class="fas fa-times"></i></button>
+    `;
+
+    list.appendChild(row);
+
+    // Add event listener to the new remove button
+    row.querySelector('.remove-assignment-btn').addEventListener('click', () => {
+      row.remove();
+    });
+  }
+
+  // Add one row by default when the container becomes visible
+  const observer = new MutationObserver((mutations) => {
+    for (const mutation of mutations) {
+      if (mutation.attributeName === 'style') {
+        const assignmentsContainer = mutation.target;
+        if (assignmentsContainer.style.display === 'block' && document.getElementById('assignments-list').children.length === 0) {
+          addAssignmentRow();
+        }
+      }
+    }
+  });
+  if (teachingAssignmentsContainer) observer.observe(teachingAssignmentsContainer, { attributes: true });
+
+  // Helper to get values from a group of checkboxes
+  function getCheckedValues(name) {
+    const checked = Array.from(document.querySelectorAll(`input[name="${name}"]:checked`));
+    return checked.map(checkbox => checkbox.value);
   }
 
   // Helper: collect user data (kept local to DOMContentLoaded)
@@ -103,6 +240,37 @@ document.addEventListener('DOMContentLoaded', () => {
         userData.email = document.querySelector('input[name="teacher-email"]')?.value || '';
         userData.surname = document.querySelector('input[name="teacher-surname"]')?.value || '';
         userData.preferredName = document.querySelector('input[name="teacher-preferred-name"]')?.value || '';
+        // Collect new teacher data
+        const isClassTeacher = document.getElementById('is-class-teacher')?.value === 'yes';
+        userData.isClassTeacher = isClassTeacher;
+        if (isClassTeacher) {
+          const phase = document.getElementById('responsible-phase')?.value || '';
+          const grade = document.getElementById('responsible-grade')?.value || '';
+          const section = document.getElementById('responsible-section')?.value || '';
+          userData.phase = phase;
+          userData.responsibleClass = (grade && section) ? `${grade}${section}` : null;
+          // For a class teacher, their assigned class is also their responsible class
+          // The assignedClasses field will now be derived from the more flexible 'assignedGrades'
+        } else {
+          userData.phase = null;
+          userData.responsibleClass = null;
+        }
+
+        // Collect the detailed teaching assignments
+        const assignments = [];
+        document.querySelectorAll('.assignment-row').forEach(row => {
+          const grade = row.querySelector('.assignment-grade').value;
+          const section = row.querySelector('.assignment-section').value.toUpperCase();
+          const subject = row.querySelector('.assignment-subject').value;
+          if (grade && section && subject) {
+            assignments.push({ grade, section, subject, fullClass: `${grade}${section}` });
+          }
+        });
+        userData.teachingAssignments = assignments;
+        // For backward compatibility and easy filtering, create arrays of unique grades and subjects
+        userData.assignedGrades = [...new Set(assignments.map(a => a.grade))];
+        userData.assignedClasses = [...new Set(assignments.map(a => a.fullClass))];
+        userData.assignedSubjects = [...new Set(assignments.map(a => a.subject))];
       } else if (role === 'admissions-team') { 
         userData.email = document.querySelector('input[name="admissions-email"]')?.value || '';
         userData.surname = document.querySelector('input[name="admissions-surname"]')?.value || '';
@@ -214,6 +382,29 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // *** NEW: Forgot Password Handler ***
+  if (forgotSubmitButton) {
+    forgotSubmitButton.addEventListener('click', async function(event) {
+      event.preventDefault();
+      const email = forgotEmailInput?.value || '';
+
+      if (!email) {
+        alert('Please enter your email address.');
+        return;
+      }
+
+      try {
+        await sendPasswordResetEmail(auth, email);
+        alert(`Password reset link sent to ${email}. Please check your inbox.`);
+        // Switch back to login form after successful send
+        setVisible('login');
+      } catch (error) {
+        console.error("Password Reset Error:", error);
+        alert(`Password Reset Error: ${error.message}`);
+      }
+    });
+  }
+
   // =========================================================
   // === Inserted form switching & role toggle snippet ===
   // This restores accessible switching and hash-based initial state
@@ -221,46 +412,122 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const register = registerForm;
   const login = loginForm;
+  // *** NEW: Add forgot password form to form variables ***
+  const forgot = forgotPasswordForm; 
   const showRegister = registerLink;
   const showLogin = loginLink;
+  // *** NEW: Add forgotten password link ***
+  const showForgot = forgotPasswordLink; 
 
-  function setVisible(formToShow) {
-    const showRegisterForm = formToShow === 'register';
 
-    if (showRegisterForm) {
-      register?.classList.remove('hidden'); register?.classList.add('active-form');
-      register?.setAttribute('aria-hidden', 'false');
-      login?.classList.add('hidden'); login?.classList.remove('active-form');
-      login?.setAttribute('aria-hidden', 'true');
-      const focusEl = register?.querySelector('input, select, button');
-      if (focusEl) focusEl.focus();
-    } else {
-      login?.classList.remove('hidden'); login?.classList.add('active-form');
-      login?.setAttribute('aria-hidden', 'false');
-      register?.classList.add('hidden'); register?.classList.remove('active-form');
-      register?.setAttribute('aria-hidden', 'true');
-      const focusEl = login?.querySelector('input, select, button');
-      if (focusEl) focusEl.focus();
+function setVisible(formToShow) {
+    // Collect all forms to hide
+    const allForms = [register, login, forgot];
+    const formLinksContainer = formLinks; 
+    
+    // **FIXED LOGIC START**
+    // Use the allForms array to hide everything safely
+    // By checking if the form exists before accessing its properties, we prevent the error.
+    allForms.forEach(form => {
+        if (form) {
+            form.style.display = 'none';
+        }
+    });
+
+    if (formLinksContainer) formLinksContainer.style.display = 'flex'; // Show links by default
+
+    let targetForm;
+    let hash = '';
+    // **FIXED LOGIC END**
+
+    if (formToShow === 'register' && register) {
+        targetForm = register;
+        register.style.display = 'block';
+        hash = '#register';
+        if (formLinksContainer) formLinksContainer.style.display = 'flex';
+    } else if (formToShow === 'login' && login) {
+        targetForm = login;
+        login.style.display = 'block';
+        hash = '#login';
+        if (formLinksContainer) formLinksContainer.style.display = 'flex';
+    } else if (formToShow === 'forgot' && forgot) {
+        targetForm = forgot;
+        forgot.style.display = 'block';
+        hash = '#forgot-password';
+        if (formLinksContainer) formLinksContainer.style.display = 'none';
+    }
+
+    if (targetForm) {
+        // The active-form/hidden classes are not strictly necessary with display: block/none,
+        // but we'll keep them for consistency with the CSS if needed.
+        targetForm.classList.remove('hidden');
+        targetForm.classList.add('active-form');
+        targetForm.setAttribute('aria-hidden', 'false');
+        
+        // Focus the first form element for accessibility
+        const focusEl = targetForm.querySelector('input, select, button');
+        if (focusEl) focusEl.focus();
+    }
+    
+    // Update hash only if a valid form was selected
+    if (hash) {
+      history.replaceState(null, '', hash);
     }
   }
 
-  if (location.hash === '#login') setVisible('login');
-  else setVisible('register');
+  // Initialize form state based on URL hash or default to register
+  const currentHash = location.hash;
+    if (currentHash === '#register') {
+      setVisible('register');
+    } else if (currentHash === '#forgot-password') {
+      setVisible('forgot');
+    } else {
+      // Default to login if hash is empty or anything else
+      setVisible('login');
+    }
 
   if (showRegister) {
     showRegister.addEventListener('click', (e) => {
       e.preventDefault();
       setVisible('register');
-      history.replaceState(null, '', '#register');
     });
   }
   if (showLogin) {
     showLogin.addEventListener('click', (e) => {
       e.preventDefault();
       setVisible('login');
-      history.replaceState(null, '', '#login');
     });
   }
+  // *** NEW: Event listener for Forgot Password link ***
+  if (showForgot) {
+    showForgot.addEventListener('click', (e) => {
+      e.preventDefault();
+      setVisible('forgot');
+      // Copy login email if available
+      if (loginEmailInput?.value) {
+        forgotEmailInput.value = loginEmailInput.value;
+      }
+    });
+  }
+
+  // --- Show/Hide Password Icon Logic ---
+  document.querySelectorAll('.toggle-password').forEach(icon => {
+    icon.addEventListener('click', () => {
+      const passwordInput = icon.previousElementSibling;
+      if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        icon.classList.remove('fa-eye');
+        icon.classList.add('fa-eye-slash');
+        icon.setAttribute('aria-label', 'Hide password');
+      } else {
+        passwordInput.type = 'password';
+        icon.classList.remove('fa-eye-slash');
+        icon.classList.add('fa-eye');
+        icon.setAttribute('aria-label', 'Show password');
+      }
+    });
+  });
+
 
   // Logout button attachment (requires DOM)
   document.querySelectorAll('.btn-logout').forEach(button => {

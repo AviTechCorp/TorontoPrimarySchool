@@ -49,20 +49,8 @@ function createKebabMenu(data) {
         menuContainer.classList.remove('active');
     });
 
-    // Option 3: Remove Learner 
-    const removeOption = document.createElement('a');
-    removeOption.textContent = 'Remove Learner';
-    removeOption.className = 'menu-option-red';
-    removeOption.href = '#';
-    removeOption.addEventListener('click', (e) => {
-        e.preventDefault();
-        menuContainer.classList.remove('active');
-        confirmAndRemoveLearner(data);
-    });
-
     dropdown.appendChild(viewOption);
     dropdown.appendChild(editOption);
-    dropdown.appendChild(removeOption);
     
     button.addEventListener('click', (e) => handleKebabMenuClick(e, menuContainer, button));
     document.addEventListener('click', (e) => handleKebabMenuOutsideClick(e, menuContainer));
@@ -331,6 +319,7 @@ function handleNavigation() {
         // Hide temporary forms
         const addFormSection = document.getElementById('add-learner-form-section');
         const removeSection = document.getElementById('remove-learner-section');
+        const duplicatesSection = document.getElementById('remove-duplicates-section');
         if (addFormSection) addFormSection.style.display = 'none';
         // If the add form is being displayed, don't let navigation hide it.
         if (addFormSection && addFormSection.style.display === 'block') {
@@ -338,6 +327,7 @@ function handleNavigation() {
             return;
         }
         if (removeSection) removeSection.style.display = 'none';
+        if (duplicatesSection) duplicatesSection.style.display = 'none';
 
         if (!selectedLearnerData) {
             listContainer.style.display = 'block';
@@ -608,6 +598,65 @@ function showEditLearnerForm() {
 // =========================================================
 
 /**
+ * Displays the detailed profile view for a selected teacher.
+ * This function should be in 'ui-handlers.js'.
+ */
+function displayTeacherDetails() {
+    const container = document.getElementById('teacher-details-display');
+    const listContainer = document.getElementById('all-teachers-list');
+
+    if (!selectedTeacherData) {
+        container.innerHTML = '<p>No teacher selected.</p>';
+        return;
+    }
+
+    // Hide the list view and show the details view
+    listContainer.style.display = 'none';
+    container.style.display = 'block';
+
+    const data = selectedTeacherData;
+    let detailsHTML = `
+        <button id="back-to-teachers-list" class="cta-button-secondary" style="margin-bottom: 20px;">
+            ← Back to All Teachers
+        </button>
+        <h3>Profile for ${data.preferredName || ''} ${data.surname || ''}</h3>
+        <div class="details-grid">
+            <p><strong>Email:</strong> <a href="mailto:${data.email}">${data.email}</a></p>
+            <p><strong>Contact:</strong> ${data.contactNumber || 'N/A'}</p>
+    `;
+
+    if (data.isClassTeacher) {
+        detailsHTML += `
+            <p><strong>Primary Role:</strong> <span class="role-tag class-teacher">Class Teacher</span></p>
+            <p><strong>Responsible Class:</strong> ${data.responsibleClass || 'Not specified'}</p>
+        `;
+    } else {
+        detailsHTML += `<p><strong>Primary Role:</strong> <span class="role-tag subject-teacher">Subject Teacher</span></p>`;
+    }
+
+    // Display the detailed list of teaching assignments
+    if (data.teachingAssignments && data.teachingAssignments.length > 0) {
+        detailsHTML += `
+            <h4 style="grid-column: 1 / -1; margin-top: 15px; border-top: 1px solid #eee; padding-top: 15px;">Teaching Assignments</h4>
+            <div style="grid-column: 1 / -1;">
+                <ul style="list-style-type: disc; padding-left: 20px; margin: 0;">
+                    ${data.teachingAssignments.map(a => `<li>${a.subject} for Class ${a.fullClass}</li>`).join('')}
+                </ul>
+            </div>
+        `;
+    }
+
+    detailsHTML += `</div>`; // Close details-grid
+    container.innerHTML = detailsHTML;
+
+    // Add event listener for the back button
+    document.getElementById('back-to-teachers-list').addEventListener('click', () => {
+        window.location.hash = '#sams-educators';
+        handleNavigation(); // Assumes handleNavigation will show the list and hide the details
+    });
+}
+
+/**
  * Displays the full teacher profile details.
  */
 function displayTeacherDetails() { // Removed 'data' parameter
@@ -781,7 +830,7 @@ function loadAssignmentToolLists(newActiveList) {
 }
 
 
-function displayLearnerAssignmentTool(data) {
+async function displayLearnerAssignmentTool(data) {
     const container = document.getElementById('assignment-details-display');
     const listContainer = document.getElementById('unassigned-learners-list');
     const assignedListContainer = document.getElementById('assigned-learners-list'); 
@@ -798,24 +847,43 @@ function displayLearnerAssignmentTool(data) {
     const currentSection = data.section || ''; 
     const currentFullGrade = data.fullGradeSection || (currentSection ? `${data.grade}${currentSection}` : `${data.grade} (Unassigned)`);
 
+    // Fetch all unique class sections to populate the dropdown
+    const allAvailableSections = await fetchAllUniqueClassSections();
+
+    // **NEW**: Filter the sections to only show classes matching the learner's grade.
+    const filteredSections = allAvailableSections.filter(section => {
+        // A class like "6A" starts with the learner's grade "6".
+        return section.startsWith(String(data.grade));
+    });
+
+    const sectionOptions = filteredSections.map(section => {
+        // Check if this option is the currently assigned one for the learner
+        const isSelected = (data.fullGradeSection === section) ? 'selected' : '';
+        return `<option value="${section}" ${isSelected}>Class ${section}</option>`;
+    }).join('');
+
     const contentHTML = `
         <button id="back-to-assignment-list" class="cta-button-secondary" style="margin-bottom: 15px;">
             ← Back to Class Assignment Lists
         </button>
         <h3>Assign Class for: ${data.learnerName} ${data.learnerSurname}</h3>
         <p><strong>Admission No:</strong> ${data.admissionId}</p>
-        <p><strong>Grade Level:</strong> ${data.grade}</p>
+        <p><strong>Registered Grade:</strong> ${data.grade}</p>
         <p><strong>Current Assignment:</strong> <span id="current-section-display" style="font-weight: bold; color: ${!currentSection ? 'var(--primary-red)' : 'var(--primary-green)'};">${currentFullGrade}</span></p>
         <hr>
         
         <h3>Class Section Assignment</h3>
+        <p>Select a class from the list below. This list is automatically populated from all classes registered by teachers.</p>
         <div id="section-assignment-form" style="display: flex; gap: 10px; align-items: flex-end; margin-bottom: 20px;">
             <div class="form-group" style="margin-bottom: 0;">
-                <label for="new-section">Section (e.g., A, B, C):</label>
-                <input type="text" id="new-section" placeholder="e.g. A" value="${currentSection}" style="width: 80px; text-transform: uppercase;" maxlength="2">
+                <label for="new-section-select">Assign to Section:</label>
+                <select id="new-section-select">
+                    <option value="">-- Select a Class --</option>
+                    ${sectionOptions}
+                </select>
             </div>
-            <button id="assign-section-button" class="cta-button-small" style="margin-top: 0;">
-                Assign/Update Class
+            <button id="assign-section-button" class="cta-button-small">
+                <i class="fas fa-check"></i> Assign/Update
             </button>
         </div>
         <p id="assignment-status-message" style="margin-top: 10px; font-weight: bold;"></p>
@@ -835,18 +903,77 @@ function displayLearnerAssignmentTool(data) {
     const assignButton = document.getElementById('assign-section-button');
     if (assignButton) {
         assignButton.addEventListener('click', () => {
-            const newSectionInput = document.getElementById('new-section');
-            const newSection = newSectionInput.value.trim().toUpperCase();
-            
-            if (newSection === '' || /^[A-Z0-9]{1,2}$/.test(newSection)) { 
-                setLearnerSection(data.admissionId, data.grade, newSection); 
-            } else {
-                alert("Please enter a valid section (e.g., A, B, C) or leave blank to unassign.");
-                newSectionInput.focus();
+            const sectionSelect = document.getElementById('new-section-select');
+            const selectedFullClass = sectionSelect.value;
+
+            if (!selectedFullClass) {
+                alert("Please select a class to assign.");
+                return;
             }
+            
+            // Extract the grade and section from the selected value (e.g., "6A" -> grade "6", section "A")
+            const newGrade = selectedFullClass.match(/^\d+|[R]/)[0];
+            const newSection = selectedFullClass.replace(newGrade, '');
+
+            setLearnerSection(data.admissionId, newGrade, newSection); 
         });
     }
 }
+
+/**
+ * Renders the results of the duplicate scan into a table.
+ * @param {Map<string, object[]>} duplicatesMap - The map of duplicates from findDuplicateLearners.
+ */
+function displayDuplicateLearners(duplicatesMap) {
+    const container = document.getElementById('duplicates-results-container');
+    container.innerHTML = '';
+
+    if (duplicatesMap.size === 0) {
+        return; // Nothing to display
+    }
+
+    let tableHTML = `
+        <table id="duplicates-table" class="min-w-full divide-y divide-gray-200">
+            <thead>
+                <tr>
+                    <th>Admission No.</th>
+                    <th>Learner Name</th>
+                    <th>Grade/Class</th>
+                    <th>Firestore Doc ID</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
+
+    for (const [admissionId, learners] of duplicatesMap.entries()) {
+        tableHTML += `<tr class="duplicate-group-header"><td colspan="5">Duplicate(s) for Admission ID: <strong>${admissionId}</strong></td></tr>`;
+        
+        learners.forEach(learner => {
+            const learnerName = `${learner.learnerName || ''} ${learner.learnerSurname || ''}`.trim();
+            tableHTML += `
+                <tr>
+                    <td>${learner.admissionId}</td>
+                    <td>${learnerName}</td>
+                    <td>${learner.fullGradeSection || learner.grade}</td>
+                    <td>${learner.docId}</td>
+                    <td>
+                        <button class="cta-button-small danger" onclick="removeLearnerByDocId('${learner.docId}', '${learnerName}')">
+                            <i class="fas fa-trash"></i> Remove
+                        </button>
+                    </td>
+                </tr>
+            `;
+        });
+    }
+
+    tableHTML += `</tbody></table>`;
+    container.innerHTML = tableHTML;
+
+    // Expose the removal function to the window so the inline onclick can find it
+    window.removeLearnerByDocId = removeLearnerByDocId;
+}
+
 
 // =========================================================
 // === PROFILE LOADING & INITIALIZATION (FINAL PART) ===
@@ -928,6 +1055,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- MANUAL LEARNER MANAGEMENT LISTENERS ---
     const addFormSection = document.getElementById('add-learner-form-section');
     const removeSection = document.getElementById('remove-learner-section');
+    const duplicatesSection = document.getElementById('remove-duplicates-section');
     const allLearnersList = document.getElementById('all-learners-list-view');
 
     const showAddFormBtn = document.getElementById('show-add-learner-form');
@@ -936,6 +1064,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Hide the list and show the form.
             allLearnersList.style.display = 'none';
             addFormSection.style.display = 'block';
+            duplicatesSection.style.display = 'none';
             // The "Back" button inside the form will handle returning to the list.
         });
     }
@@ -949,8 +1078,26 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 removeSection.style.display = 'block';
                 addFormSection.style.display = 'none'; 
+                duplicatesSection.style.display = 'none';
                 allLearnersList.style.display = 'none'; 
             }
+        });
+    }
+
+    const showDuplicatesToolBtn = document.getElementById('show-remove-duplicates-tool');
+    if (showDuplicatesToolBtn) {
+        showDuplicatesToolBtn.addEventListener('click', () => {
+            allLearnersList.style.display = 'none';
+            addFormSection.style.display = 'none';
+            duplicatesSection.style.display = 'block';
+        });
+    }
+
+    const scanBtn = document.getElementById('scan-for-duplicates-btn');
+    if (scanBtn) {
+        scanBtn.addEventListener('click', async () => {
+            const duplicates = await findDuplicateLearners();
+            displayDuplicateLearners(duplicates);
         });
     }
 

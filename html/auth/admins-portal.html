@@ -162,6 +162,9 @@
             <button id="show-add-learner-form" class="cta-button-small">
                 <i class="fas fa-plus"></i> Add New Learner
             </button>
+            <button id="show-remove-duplicates-tool" class="cta-button-small danger">
+                <i class="fas fa-exclamation-triangle"></i> Find & Remove Duplicates
+            </button>
           </div>
           <div id="all-active-learners-list" style="margin-top: 0;">
             <h3>Active Learners Summary</h3>
@@ -183,6 +186,7 @@
             <table id="active-learners-table">
               <thead>
                 <tr>
+                  <th><input type="checkbox" id="select-all-active"></th>
                   <th>Adm No.</th>
                   <th>Name</th>
                   <th>Grade/Class</th> 
@@ -225,6 +229,22 @@
             </form>
         </div>
 
+        <div id="remove-duplicates-section" class="tool-card" style="display: none; margin-top: 20px;">
+            <h3>Find & Remove Duplicate Learners</h3>
+            <p>This tool scans for learners with identical admission numbers. Review the list below and remove any incorrect or outdated entries. This action is permanent.</p>
+            <p class="data-status-message" id="duplicates-status">Click the button to start scanning for duplicates.</p>
+            <button id="scan-for-duplicates-btn" class="cta-button" style="margin-top: 15px;">
+                <i class="fas fa-search"></i> Scan for Duplicates
+            </button>
+            <div id="duplicates-results-container" style="margin-top: 20px;">
+                <!-- Duplicate results will be rendered here -->
+            </div>
+        </div>
+
+        <div id="remove-learner-section" class="tool-card" style="display: none; margin-top: 20px;">
+            <!-- This section seems to be unused, but we'll leave it for now -->
+        </div>
+
       </section>
       
       <section id="grade-assignment" class="portal-section">
@@ -258,6 +278,7 @@
             <table id="unassigned-learners-table">
               <thead>
                 <tr>
+                  <th><input type="checkbox" id="select-all-unassigned"></th>
                   <th>Adm No.</th>
                   <th>Name</th>
                   <th>Grade</th> 
@@ -269,6 +290,22 @@
             </table>
             <p class="data-status-message" id="unassigned-learners-status">Loading unassigned learners...</p>
           </div>
+        </div>
+
+        <!-- Bulk Action Bar -->
+        <div id="bulk-action-bar" class="bulk-action-bar" style="display: none;">
+            <span id="bulk-action-count">0 learners selected</span>
+            <div class="bulk-action-controls">
+                <div class="form-group">
+                    <label for="bulk-assign-section-select">Assign selected to:</label>
+                    <select id="bulk-assign-section-select">
+                        <option value="">-- Select a Class --</option>
+                    </select>
+                </div>
+                <button id="bulk-assign-button" class="cta-button-small">
+                    <i class="fas fa-check-double"></i> Assign
+                </button>
+            </div>
         </div>
                         <div class="tool-card all-learners-container" id="assigned-learners-list" style="display: none;">
           <h3>Active Class Assignments</h3>
@@ -291,6 +328,7 @@
           <table id="assigned-learners-table">
             <thead>
               <tr>
+                <th><input type="checkbox" id="select-all-assigned"></th>
                 <th>Adm No.</th>
                 <th>Name</th>
                 <th>Grade/Class</th> 
