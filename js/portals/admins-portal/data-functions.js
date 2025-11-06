@@ -453,75 +453,86 @@ async function loadAssignedLearners(filterGrade = 'All', reset = false) {
 }
 
 /**
- * Fetches and displays absentee records for a specific date.
- * @param {string} filterGrade - The grade to filter by.
- * @param {string} filterClass - The class section to filter by.
+ * Gets the ISO week number for a given date.
+ * @param {Date} d - The date.
+ * @returns {number} The ISO week number.
  */
-async function loadAttendanceRecords(filterGrade, filterClass = 'All') {
+function getWeekNumber(d) {
+    d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+    d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+    return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+}
+
+/**
+ * Fetches and displays weekly absentee records based on a selected date.
+ * @param {string} dateString - The date in YYYY-MM-DD format.
+ */
+async function loadAttendanceRecords(dateString, classFilter = 'All') {
     const tableBody = document.querySelector('#attendance-records-table tbody');
     const statusMessage = document.getElementById('attendance-records-status');
 
     tableBody.innerHTML = '';
 
-    if (!filterGrade) {
-        statusMessage.textContent = 'Please select a grade to view records.';
+    if (!dateString) {
+        document.getElementById('attendance-class-filter').disabled = true;
+        statusMessage.textContent = 'Please select a date to view records.';
         statusMessage.style.display = 'block';
         return;
     }
 
-    let statusText = `Fetching absentee records for Grade ${filterGrade}`;
-    if (filterClass !== 'All') {
-        statusText += `, Class ${filterClass}`;
-    }
+    const selectedDate = new Date(dateString);
+    const year = selectedDate.getFullYear();
+    const weekNumber = getWeekNumber(selectedDate);
+
+    document.getElementById('attendance-class-filter').disabled = false;
+
+    let statusText = `Fetching absentee records for Week ${weekNumber}, ${year}`;
+    if (classFilter !== 'All') statusText += ` in Class ${classFilter}`;
     statusMessage.textContent = statusText + '...';
     statusMessage.style.display = 'block';
 
     try {
-        let query = db.collection('attendance_records').where('status', '==', 'absent');
+        const snapshot = await db.collection('weekly_attendance')
+            .where('year', '==', year)
+            .where('weekNumber', '==', weekNumber)
+            .get();
 
-        if (filterGrade !== 'All') {
-            // Use a range query to find all classes for a given grade (e.g., >= '6' and < '7')
-            if (filterClass !== 'All') {
-                // If a specific class is selected, query for that exact class
-                query = query.where('fullGradeSection', '==', filterClass);
-            } else {
-                // Otherwise, query for all classes within the grade
-                const start = String(filterGrade);
-                const end = (filterGrade === 'R') ? 'S' : String(Number(filterGrade) + 1);
-                query = query.where('fullGradeSection', '>=', start).where('fullGradeSection', '<', end);
-            }
-        }
+        // Populate the class filter dropdown with unique classes from the records found
+        populateAttendanceClassFilter(snapshot);
 
-        // Order by date descending to see the most recent absences first
-        const snapshot = await query.orderBy('fullGradeSection').orderBy('date', 'desc').get();
+        let query = db.collection('weekly_attendance').where('year', '==', year).where('weekNumber', '==', weekNumber);
+        if (classFilter !== 'All') query = query.where('fullGradeSection', '==', classFilter);
+        const finalSnapshot = await query.get();
 
         if (snapshot.empty) {
-            let emptyMessage = `No learners were marked absent for Grade ${filterGrade}`;
-            if (filterClass !== 'All') emptyMessage += ` in Class ${filterClass}`;
-            statusMessage.textContent = emptyMessage + '.';
+            statusMessage.textContent = `No attendance records found for Week ${weekNumber}, ${year}.`;
             return;
         }
 
         let absenteeCount = 0;
         snapshot.forEach(doc => {
-            const data = doc.data();
-            const row = tableBody.insertRow();
-            row.insertCell().textContent = data.admissionId || 'N/A'; // Column 1: Admission No.
-            row.insertCell().textContent = data.date || 'N/A'; // Column 2: Date
-            row.insertCell().textContent = data.learnerName || 'N/A';
-            row.insertCell().textContent = data.fullGradeSection || 'N/A';
+            const data = doc.data(); 
+            const absentDays = Object.entries(data.attendance || {})
+                .filter(([day, status]) => status === 'absent')
+                .map(([day]) => day.charAt(0).toUpperCase() + day.slice(1)); // Capitalize day names
 
-            const statusCell = row.insertCell();
-            const status = data.status || 'unknown';
-            const statusClass = status.replace(/\s/g, '-').toLowerCase();
-            statusCell.innerHTML = `<span class="status-badge status-${statusClass}">${status}</span>`;
-
-            absenteeCount++;
+            if (absentDays.length > 0) {
+                const row = tableBody.insertRow();
+                row.insertCell().textContent = data.admissionId || 'N/A';
+                row.insertCell().textContent = data.learnerName || 'N/A';
+                row.insertCell().textContent = data.fullGradeSection || 'N/A';
+                row.insertCell().textContent = absentDays.join(', ');
+                absenteeCount++;
+            }
         });
 
-        let successMessage = `Found ${absenteeCount} absent learner(s) for Grade ${filterGrade}`;
-        if (filterClass !== 'All') successMessage += ` in Class ${filterClass}`;
-        statusMessage.textContent = successMessage + '.';
+        let finalStatusText = `Found ${absenteeCount} learner(s) with absences in Week ${weekNumber}, ${year}`;
+        if (classFilter !== 'All') finalStatusText += ` for Class ${classFilter}`;
+        statusMessage.textContent = finalStatusText + '.';
+        if (absenteeCount === 0) {
+            statusMessage.textContent = `All learners were present for Week ${weekNumber}, ${year}` + (classFilter !== 'All' ? ` in Class ${classFilter}` : '') + '.';
+        }
 
     } catch (error) {
         console.error("Error loading attendance records:", error);
@@ -530,6 +541,30 @@ async function loadAttendanceRecords(filterGrade, filterClass = 'All') {
             statusMessage.innerHTML += '<br><strong>Action Required:</strong> A database index is required for this query. Please contact your system administrator and ask them to create the composite index for the `attendance_records` collection as specified in the browser console error log.';
         }
     }
+}
+
+/**
+ * Populates the attendance class filter dropdown with unique classes from the snapshot.
+ * @param {firebase.firestore.QuerySnapshot} snapshot - The snapshot of attendance records for the week.
+ */
+function populateAttendanceClassFilter(snapshot) {
+    const classFilterSelect = document.getElementById('attendance-class-filter');
+    if (!classFilterSelect) return;
+
+    const currentSelection = classFilterSelect.value;
+    const uniqueClasses = new Set();
+    snapshot.forEach(doc => {
+        const data = doc.data();
+        if (data.fullGradeSection) {
+            uniqueClasses.add(data.fullGradeSection);
+        }
+    });
+
+    classFilterSelect.innerHTML = '<option value="All">All Classes</option>'; // Reset
+    Array.from(uniqueClasses).sort().forEach(className => {
+        classFilterSelect.add(new Option(className, className));
+    });
+    classFilterSelect.value = currentSelection; // Restore previous selection if it still exists
 }
 
 /**

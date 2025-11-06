@@ -293,8 +293,39 @@ function viewApplicantDetails(index) {
  * @param {number} row - The 1-based row number in the Google Sheet.
  */
 async function updateApplicantStatus(row) {
+    // **FIX**: Initialize Firestore to perform the duplication check.
+    if (!firebase.apps.length) {
+        // This config should match your other portal files.
+        const firebaseConfig = {
+            apiKey: "AIzaSyAJlr-6eTCCpQtWHkPics3-tbOS_X5xA84",
+            authDomain: "school-website-66326.firebaseapp.com",
+            projectId: "school-website-66326",
+        };
+        firebase.initializeApp(firebaseConfig);
+    }
+    const db = firebase.firestore();
+
     const statusSelect = document.getElementById(`new-status-${row}`);
     const newStatus = statusSelect.value;
+    const applicant = allApplicationsData[row - 2]; // Get applicant data from global array
+
+    // **CRITICAL FIX**: If the new status is "Offer Accepted", check for duplicates first.
+    if (newStatus === 'Offer Accepted' && applicant && applicant['admission-id']) {
+        const admissionId = applicant['admission-id'];
+        try {
+            const query = db.collection('sams_registrations').where('admissionId', '==', admissionId).limit(1);
+            const snapshot = await query.get();
+
+            if (!snapshot.empty) {
+                alert(`Error: A learner with Admission ID "${admissionId}" already exists in the school system. You cannot accept this offer again. Please choose a different status or contact the administrator.`);
+                return; // Stop the function to prevent creating a duplicate.
+            }
+        } catch (error) {
+            console.error("Error checking for duplicate learner:", error);
+            alert("A database error occurred while checking for duplicates. Please try again.");
+            return;
+        }
+    }
 
     if (!confirm(`Are you sure you want to update Row ${row} to status: ${newStatus} AND send an email update to the applicant?`)) {
         return;

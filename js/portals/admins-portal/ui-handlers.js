@@ -1188,6 +1188,16 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // --- ATTENDANCE RECORDS LISTENERS ---
+    const attendanceDateFilter = document.getElementById('attendance-date-filter');
+    const attendanceClassFilter = document.getElementById('attendance-class-filter');
+    if (attendanceDateFilter && attendanceClassFilter) {
+        const reloadAttendance = () => loadAttendanceRecords(attendanceDateFilter.value, attendanceClassFilter.value);
+        attendanceDateFilter.addEventListener('change', reloadAttendance);
+        attendanceClassFilter.addEventListener('change', reloadAttendance);
+    }
+
+
     // --- PARENT DATA LISTENERS ---
     const parentGradeFilter = document.getElementById('parent-grade-filter');
     const parentClassFilter = document.getElementById('parent-class-filter');

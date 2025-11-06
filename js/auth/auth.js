@@ -8,7 +8,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
 // *** MODIFICATION: Import sendPasswordResetEmail ***
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
-import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
+import { getFirestore, doc, setDoc, getDoc, collection, query, where, limit, getDocs } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
 
 
 // Your web app's Firebase configuration
@@ -225,17 +225,8 @@ document.addEventListener('DOMContentLoaded', () => {
         userData.gender = document.querySelector('select[name="learner-gender"]')?.value || '';
       } else if (role === 'parent') {
         userData.email = document.querySelector('input[name="parent-email"]')?.value || '';
-        userData.surname = document.querySelector('input[name="parent-surname"]')?.value || '';
-        userData.name = document.querySelector('input[name="parent-name"]')?.value || '';
-        userData.contact = document.querySelector('input[name="parent-contact"]')?.value || '';
-        userData.relationship = document.querySelector('input[name="relationship"]')?.value || '';
-        userData.admissionNumber = document.querySelector('input[name="admission-number"]')?.value || '';
-        userData.learnerSurname = document.querySelector('input[name="learner-surname"]')?.value || '';
-        userData.learnerFirstName = document.querySelector('input[name="learner-first-name"]')?.value || '';
-        userData.learnerMiddleName = document.querySelector('input[name="learner-middle-name"]')?.value || '';
-        userData.learnerDOB = document.querySelector('input[name="learner-dob"]')?.value || '';
-        userData.learnerGender = document.querySelector('select[name="learner-gender"]')?.value || '';
-        userData.learnerGrade = document.querySelector('select[name="learner-grade"]')?.value || '';
+        // **FIX**: Read the admission number from the correct input field by its ID.
+        userData.admissionNumber = document.getElementById('parent-admission-number-lookup')?.value || '';
       } else if (role === 'teacher') {
         userData.email = document.querySelector('input[name="teacher-email"]')?.value || '';
         userData.surname = document.querySelector('input[name="teacher-surname"]')?.value || '';
@@ -288,6 +279,54 @@ document.addEventListener('DOMContentLoaded', () => {
     return userData;
   }
 
+  // --- NEW: Parent Registration Step 1: Find Learner ---
+  const findLearnerBtn = document.getElementById('find-learner-btn');
+  if (findLearnerBtn) {
+      findLearnerBtn.addEventListener('click', async () => {
+          const admissionInput = document.getElementById('parent-admission-number-lookup');
+          const admissionNumber = admissionInput.value.trim();
+          const detailsContainer = document.getElementById('parent-details-container');
+
+          if (admissionNumber.length < 3) {
+              alert('Please enter a valid admission number.');
+              return;
+          }
+
+          findLearnerBtn.disabled = true;
+          findLearnerBtn.innerHTML = '<i class="fas fa-sync fa-spin"></i>';
+
+          try {
+              const q = query(collection(db, 'sams_registrations'), where('admissionId', '==', admissionNumber), limit(1));
+              const querySnapshot = await getDocs(q);
+
+              if (querySnapshot.empty) {
+                  alert('No learner found with that admission number. Please check the number and try again.');
+                  detailsContainer.style.display = 'none';
+                  return;
+              }
+
+              const learnerData = querySnapshot.docs[0].data();
+
+              // Populate the display fields
+              document.getElementById('parent-name-display').value = learnerData.parent1Name || '';
+              document.getElementById('parent-surname-display').value = learnerData.parent1Surname || '';
+              document.getElementById('parent-contact-display').value = learnerData.parent1Contact || '';
+              document.getElementById('learner-name-display').value = `${learnerData.learnerName || ''} ${learnerData.learnerSurname || ''}`;
+              
+              // Show the details and the rest of the form
+              detailsContainer.style.display = 'block';
+              admissionInput.readOnly = true; // Lock the admission number field
+
+          } catch (error) {
+              console.error("Error finding learner:", error);
+              alert("An error occurred while searching for the learner. Please try again.");
+          } finally {
+              findLearnerBtn.disabled = false;
+              findLearnerBtn.textContent = 'Find Learner';
+          }
+      });
+  }
+
   // Registration handler
   if (registerSubmitButton) {
     registerSubmitButton.addEventListener('click', async function(event) {
@@ -317,10 +356,58 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
 
+      // **NEW**: Special validation for parent registration
+      if (role === 'parent') {
+          const admissionNumber = document.getElementById('parent-admission-number-lookup').value.trim();
+          if (!admissionNumber) {
+              alert('Please use the "Find Learner" button to verify your learner\'s admission number first.');
+              return;
+          }
+          // Check if a learner with this admission number exists
+          const learnerQuery = query(collection(db, 'sams_registrations'), where('admissionId', '==', userData.admissionNumber), limit(1));
+          const learnerSnapshot = await getDocs(learnerQuery);
+
+          if (learnerSnapshot.empty) {
+              alert('Error: No learner found with that admission number. Please check the number and try again.');
+              return;
+          }
+
+          const learnerData = learnerSnapshot.docs[0].data();
+          // Security check: ensure the registering email matches the parent email on file
+          if (learnerData.parent1Email.toLowerCase() !== email.toLowerCase()) {
+              alert('Error: The email address you entered does not match the parent email on file for this learner. Please use the email address you provided to the school.');
+              return;
+          }
+          // Add details from SAMS record to the user profile to be created
+          userData.admissionNumber = admissionNumber;
+          userData.name = learnerData.parent1Name;
+          userData.surname = learnerData.parent1Surname || ''; // Assuming surname might not be separate
+          userData.contact = learnerData.parent1Contact || '';
+      }
+
+      // Capture the admission number before creating the user, as it's part of the form, not the user data object yet.
+      const admissionNumberForUpdate = (role === 'parent') ? document.getElementById('parent-admission-number-lookup').value.trim() : null;
+
       try {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
+        // Add the new UID to the user data object before saving it
+        userData.uid = user.uid; 
         await setDoc(doc(db, "users", user.uid), userData);
+
+        // **CRITICAL FIX**: If a parent just registered, use the captured admission number
+        // to find the corresponding learner and update their record with the new parent's UID.
+        if (role === 'parent' && admissionNumberForUpdate) {
+            const learnerQuery = query(collection(db, 'sams_registrations'), where('admissionId', '==', admissionNumberForUpdate), limit(1));
+            const learnerSnapshot = await getDocs(learnerQuery);
+
+            if (!learnerSnapshot.empty) {
+                const learnerDocRef = learnerSnapshot.docs[0].ref;
+                await setDoc(learnerDocRef, { parentUserId: user.uid }, { merge: true });
+                console.log(`Successfully linked parent UID ${user.uid} to learner with admission ID ${admissionNumberForUpdate}.`);
+            }
+        }
+
         alert(`Registration successful! Welcome, ${userData.name || userData.preferredName || userData.surname || userData.admissionNumber || userData.fullName}!`);
         // switch to login view if available
         if (loginLink) loginLink.click();
@@ -543,12 +630,8 @@ function setVisible(formToShow) {
 // === AUTH STATE LISTENER & PAGE PROTECTION ===
 // =========================================================
 
-// Check for authentication state change to redirect users who are not logged in.
 onAuthStateChanged(auth, (user) => {
     const currentPath = window.location.pathname;
-    const isLoggedIn = !!user;
-
-    // List of protected portal pages
     const protectedPages = [
         'learners-portal.html', 
         'parents-portal.html',
@@ -556,11 +639,26 @@ onAuthStateChanged(auth, (user) => {
         'admins-portal.html',
         'admission-team-portal.html' 
     ];
+    const isProtectedPage = protectedPages.some(page => currentPath.endsWith(page));
 
-    // Check if the current page is a protected page and the user is not logged in
-    if (protectedPages.some(page => currentPath.endsWith(page)) && !isLoggedIn) {
-        alert("You must be logged in to view this page.");
-        window.location.href = "../../html/auth/auth.html";
+    // Only run protection logic on protected pages.
+    if (isProtectedPage) {
+        const sessionUser = JSON.parse(sessionStorage.getItem('currentUser'));
+
+        // If there's no user in the session for this tab, they should not be here.
+        if (!sessionUser) {
+            alert("Your session has expired. Please log in again.");
+            window.location.href = "../../html/auth/auth.html";
+            return;
+        }
+
+        // If a logout happens in another tab, `user` will be null.
+        // We check if the logged-out user matches this tab's session user before redirecting.
+        if (!user && sessionUser) {
+            // This case is ambiguous and could be a logout from another tab.
+            // For stability, we let the user stay but can add a check if needed.
+            // A full logout is handled by the logout button which clears sessionStorage.
+        }
     }
 });
 

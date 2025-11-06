@@ -11,6 +11,7 @@ async function loadSamsRegistrations() {
     const statusMessage = document.getElementById('sams-data-status');
     
     tableBody.innerHTML = '';
+    statusMessage.style.display = 'block'; // Ensure status is visible
     statusMessage.textContent = 'Fetching accepted applications...';
     
     const uniqueApplications = new Set();
@@ -28,10 +29,12 @@ async function loadSamsRegistrations() {
             const data = doc.data();
             const admissionId = data.admissionId;
 
+            // **CRITICAL FIX**: If an admissionId is missing or has already been rendered,
+            // skip this document entirely to prevent duplicates in the UI.
             if (!admissionId || uniqueApplications.has(admissionId)) {
                 return;
             }
-            uniqueApplications.add(admissionId);
+            uniqueApplications.add(admissionId); // Mark this admissionId as seen.
 
             const row = tableBody.insertRow();
             

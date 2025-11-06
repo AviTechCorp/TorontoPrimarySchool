@@ -249,44 +249,30 @@
       </section>
       
       <section id="attendance-records" class="portal-section">
-        <h2>Daily Attendance Records</h2>
+        <h2>Weekly Attendance Records</h2>
         <p>View learners who were marked absent. Data is submitted by teachers from their portals.</p>
 
         <div class="tool-card">
             <div class="filters-container" style="display: flex; gap: 20px; margin-bottom: 20px; flex-wrap: wrap;">
                 <div class="form-group" style="flex: 1; min-width: 200px;">
-                    <label for="attendance-grade-filter">Filter Absentees by Grade:</label>
-                    <select id="attendance-grade-filter">
-                        <option value="">-- Select a Grade --</option>
-                        <option value="All">All Grades</option>
-                        <option value="R">Grade R</option>
-                        <option value="1">Grade 1</option>
-                        <option value="2">Grade 2</option>
-                        <option value="3">Grade 3</option>
-                        <option value="4">Grade 4</option>
-                        <option value="5">Grade 5</option>
-                        <option value="6">Grade 6</option>
-                        <option value="7">Grade 7</option>
-                    </select>
+                    <label for="attendance-date-filter">Select a Date to View Week's Report:</label>
+                    <input type="date" id="attendance-date-filter">
                 </div>
                 <div class="form-group" style="flex: 1; min-width: 200px;">
                     <label for="attendance-class-filter">Filter by Class:</label>
-                    <select id="attendance-class-filter" disabled>
-                        <option value="All">All Classes</option>
-                    </select>
+                    <select id="attendance-class-filter" disabled><option value="All">All Classes</option></select>
                 </div>
             </div>
 
-            <p class="data-status-message" id="attendance-records-status">Please select a grade to view records.</p>
+            <p class="data-status-message" id="attendance-records-status">Please select a date to view records.</p>
             <div id="attendance-records-container">
                 <table id="attendance-records-table">
                     <thead>
                         <tr>
                             <th>Admission No.</th>
-                            <th>Date</th>
                             <th>Learner Name</th>
                             <th>Class</th>
-                            <th>Status</th>
+                            <th>Absent Days This Week</th>
                         </tr>
                     </thead>
                     <tbody></tbody>

@@ -38,46 +38,60 @@ function loadLearnerProfile() {
 
 // ** 2. Portal Section Switching for Usability **
 function setupPortalNavigation() {
- const sidebarLinks = document.querySelectorAll('.sidebar ul li a');
- const sections = document.querySelectorAll('.portal-section');
+    const navLinks = document.querySelectorAll('.sidebar a');
+    const sections = document.querySelectorAll('.portal-section');
+    const sidebar = document.querySelector('.sidebar');
+    const menuToggle = document.getElementById('menu-toggle');
+    const contentWrapper = document.querySelector('.portal-content-wrapper');
 
- // Function to show the target section and hide others
- function showSection(targetId) {
-  sections.forEach(section => {
-   section.classList.remove('active-section');
-   section.classList.add('hidden-section');
-   if (section.id === targetId) {
-    section.classList.add('active-section');
-    section.classList.remove('hidden-section');
-   }
-  });
- }
+    function showSection(targetId) {
+        sections.forEach(section => {
+            section.classList.remove('active-section');
+            if (section.id === targetId) {
+                section.classList.add('active-section');
+            }
+        });
+    }
 
- // Handle link clicks
- sidebarLinks.forEach(link => {
-  link.addEventListener('click', function(e) {
-   e.preventDefault();
-   
-   // Remove active class from all links
-   sidebarLinks.forEach(l => l.classList.remove('active'));
-   // Add active class to the clicked link
-   this.classList.add('active');
-   
-   const targetId = this.getAttribute('href').substring(1);
-   showSection(targetId);
-   
-   // Update URL hash for sharing/back button functionality
-   history.pushState(null, null, `#${targetId}`);
-  });
- });
+    navLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const targetId = this.getAttribute('href').substring(1);
+            navLinks.forEach(l => l.classList.remove('active'));
+            this.classList.add('active');
+            showSection(targetId);
+            history.pushState(null, null, `#${targetId}`);
+            // Close sidebar on mobile after clicking a link
+            if (sidebar.classList.contains('is-open')) {
+                sidebar.classList.remove('is-open');
+                contentWrapper.classList.remove('overlay-active');
+            }
+        });
+    });
 
- // Handle page load based on URL hash (default to dashboard)
- const initialHash = window.location.hash.substring(1) || 'dashboard';
- showSection(initialHash);
- const initialLink = document.querySelector(`.sidebar ul li a[href="#${initialHash}"]`);
- if (initialLink) {
-  initialLink.classList.add('active');
- }
+    const initialHash = window.location.hash.substring(1) || 'dashboard';
+    showSection(initialHash);
+    const initialLink = document.querySelector(`.sidebar a[href="#${initialHash}"]`);
+    if (initialLink) {
+        navLinks.forEach(l => l.classList.remove('active'));
+        initialLink.classList.add('active');
+    }
+
+    // Mobile sidebar toggle
+    if (menuToggle) {
+        menuToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('is-open');
+            contentWrapper.classList.toggle('overlay-active');
+        });
+    }
+    if (contentWrapper) {
+        contentWrapper.addEventListener('click', () => {
+            if (sidebar.classList.contains('is-open')) {
+                sidebar.classList.remove('is-open');
+                contentWrapper.classList.remove('overlay-active');
+            }
+        });
+    }
 }
 
 
