@@ -36,7 +36,37 @@ function initializeParentPortal() {
     setupParentChatEngine(db, userData);
 
     // Set up UI interactions
+    setupResponsiveSidebar();
     setupPortalNavigation();
+}
+
+/**
+ * Sets up the responsive sidebar toggle for mobile view.
+ */
+function setupResponsiveSidebar() {
+    const menuToggle = document.getElementById('menu-toggle');
+    const sidebar = document.querySelector('.sidebar');
+    const contentWrapper = document.querySelector('.portal-content-wrapper');
+
+    if (menuToggle && sidebar) {
+        menuToggle.addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent the click from closing the menu immediately
+            sidebar.classList.toggle('is-open');
+            if (contentWrapper) {
+                contentWrapper.classList.toggle('overlay-active');
+            }
+        });
+    }
+
+    // Add a listener to the main content area to close the sidebar when clicking outside
+    if (contentWrapper) {
+        contentWrapper.addEventListener('click', () => {
+            if (sidebar.classList.contains('is-open')) {
+                sidebar.classList.remove('is-open');
+                contentWrapper.classList.remove('overlay-active');
+            }
+        });
+    }
 }
 
 async function loadParentProfile(db, userData) {
@@ -150,52 +180,106 @@ async function openParentChat(db, parentData, chatData, listItem) {
     const chatWindow = document.getElementById('parent-chat-window');
     document.getElementById('parent-chat-welcome-message').style.display = 'none';
     chatWindow.style.display = 'flex';
+    // Ensure chat window is visible before adding messages
 
     const chatId = listItem.dataset.chatId;
 
     chatWindow.innerHTML = `
-        <div class="chat-header" style="padding: 15px; border-bottom: 1px solid var(--color-border);">
-            <h4>Chat with ${chatData.teacherName}</h4>
+        <div class="chat-header" style="background-color: #005e54; color: white; padding: 10px 15px; display: flex; align-items: center; gap: 15px;">
+            <button id="parent-chat-back-btn" style="background: none; border: none; color: white; font-size: 1.2em; cursor: pointer;">
+                <i class="fas fa-arrow-left"></i>
+            </button>
+            <div style="background: #ccc; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                <i class="fas fa-user" style="color: #fff;"></i>
+            </div>
+            <div style="flex-grow: 1;">
+                <div style="font-weight: 600;">${chatData.teacherName}</div>
+                <div style="font-size: 0.8em; opacity: 0.8;">Regarding: ${chatData.learnerName}</div>
+            </div>
+            <div style="display: flex; gap: 20px; font-size: 1.2em;">
+                <button style="background: none; border: none; color: white; cursor: pointer;"><i class="fas fa-video"></i></button>
+                <button style="background: none; border: none; color: white; cursor: pointer;"><i class="fas fa-phone"></i></button>
+                <button style="background: none; border: none; color: white; cursor: pointer;"><i class="fas fa-ellipsis-v"></i></button>
+            </div>
         </div>
-        <div class="chat-messages" id="parent-chat-messages-container"></div>
-        <div class="chat-input-area">
-            <input type="text" id="parent-chat-message-input" placeholder="Type your reply...">
-            <button id="parent-chat-send-btn" class="cta-button-small"><i class="fas fa-paper-plane"></i></button>
+        <div class="chat-messages chat-bg scroll-container" id="parent-chat-messages-container"></div>
+        <div class="chat-input-area" style="background-color: #f0f2f5; padding: 8px 12px; display: flex; align-items: center; gap: 10px;">
+            <button style="background: none; border: none; font-size: 1.5em; color: #54656f; cursor: pointer;"><i class="far fa-grin"></i></button>
+            <button style="background: none; border: none; font-size: 1.5em; color: #54656f; cursor: pointer;"><i class="fas fa-paperclip"></i></button>
+            <input type="text" id="parent-chat-message-input" placeholder="Type a message" style="flex-grow: 1; border: none; border-radius: 20px; padding: 10px 15px; font-size: 1em; outline: none;">
+            <button id="parent-chat-send-btn" style="background-color: #00a884; color: white; border: none; border-radius: 50%; width: 45px; height: 45px; font-size: 1.2em; cursor: pointer; display: none;">
+                <i class="fas fa-paper-plane"></i>
+            </button>
+            <button id="parent-chat-mic-btn" style="background-color: #00a884; color: white; border: none; border-radius: 50%; width: 45px; height: 45px; font-size: 1.2em; cursor: pointer;">
+                <i class="fas fa-microphone"></i>
+            </button>
         </div>
     `;
+
+    document.getElementById('parent-chat-back-btn').addEventListener('click', () => {
+        goBackToParentChatList();
+    });
 
     const messagesContainer = document.getElementById('parent-chat-messages-container');
     const messageInput = document.getElementById('parent-chat-message-input');
     const sendBtn = document.getElementById('parent-chat-send-btn');
+    const micBtn = document.getElementById('parent-chat-mic-btn');
+
+    // Logic to show send button or mic button
+    messageInput.addEventListener('input', () => {
+        if (messageInput.value.trim()) {
+            sendBtn.style.display = 'block';
+            micBtn.style.display = 'none';
+        } else {
+            sendBtn.style.display = 'none';
+            micBtn.style.display = 'block';
+        }
+    });
 
     if (parentActiveChatListener) {
         parentActiveChatListener();
     }
 
-    const messagesRef = db.collection('chats').doc(chatId).collection('messages').orderBy('timestamp', 'desc');
+    const messagesRef = db.collection('chats').doc(chatId).collection('messages').orderBy('timestamp', 'asc');
     parentActiveChatListener = messagesRef.onSnapshot(snapshot => {
         messagesContainer.innerHTML = '';
         snapshot.forEach(doc => {
             const msg = doc.data();
             const messageDiv = document.createElement('div');
             messageDiv.classList.add('message');
-            messageDiv.classList.add(msg.senderId === parentData.uid ? 'sent' : 'received');
-            messageDiv.textContent = msg.text;
+            const isSent = msg.senderId === parentData.uid;
+            messageDiv.classList.add(isSent ? 'sent' : 'received');
+
+            let messageContentHTML = `<p>${msg.text}</p>`;
+            let messageInfoHTML = '';
+
+            if (msg.timestamp && typeof msg.timestamp.toDate === 'function') { // Always show timestamp
+                const timeString = msg.timestamp.toDate().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+                messageInfoHTML += `<span class="timestamp">${timeString}</span>`;
+                messageDiv.title = msg.timestamp.toDate().toLocaleString();
+            }
+            if (isSent) { // Only show status icon for sent messages
+                messageInfoHTML += getParentMessageStatusHTML(msg.status);
+            }
+            if (messageInfoHTML) {
+                messageContentHTML += `<div class="message-info">${messageInfoHTML}</div>`;
+            }
+            messageDiv.innerHTML = messageContentHTML;
             messagesContainer.appendChild(messageDiv);
+            // Scroll to the latest message
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
         });
     });
 
     // Mark messages as read when opening the chat
     const chatRef = db.collection('chats').doc(chatId);
-    chatRef.update({ unreadByParentCount: 0 });
+    chatRef.set({ unreadByParentCount: 0 }, { merge: true });
 
-    // **NEW**: Find all unread messages from the teacher and mark them as 'read'
+    // Find all unread messages from the teacher and mark them as 'read'
     try {
-        // **FIX**: Create a new query for marking messages as read.
-        // Do not reuse messagesRef, as it has an orderBy('timestamp') which conflicts with the inequality filter on 'senderId'.
         const unreadMessagesQuery = db.collection('chats').doc(chatId).collection('messages')
-            .where('senderId', '!=', parentData.uid)
-            .where('status', '==', 'sent');
+            .where('senderId', '==', chatData.teacherId) // Be specific
+            .where('status', '==', 'sent'); // Only update sent messages
         const unreadSnapshot = await unreadMessagesQuery.get();
 
         if (!unreadSnapshot.empty) {
@@ -216,6 +300,11 @@ async function openParentChat(db, parentData, chatData, listItem) {
         if (text === '') return;
 
         messageInput.value = '';
+        // After sending, hide send button and show mic button again
+        if (sendBtn && micBtn) {
+            sendBtn.style.display = 'none';
+            micBtn.style.display = 'block';
+        }
 
         // Re-use chatRef from above
         const messagePayload = {
@@ -223,7 +312,7 @@ async function openParentChat(db, parentData, chatData, listItem) {
             senderId: parentData.uid,
             senderName: parentData.name || 'Parent', // **FIX**: Ensure parent's name is included
             timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-            read: false
+            status: 'sent' // Add status field
         };
 
         const batch = db.batch();
@@ -239,6 +328,41 @@ async function openParentChat(db, parentData, chatData, listItem) {
 
     sendBtn.addEventListener('click', sendMessage);
     messageInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') sendMessage();
+        if (e.key === 'Enter') {
+            e.preventDefault(); // Prevent new line in input
+            sendMessage();
+        }
     });
+}
+
+/**
+ * Generates the HTML for the message status icon for the parent's portal.
+ * @param {string} status - The status of the message ('sent', 'read').
+ * @returns {string} The HTML string for the icon.
+ */
+function getParentMessageStatusHTML(status) {
+    let iconClass = 'fas fa-check'; // Default for 'sent'
+    let title = 'Sent';
+
+    if (status === 'read') {
+        iconClass = 'fas fa-check-double'; // Blue double check for 'read'
+        title = 'Read';
+    }
+
+    return `<span class="message-status" title="${title}"><i class="${iconClass}"></i></span>`;
+}
+
+/**
+ * Hides the chat window and returns to the chat list view for parents.
+ */
+function goBackToParentChatList() {
+    if (parentActiveChatListener) {
+        parentActiveChatListener(); // Unsubscribe from the current chat listener
+        parentActiveChatListener = null;
+    }
+    document.getElementById('parent-chat-window').style.display = 'none';
+    document.getElementById('parent-chat-welcome-message').style.display = 'flex'; // Show welcome message
+    // Remove the global click listener when chat is closed
+    document.removeEventListener('click', globalParentChatMenuClickListener);
+    document.querySelectorAll('#parent-chat-list li').forEach(li => li.classList.remove('active'));
 }

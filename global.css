@@ -17,6 +17,34 @@
     font-family: 'Montserrat', sans-serif;
 }
 
+/* ==========================================================================
+   Responsive Sidebar (for all portals)
+   ========================================================================== */
+
+@media (max-width: 768px) {
+    .sidebar {
+        transform: translateX(-100%);
+        position: fixed;
+        top: 64px; /* Start below the fixed header */
+        left: 0;
+        z-index: 40; /* Above the content wrapper */
+        height: calc(100% - 64px); /* Full viewport height minus header */
+        transition: transform 0.3s ease-in-out;
+    }
+    .sidebar.is-open {
+        transform: translateX(0);
+    }
+    /* Overlay effect when sidebar is open */
+    .portal-content-wrapper.overlay-active::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0,0,0,0.5);
+        z-index: 35;
+    }
+}
+
+
 /* Body with full-screen background image */
 body {
     background-image: url(images/4.jpg);

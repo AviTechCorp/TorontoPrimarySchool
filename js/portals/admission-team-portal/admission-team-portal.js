@@ -1,5 +1,3 @@
-// admission-team-portal.js
-
 // === IMPORTANT: Use the URL from the Application Form for fetching submissions ===
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyYCBiHB7oaAchC--LfvJhpAOqOOqVNYtsd90-2g4gHp1LHzkz_7lhrMMvVaD41Pmyr3g/exec';
 
@@ -353,10 +351,89 @@ async function updateApplicantStatus(row) {
     }
 }
 
+/**
+ * Sets up the responsive sidebar toggle for mobile view.
+ */
+function setupResponsiveSidebar() {
+    const menuToggle = document.getElementById('menu-toggle');
+    const sidebar = document.querySelector('.sidebar');
+    const contentWrapper = document.querySelector('.portal-content-wrapper');
+
+    if (menuToggle && sidebar) {
+        menuToggle.addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent the click from closing the menu immediately
+            sidebar.classList.toggle('is-open');
+            if (contentWrapper) {
+                contentWrapper.classList.toggle('overlay-active');
+            }
+        });
+    }
+
+    // Add a listener to the main content area to close the sidebar when clicking outside
+    if (contentWrapper) {
+        contentWrapper.addEventListener('click', () => {
+            if (sidebar.classList.contains('is-open')) {
+                sidebar.classList.remove('is-open');
+                contentWrapper.classList.remove('overlay-active');
+            }
+        });
+    }
+}
+
+/**
+ * Sets up the manual application form submission logic.
+ */
+function setupManualApplicationForm() {
+    const form = document.getElementById('manual-application-form');
+    if (!form) return;
+
+    form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const submitButton = form.querySelector('button[type="submit"]');
+        const statusMessage = document.getElementById('manual-submission-status');
+
+        submitButton.disabled = true;
+        submitButton.textContent = 'Submitting...';
+        statusMessage.style.display = 'block';
+        statusMessage.className = 'status-message-box info';
+        statusMessage.textContent = 'Submitting application data...';
+
+        const formData = new FormData(form);
+
+        fetch(APPS_SCRIPT_URL, { method: 'POST', body: formData })
+            .then(response => {
+                if (response.ok) {
+                    return response.text(); // Or .json() if your script returns JSON
+                }
+                throw new Error('Network response was not ok.');
+            })
+            .then(data => {
+                statusMessage.className = 'status-message-box success';
+                statusMessage.textContent = 'Application submitted successfully! You can view it in the "New Submissions" tab after reloading the data.';
+                form.reset();
+            })
+            .catch(error => {
+                console.error('Error submitting manual application:', error);
+                statusMessage.className = 'status-message-box error';
+                statusMessage.textContent = 'An error occurred during submission. Please check the console and try again.';
+            })
+            .finally(() => {
+                submitButton.disabled = false;
+                submitButton.textContent = 'Submit Application';
+            });
+    });
+}
+
 
 // --- Profile and Navigation Setup ---
 
 function setupPortalNavigation() {
+    // Add this block to handle form styling consistency
+    const allForms = document.querySelectorAll('.application-form');
+    allForms.forEach(form => {
+        form.classList.add('p-6', 'bg-white', 'rounded-lg', 'shadow-md', 'space-y-6');
+    });
+
     const sidebarLinks = document.querySelectorAll('.sidebar ul li a');
     const sections = document.querySelectorAll('.portal-section');
 
@@ -396,7 +473,13 @@ document.addEventListener('DOMContentLoaded', () => {
     window.loadAllApplications = loadAllApplications;
     window.updateApplicantStatus = updateApplicantStatus; 
 
+    // **NEW**: Initialize the responsive sidebar functionality
+    setupResponsiveSidebar();
+
     setupPortalNavigation();
     // Load all data automatically upon page load
     window.loadAllApplications();
+
+    // **NEW**: Set up the listener for the manual application form
+    setupManualApplicationForm();
 });

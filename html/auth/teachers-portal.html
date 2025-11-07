@@ -142,8 +142,7 @@
     <!-- Nested Attendance Form -->
     <div id="attendance-form" class="learner-mgmt-view class-teacher-only" style="display: none;">
     <h2>Mark Attendance</h2>
-    <form action="#" method="POST" class="form-grid">
-     <label for="class-select">Select Class:</label>
+     <label for="attendance-class-select">Select Class:</label>
      <select id="attendance-class-select" name="class">
       <option value="">-- Select a Class to Load Roster --</option>
      </select>
@@ -337,11 +336,18 @@
         <div class="chat-sidebar">
             <div class="chat-sidebar-header">
                 <h3>Parent Conversations</h3>
+                <div class="form-group" style="margin-top: 10px;">
+                    <label for="chat-class-filter" style="font-size: 0.85em; opacity: 0.8;">Filter by Class:</label>
+                    <select id="chat-class-filter">
+                        <option value="all">All Classes</option>
+                        <!-- Options will be dynamically populated -->
+                    </select>
+                </div>
                 <div class="form-group">
                     <input type="text" id="chat-parent-search" placeholder="Search for a parent...">
                 </div>
             </div>
-            <ul id="chat-parent-list" class="chat-parent-list">
+            <ul id="chat-parent-list" class="chat-parent-list scroll-container">
                 <!-- Parent list will be dynamically populated here -->
                 <p class="info-message">Loading parent contacts...</p>
             </ul>

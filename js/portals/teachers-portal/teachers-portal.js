@@ -233,6 +233,35 @@ function setupContactModalListeners() {
     });
 }
 
+/**
+ * Sets up the responsive sidebar toggle for mobile view.
+ */
+function setupResponsiveSidebar() {
+    const menuToggle = document.getElementById('menu-toggle');
+    const sidebar = document.querySelector('.sidebar');
+    const contentWrapper = document.querySelector('.portal-content-wrapper');
+
+    if (menuToggle && sidebar) {
+        menuToggle.addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent the click from closing the menu immediately
+            sidebar.classList.toggle('is-open');
+            if (contentWrapper) {
+                contentWrapper.classList.toggle('overlay-active');
+            }
+        });
+    }
+
+    // Add a listener to the main content area to close the sidebar when clicking outside
+    if (contentWrapper) {
+        contentWrapper.addEventListener('click', () => {
+            if (sidebar.classList.contains('is-open')) {
+                sidebar.classList.remove('is-open');
+                contentWrapper.classList.remove('overlay-active');
+            }
+        });
+    }
+}
+
 // --- CORE DATA HANDLING & DISPLAY FUNCTIONS ---
 document.addEventListener('DOMContentLoaded', () => {
     const userData = JSON.parse(sessionStorage.getItem('currentUser'));
@@ -271,6 +300,9 @@ document.addEventListener('DOMContentLoaded', () => {
         console.error("User data not found in session storage. Please log in again.");
         return; // Stop further script execution
     }
+
+    // **NEW**: Initialize the responsive sidebar functionality
+    setupResponsiveSidebar();
 
     // Sidebar navigation logic
     // Select all links intended for section navigation, both in the sidebar and main content
@@ -484,11 +516,9 @@ async function loadTeacherClassesAndLearners(db, teacherAuthData) {
             displayTeacherAssignments(myClassesContainer, teacherData);
         }
 
-        // Clear the loading message
+        // **FIX**: Clear the entire rosters container to prevent duplicates on re-load.
         const rostersContainer = document.getElementById('class-rosters-container');
-        if (rostersContainer.querySelector('.info-message')) {
-            rostersContainer.innerHTML = '';
-        }
+        rostersContainer.innerHTML = '';
 
         if (assignedClasses.length === 0) {
             document.getElementById('class-rosters-container').innerHTML = '<p class="info-message">You are not currently assigned to any classes.</p>';
@@ -1106,6 +1136,19 @@ function setupAttendanceRegister(db, assignedClasses) {
     });
 }
 
+// Global click listener to close all action menus when clicking outside
+let globalChatMenuClickListener = (event) => {
+    document.querySelectorAll('.action-menu').forEach(menu => {
+        const kebabBtn = menu.closest('.chat-message-actions').querySelector('.action-kebab-btn');
+        if (!menu.contains(event.target) && !kebabBtn.contains(event.target)) {
+            menu.style.display = 'none';
+            menu.closest('.chat-message-actions').style.display = 'none'; // Hide its parent actions container too
+        }
+    });
+};
+// Add this listener once when the DOM is ready, or when the chat feature is initialized.
+document.addEventListener('click', globalChatMenuClickListener);
+
 /**
  * Renders the HTML for a single class roster and appends it to the container.
  * @param {HTMLElement} container - The main container for all class rosters.
@@ -1434,6 +1477,7 @@ let activeChatListener = null; // Global to hold the active unsubscribe function
 async function setupChatEngine(db, teacherData) {
     const parentList = document.getElementById('chat-parent-list');
     const searchInput = document.getElementById('chat-parent-search');
+    const classFilter = document.getElementById('chat-class-filter');
     if (!parentList) return;
 
     try {
@@ -1445,6 +1489,12 @@ async function setupChatEngine(db, teacherData) {
         }
         const teachingAssignments = teacherDoc.data().teachingAssignments || [];
         const assignedClasses = [...new Set(teachingAssignments.map(a => a.fullClass).filter(Boolean))];
+
+        // Populate the class filter dropdown
+        classFilter.innerHTML = '<option value="all">All Classes</option>'; // Reset and add default
+        assignedClasses.sort().forEach(className => {
+            classFilter.add(new Option(className, className));
+        });
 
         if (assignedClasses.length === 0) {
             parentList.innerHTML = '<p class="info-message">You are not assigned to any classes to view parent contacts.</p>';
@@ -1460,7 +1510,15 @@ async function setupChatEngine(db, teacherData) {
             learnersSnapshot.forEach(doc => {
                 const learner = doc.data();
                 if (learner.parent1Email && !uniqueParentEmails.has(learner.parent1Email)) {
-                    parents.push({ parentId: learner.parentUserId || null, parentName: learner.parent1Name, parentEmail: learner.parent1Email, learnerName: `${learner.learnerName} ${learner.learnerSurname}`, learnerId: doc.id });
+                    parents.push({
+                        parentId: learner.parentUserId || null,
+                        parentName: learner.parent1Name,
+                        parentEmail: learner.parent1Email,
+                        learnerName: `${learner.learnerName} ${learner.learnerSurname}`,
+                        learnerId: doc.id,
+                        // Add the class name to each parent object for filtering
+                        fullGradeSection: learner.fullGradeSection
+                    });
                     uniqueParentEmails.add(learner.parent1Email);
                 }
             });
@@ -1471,27 +1529,43 @@ async function setupChatEngine(db, teacherData) {
             return;
         }
 
-        parentList.innerHTML = ''; // Clear loading message
-        parents.sort((a, b) => (a.parentName || '').localeCompare(b.parentName || '')).forEach(parent => {
-            const li = document.createElement('li');
-            li.dataset.parentId = parent.parentId;
-            li.dataset.parentName = parent.parentName;
-            li.dataset.learnerId = parent.learnerId;
-            li.dataset.learnerName = parent.learnerName;
-            li.innerHTML = `<span class="parent-name">${parent.parentName}</span><span class="learner-name">(${parent.learnerName})</span>`;
-            li.addEventListener('click', () => openChat(db, teacherData, parent, li));
-            parentList.appendChild(li);
-        });
-
-        // Search functionality
-        searchInput.addEventListener('input', () => {
+        // Combined function to render and search the parent list
+        const updateParentList = () => {
+            const filterClass = classFilter.value;
             const searchTerm = searchInput.value.toLowerCase();
-            parentList.querySelectorAll('li').forEach(li => {
-                const parentName = li.dataset.parentName.toLowerCase();
-                const learnerName = li.dataset.learnerName.toLowerCase();
-                li.style.display = (parentName.includes(searchTerm) || learnerName.includes(searchTerm)) ? '' : 'none';
+            parentList.innerHTML = ''; // Clear list
+
+            const filteredByClass = (filterClass === 'all') ?
+                parents :
+                parents.filter(p => p.fullGradeSection === filterClass);
+
+            const filteredBySearch = filteredByClass.filter(p => {
+                const parentName = (p.parentName || '').toLowerCase();
+                const learnerName = (p.learnerName || '').toLowerCase();
+                return parentName.includes(searchTerm) || learnerName.includes(searchTerm);
             });
-        });
+
+            if (filteredBySearch.length === 0) {
+                parentList.innerHTML = '<p class="info-message">No parents found matching your criteria.</p>';
+                return;
+            }
+
+            filteredBySearch.sort((a, b) => (a.parentName || '').localeCompare(b.parentName || '')).forEach(parent => {
+                const li = document.createElement('li');
+                li.dataset.parentId = parent.parentId;
+                li.dataset.parentName = parent.parentName;
+                li.dataset.learnerId = parent.learnerId;
+                li.dataset.learnerName = parent.learnerName;
+                li.innerHTML = `<span class="parent-name">${parent.parentName}</span><span class="learner-name">(${parent.learnerName})</span>`;
+                li.addEventListener('click', () => openChat(db, teacherData, parent, li));
+                parentList.appendChild(li);
+            });
+        };
+
+        // Initial render and event listeners
+        updateParentList();
+        classFilter.addEventListener('change', updateParentList);
+        searchInput.addEventListener('input', updateParentList);
 
     } catch (error) {
         console.error("Error setting up chat engine:", error);
@@ -1514,6 +1588,7 @@ async function openChat(db, teacherData, parentData, listItem) {
     const chatWindow = document.getElementById('chat-window');
     const welcomeMessage = document.getElementById('chat-welcome-message');
     welcomeMessage.style.display = 'none';
+    // Ensure chat window is visible before adding messages
     chatWindow.style.display = 'flex';
     
     // Construct a consistent chat ID
@@ -1521,20 +1596,57 @@ async function openChat(db, teacherData, parentData, listItem) {
     const chatId = participants.join('_');
     
     chatWindow.innerHTML = `
-        <div class="chat-header" style="padding: 15px; border-bottom: 1px solid var(--color-border);">
-            <h4>Chat with ${parentData.parentName} (Parent of ${parentData.learnerName})</h4>
+        <div class="chat-header" style="background-color: #005e54; color: white; padding: 10px 15px; display: flex; align-items: center; gap: 15px;">
+            <button id="chat-back-btn" style="background: none; border: none; color: white; font-size: 1.2em; cursor: pointer;">
+                <i class="fas fa-arrow-left"></i>
+            </button>
+            <div style="background: #ccc; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                <i class="fas fa-user" style="color: #fff;"></i>
+            </div>
+            <div style="flex-grow: 1;">
+                <div style="font-weight: 600;">${parentData.parentName}</div>
+                <div style="font-size: 0.8em; opacity: 0.8;">Parent of ${parentData.learnerName}</div>
+            </div>
+            <div style="display: flex; gap: 20px; font-size: 1.2em;">
+                <button style="background: none; border: none; color: white; cursor: pointer;"><i class="fas fa-video"></i></button>
+                <button style="background: none; border: none; color: white; cursor: pointer;"><i class="fas fa-phone"></i></button>
+                <button style="background: none; border: none; color: white; cursor: pointer;"><i class="fas fa-ellipsis-v"></i></button>
+            </div>
         </div>
-        <div class="chat-messages" id="chat-messages-container"></div>
-        <div class="chat-input-area">
-            <input type="text" id="chat-message-input" placeholder="Type your message...">
-            <button id="chat-send-btn" class="cta-button-small"><i class="fas fa-paper-plane"></i></button>
+        <div class="chat-messages chat-bg scroll-container" id="chat-messages-container"></div>
+        <div class="chat-input-area" style="background-color: #f0f2f5; padding: 8px 12px; display: flex; align-items: center; gap: 10px;">
+            <button style="background: none; border: none; font-size: 1.5em; color: #54656f; cursor: pointer;"><i class="far fa-grin"></i></button>
+            <button style="background: none; border: none; font-size: 1.5em; color: #54656f; cursor: pointer;"><i class="fas fa-paperclip"></i></button>
+            <input type="text" id="chat-message-input" placeholder="Type a message" style="flex-grow: 1; border: none; border-radius: 20px; padding: 10px 15px; font-size: 1em; outline: none;">
+            <button id="chat-send-btn" style="background-color: #00a884; color: white; border: none; border-radius: 50%; width: 45px; height: 45px; font-size: 1.2em; cursor: pointer; display: none;">
+                <i class="fas fa-paper-plane"></i>
+            </button>
+            <button id="chat-mic-btn" style="background-color: #00a884; color: white; border: none; border-radius: 50%; width: 45px; height: 45px; font-size: 1.2em; cursor: pointer;">
+                <i class="fas fa-microphone"></i>
+            </button>
         </div>
     `;
+
+    document.getElementById('chat-back-btn').addEventListener('click', () => {
+        goBackToChatList();
+    });
     
     const messagesContainer = document.getElementById('chat-messages-container');
     const messageInput = document.getElementById('chat-message-input');
     const sendBtn = document.getElementById('chat-send-btn');
+    const micBtn = document.getElementById('chat-mic-btn');
     
+    // Logic to show send button or mic button
+    messageInput.addEventListener('input', () => {
+        if (messageInput.value.trim()) {
+            sendBtn.style.display = 'block';
+            micBtn.style.display = 'none';
+        } else {
+            sendBtn.style.display = 'none';
+            micBtn.style.display = 'block';
+        }
+    });
+
     // Unsubscribe from any previous chat listener
     if (activeChatListener) {
         activeChatListener();
@@ -1553,12 +1665,22 @@ async function openChat(db, teacherData, parentData, listItem) {
             const isSent = msg.senderId === teacherData.uid;
             messageDiv.classList.add(isSent ? 'sent' : 'received');
             
-            let messageHTML = `<p>${msg.text}</p>`;
-            // If the message was sent by the current teacher, add the status icon
-            if (isSent) {
-                messageHTML += getMessageStatusHTML(msg.status);
+            // Wrap text in a paragraph
+            let messageContentHTML = `<p>${msg.text}</p>`;
+            let messageInfoHTML = '';
+
+            if (msg.timestamp && typeof msg.timestamp.toDate === 'function') { // Always show timestamp
+                const timeString = msg.timestamp.toDate().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+                messageInfoHTML += `<span class="timestamp">${timeString}</span>`;
+                messageDiv.title = msg.timestamp.toDate().toLocaleString();
             }
-            messageDiv.innerHTML = messageHTML;
+            if (isSent) { // Only show status icon for sent messages
+                messageInfoHTML += getMessageStatusHTML(msg.status);
+            }
+            if (messageInfoHTML) {
+                messageContentHTML += `<div class="message-info">${messageInfoHTML}</div>`;
+            }
+            messageDiv.innerHTML = messageContentHTML;
             messagesContainer.appendChild(messageDiv);
         });
         // Scroll to the latest message
@@ -1566,24 +1688,43 @@ async function openChat(db, teacherData, parentData, listItem) {
     });
     
     // Mark messages as read by the teacher when they are viewing the chat
-    const chatRef = db.collection('chats').doc(chatId);
-    // **FIX**: Use `set` with `merge: true` instead of `update`.
-    // This prevents an error if the chat document doesn't exist yet (i.e., a new conversation).
-    // It will create the document with the `unreadByTeacherCount` field if it's new.
-    chatRef.set({ unreadByTeacherCount: 0 }, { merge: true });
-    
+    const chatRef = db.collection('chats').doc(chatId);    
+    chatRef.set({ unreadByTeacherCount: 0 }, { merge: true }); // Mark conversation as read
+
+    // Find all unread messages from the parent and mark them as 'read'
+    try {
+        const unreadMessagesQuery = db.collection('chats').doc(chatId).collection('messages')
+            .where('senderId', '==', parentData.parentId)
+            .where('status', '==', 'sent');
+        const unreadSnapshot = await unreadMessagesQuery.get();
+
+        if (!unreadSnapshot.empty) {
+            const batch = db.batch();
+            unreadSnapshot.forEach(doc => {
+                batch.update(doc.ref, { status: 'read' });
+            });
+            await batch.commit();
+        }
+    } catch (error) {
+        console.error("Could not mark messages as read. This may require a Firestore index.", error);
+    }
     const sendMessage = async () => {
         const text = messageInput.value.trim();
         if (text === '') return;
         
         messageInput.value = '';
+        // After sending, hide send button and show mic button again
+        if (sendBtn && micBtn) {
+            sendBtn.style.display = 'none';
+            micBtn.style.display = 'block';
+        }
         
         const messagePayload = {
             text: text,
             senderId: teacherData.uid,
             senderName: teacherData.preferredName,
             timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-            status: 'sent'
+            status: 'sent' // Add status field
         };
         
         const batch = db.batch();
@@ -1621,15 +1762,30 @@ async function openChat(db, teacherData, parentData, listItem) {
  * @returns {string} The HTML string for the icon.
  */
 function getMessageStatusHTML(status) {
-    let iconClass = 'fas fa-check'; // Default to 'sent' (single grey check)
+    let iconClass = 'fas fa-check'; // Default for 'sent'
     let title = 'Sent';
 
     if (status === 'read') {
-        iconClass = 'fas fa-check-double'; // 'read' (double blue check)
+        iconClass = 'fas fa-check-double'; // Blue double check for 'read'
         title = 'Read';
     }
     // Note: 'delivered' status can be added here if needed in the future.
-    return `<div class="message-meta"><span class="message-status" title="${title}"><i class="${iconClass}"></i></span></div>`;
+    return `<span class="message-status" title="${title}"><i class="${iconClass}"></i></span>`;
+}
+
+/**
+ * Hides the chat window and returns to the chat list view.
+ */
+function goBackToChatList() {
+    if (activeChatListener) {
+        activeChatListener(); // Unsubscribe from the current chat listener
+        activeChatListener = null;
+    }
+    document.getElementById('chat-window').style.display = 'none';
+    document.getElementById('chat-welcome-message').style.display = 'flex';
+    // Remove the global click listener when chat is closed
+    document.removeEventListener('click', globalChatMenuClickListener);
+    document.querySelectorAll('#chat-parent-list li').forEach(li => li.classList.remove('active'));
 }
 
 // =========================================================
