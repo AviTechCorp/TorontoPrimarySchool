@@ -33,6 +33,7 @@ function initializeParentPortal() {
 
     // Load dynamic data into the portal
     loadParentProfile(db, userData);
+    loadParentDashboard(db, userData);
     setupParentChatEngine(db, userData);
 
     // Set up UI interactions
@@ -83,6 +84,44 @@ async function loadParentProfile(db, userData) {
     // This is crucial for linking the parent's auth account to their child's record.
     if (parentUidInput && userData.uid) {
         parentUidInput.value = userData.uid;
+    }
+}
+
+/**
+ * Loads dynamic data for the parent's dashboard.
+ * @param {firebase.firestore.Firestore} db - The Firestore database instance.
+ * @param {object} parentData - The authenticated parent's data.
+ */
+async function loadParentDashboard(db, parentData) {
+    const overdueEl = document.getElementById('dashboard-overdue');
+    const gradeEl = document.getElementById('dashboard-grade');
+    const eventEl = document.getElementById('dashboard-event');
+
+    // Placeholder for fetching learner-specific data
+    try {
+        // Find the learner associated with this parent
+        const learnerQuery = db.collection('sams_registrations').where('parentUserId', '==', parentData.uid).limit(1);
+        const learnerSnapshot = await learnerQuery.get();
+
+        if (!learnerSnapshot.empty) {
+            const learnerData = learnerSnapshot.docs[0].data();
+            document.getElementById('learner-name-display').textContent = `${learnerData.learnerName || 'Your Child'}`;
+
+            // These would be replaced with real data fetching logic
+            if (overdueEl) overdueEl.textContent = '0 (Excellent!)';
+            if (gradeEl) gradeEl.textContent = '85% (Maths)';
+            if (eventEl) eventEl.textContent = 'Sports Day: 01 Dec';
+
+        } else {
+            if (overdueEl) overdueEl.textContent = 'N/A';
+            if (gradeEl) gradeEl.textContent = 'N/A';
+            if (eventEl) eventEl.textContent = 'N/A';
+        }
+    } catch (error) {
+        console.error("Error loading parent dashboard data:", error);
+        if (overdueEl) overdueEl.textContent = 'Error';
+        if (gradeEl) gradeEl.textContent = 'Error';
+        if (eventEl) eventEl.textContent = 'Error';
     }
 }
 

@@ -268,6 +268,21 @@ function handleNavigation() {
         targetId = 'profile'; 
     }
 
+    // --- FIX: Reset all specific view containers before activating the new section ---
+    // This prevents content from different sections from overlapping.
+    const allSpecificViews = [
+        'learner-details-display', 'all-learners-list-view', 'add-learner-form-section',
+        'remove-duplicates-section', 'remove-learner-section', 'assignment-details-display',
+        'unassigned-learners-list', 'assigned-learners-list', 'teacher-details-display',
+        'all-teachers-list', 'edit-teacher-profile', 'edit-learner-profile'
+    ];
+
+    allSpecificViews.forEach(viewId => {
+        const view = document.getElementById(viewId);
+        if (view) {
+            view.style.display = 'none';
+        }
+    });
     // Reset pagination and state if leaving detail/assignment/management views
     if (!['grade-assignment', 'sams-learners', 'edit-learner-profile', 'sams-educators', 'edit-teacher-profile', 'teacher-details', 'grade-sections', 'sams-parents'].includes(targetId)) {
         lastVisibleUnassigned = null;
@@ -991,20 +1006,73 @@ function loadAdminProfile() {
     }
 }
 
+/**
+ * Populates the attendance year filter with a range of years.
+ */
+function populateAttendanceYearFilter() {
+    const yearFilter = document.getElementById('attendance-year-filter');
+    if (!yearFilter) return;
+
+    const currentYear = new Date().getFullYear();
+    const startYear = currentYear - 5; // Go back 5 years
+    const endYear = currentYear + 1;   // Go forward 1 year
+
+    yearFilter.innerHTML = ''; // Clear existing options
+
+    for (let year = endYear; year >= startYear; year--) {
+        const option = new Option(year, year);
+        yearFilter.add(option);
+    }
+
+    // Set the current year as the default selection
+    yearFilter.value = currentYear;
+}
+
+/**
+ * Populates the attendance week filter based on the selected year and term.
+ * @param {number} year - The selected year.
+ * @param {number} term - The selected term (1-4).
+ */
+function populateAttendanceWeekFilter(year, term) {
+    const weekFilter = document.getElementById('attendance-week-filter');
+    if (!weekFilter) return;
+
+    weekFilter.innerHTML = '<option value="All">All Weeks in Term</option>'; // Reset with default
+    weekFilter.disabled = false;
+
+    const termBoundaries = {
+        1: { start: 1, end: 13 },
+        2: { start: 14, end: 26 },
+        3: { start: 27, end: 39 },
+        4: { start: 40, end: 53 }
+    };
+
+    if (!term || !termBoundaries[term]) {
+        weekFilter.disabled = true;
+        return;
+    }
+
+    const { start, end } = termBoundaries[term];
+
+    // Helper to get the month for a given week number in a year
+    const getMonthForWeek = (yr, wk) => {
+        const d = new Date(yr, 0, 1 + (wk - 1) * 7); // Approx date
+        const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+        return monthNames[d.getMonth()];
+    };
+
+    for (let week = start; week <= end; week++) {
+        const monthName = getMonthForWeek(year, week);
+        const optionText = `Week ${week} (${monthName})`;
+        weekFilter.add(new Option(optionText, week));
+    }
+}
+
 
 document.addEventListener('DOMContentLoaded', () => {
     loadAdminProfile();
     
     const initialHash = window.location.hash.substring(1);
-    if (initialHash === 'grade-assignment') {
-        const assignedList = document.getElementById('assigned-learners-list');
-        if (assignedList && assignedList.style.display === 'block') {
-            activeAssignmentView = 'assigned';
-        } else {
-            activeAssignmentView = 'unassigned';
-        }
-    }
-
     handleNavigation(); 
     window.addEventListener('hashchange', handleNavigation);
 
@@ -1189,11 +1257,30 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- ATTENDANCE RECORDS LISTENERS ---
-    const attendanceDateFilter = document.getElementById('attendance-date-filter');
+    const attendanceYearFilter = document.getElementById('attendance-year-filter');
+    const attendanceTermFilter = document.getElementById('attendance-term-filter');
+    const attendanceWeekFilter = document.getElementById('attendance-week-filter');
     const attendanceClassFilter = document.getElementById('attendance-class-filter');
-    if (attendanceDateFilter && attendanceClassFilter) {
-        const reloadAttendance = () => loadAttendanceRecords(attendanceDateFilter.value, attendanceClassFilter.value);
-        attendanceDateFilter.addEventListener('change', reloadAttendance);
+
+    if (attendanceYearFilter && attendanceTermFilter && attendanceWeekFilter && attendanceClassFilter) {
+        // Populate the year filter on page load
+        populateAttendanceYearFilter();
+        // Populate the week filter for the default selection
+        populateAttendanceWeekFilter(attendanceYearFilter.value, attendanceTermFilter.value);
+
+        const reloadAttendance = () => {
+            loadAttendanceRecords(attendanceYearFilter.value, attendanceTermFilter.value, attendanceWeekFilter.value, attendanceClassFilter.value);
+        };
+
+        attendanceYearFilter.addEventListener('change', () => {
+            populateAttendanceWeekFilter(attendanceYearFilter.value, attendanceTermFilter.value);
+            reloadAttendance();
+        });
+        attendanceTermFilter.addEventListener('change', () => {
+            populateAttendanceWeekFilter(attendanceYearFilter.value, attendanceTermFilter.value);
+            reloadAttendance();
+        });
+        attendanceWeekFilter.addEventListener('change', reloadAttendance);
         attendanceClassFilter.addEventListener('change', reloadAttendance);
     }
 

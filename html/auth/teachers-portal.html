@@ -16,6 +16,8 @@
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-storage-compat.js"></script>
+  <!-- **NEW**: Add SheetJS library for reading Excel files -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script src="../../js/portals/teachers-portal/firebase-config.js"></script>
 </head>
 <body>
@@ -78,16 +80,12 @@
     <div class="grid-container dashboard-cards">
      <div class="tool-card accent-1">
       <h3><i class="fas fa-calendar-check"></i> Upcoming Events</h3>
-      <p><strong>Today:</strong> No events.</p>
-      <p><strong>Tomorrow, 9 AM:</strong> Math Class (Grade 10B)</p>
-      <p><strong>Tomorrow, 3 PM:</strong> Parent-Teacher Conference (via Zoom)</p>
+      <p id="dashboard-events">Loading upcoming events...</p>
             <a href="#calendar" class="cta-button-small">View Full Calendar</a>
      </div>
      <div class="tool-card accent-2">
       <h3><i class="fas fa-bell"></i> Notifications</h3>
-      <p><i class="fas fa-envelope"></i> You have **2 new messages** from parents.</p>
-      <p><i class="fas fa-exclamation-circle"></i> **1 new assignment** submitted for review.</p>
-      <p><i class="fas fa-bell"></i> Important: All grades must be submitted by Friday.</p>
+      <p id="dashboard-notifications">Loading notifications...</p>
             <a href="#communication" class="cta-button-small">Go to Messages</a>
      </div>
      <div class="tool-card accent-3">
@@ -142,8 +140,8 @@
      </div>
    
     <!-- Nested Attendance Form -->
-    <div id="attendance-form" class="learner-mgmt-view class-teacher-only" style="display: none;">
-    <h2>Mark Attendance</h2>
+    <form id="attendance-form" class="learner-mgmt-view class-teacher-only" style="display: none;">
+     <h2>Mark Attendance</h2>
      <label for="attendance-class-select">Select Class:</label>
      <select id="attendance-class-select" name="class">
       <option value="">-- Select a Class to Load Roster --</option>
@@ -166,14 +164,31 @@
       </tbody>
      </table>
      <p id="attendance-submit-status" class="status-message-box" style="display: none; margin-top: 15px;"></p>
-     <button type="submit" class="cta-button primary-green"><i class="fas fa-save"></i> Submit Attendance</button>
+     <button type="submit" class="cta-button primary-green"><i class="fas fa-save"></i> Submit Attendance</button>    
     </form>
-   </div>
+   
     
     <!-- Nested Class Roster Setup -->
     <div id="class-setup" class="learner-mgmt-view class-teacher-only" style="display: none;">
       <h2>Annual Class Roster Setup</h2>
       <p>Use this tool at the beginning of the year to build your new class list. Search for learners by surname and add them to your class.</p>
+      
+      <!-- **NEW**: Excel Upload Tool -->
+      <div class="tool-card accent-2" style="margin-top: 20px;">
+        <h3><i class="fas fa-file-excel"></i> Upload Roster from Excel</h3>
+        <p>Quickly populate your class by uploading an Excel file (.xlsx, .csv). The file must have columns named: <strong>Admission Number</strong>, <strong>First Name</strong>, and <strong>Last Name</strong>.</p>
+        <div class="form-group">
+            <label for="excel-roster-upload">Select Excel File:</label>
+            <input type="file" id="excel-roster-upload" accept=".xlsx, .xls, .csv">
+        </div>
+        <button id="process-excel-btn" class="cta-button primary-green" style="margin-top: 10px;">
+            <i class="fas fa-cogs"></i> Process File
+        </button>
+        <div id="excel-upload-status" style="margin-top: 15px;"></div>
+      </div>
+
+      <hr style="margin: 30px 0;">
+
       <div class="tool-card">
         <div class="form-group" style="max-width: 400px;">
           <label for="roster-setup-class-select">Select Your Class to Manage:</label>

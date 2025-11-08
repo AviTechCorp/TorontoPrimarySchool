@@ -468,70 +468,120 @@ function getWeekNumber(d) {
  * Fetches and displays weekly absentee records based on a selected date.
  * @param {string} dateString - The date in YYYY-MM-DD format.
  */
-async function loadAttendanceRecords(dateString, classFilter = 'All') {
+async function loadAttendanceRecords(year, term, weekFilter = 'All', classFilter = 'All') {
     const tableBody = document.querySelector('#attendance-records-table tbody');
     const statusMessage = document.getElementById('attendance-records-status');
+    const tableHeader = document.getElementById('attendance-table-header-absences');
 
     tableBody.innerHTML = '';
 
-    if (!dateString) {
+    if (!year || !term) {
         document.getElementById('attendance-class-filter').disabled = true;
-        statusMessage.textContent = 'Please select a date to view records.';
+        statusMessage.textContent = 'Please select a year and term to view records.';
         statusMessage.style.display = 'block';
         return;
     }
 
-    const selectedDate = new Date(dateString);
-    const year = selectedDate.getFullYear();
-    const weekNumber = getWeekNumber(selectedDate);
-
+    document.getElementById('attendance-week-filter').disabled = false;
     document.getElementById('attendance-class-filter').disabled = false;
 
-    let statusText = `Fetching absentee records for Week ${weekNumber}, ${year}`;
+    // Define the week numbers for the selected term
+    const termBoundaries = {
+        1: { start: 1, end: 13 },   // Jan-Mar
+        2: { start: 14, end: 26 },  // Apr-Jun
+        3: { start: 27, end: 39 },  // Jul-Sep
+        4: { start: 40, end: 53 }   // Oct-Dec
+    };
+
+    let statusText;
+    let queryHeaderText;
+
+    if (weekFilter === 'All') {
+        statusText = `Fetching absentee records for ${year}, Term ${term}`;
+        queryHeaderText = "Total Days Absent This Term";
+    } else {
+        statusText = `Fetching absentee records for ${year}, Week ${weekFilter}`;
+        queryHeaderText = "Absent Days This Week";
+    }
+
     if (classFilter !== 'All') statusText += ` in Class ${classFilter}`;
     statusMessage.textContent = statusText + '...';
     statusMessage.style.display = 'block';
+    tableHeader.textContent = queryHeaderText;
 
     try {
-        const snapshot = await db.collection('weekly_attendance')
-            .where('year', '==', year)
-            .where('weekNumber', '==', weekNumber)
-            .get();
+        // Query for all records within the year and week range of the term
+        let query = db.collection('weekly_attendance')
+            .where('year', '==', parseInt(year));
 
-        // Populate the class filter dropdown with unique classes from the records found
-        populateAttendanceClassFilter(snapshot);
-
-        let query = db.collection('weekly_attendance').where('year', '==', year).where('weekNumber', '==', weekNumber);
+        if (weekFilter === 'All') {
+            const { start: startWeek, end: endWeek } = termBoundaries[term];
+            query = query.where('weekNumber', '>=', startWeek).where('weekNumber', '<=', endWeek);
+        } else {
+            query = query.where('weekNumber', '==', parseInt(weekFilter));
+        }
         if (classFilter !== 'All') query = query.where('fullGradeSection', '==', classFilter);
+
         const finalSnapshot = await query.get();
 
-        if (snapshot.empty) {
-            statusMessage.textContent = `No attendance records found for Week ${weekNumber}, ${year}.`;
+        // Populate the class filter based on the results
+        populateAttendanceClassFilter(finalSnapshot);
+
+        if (finalSnapshot.empty) {
+            statusMessage.textContent = `No attendance records found for the selected period.`;
             return;
         }
 
-        let absenteeCount = 0;
-        snapshot.forEach(doc => {
-            const data = doc.data(); 
+        // Aggregate absences by learner
+        const absenteeData = new Map();
+
+        finalSnapshot.forEach(doc => {
+            const data = doc.data();
+            const learnerId = data.learnerId;
+
             const absentDays = Object.entries(data.attendance || {})
-                .filter(([day, status]) => status === 'absent')
-                .map(([day]) => day.charAt(0).toUpperCase() + day.slice(1)); // Capitalize day names
+                .filter(([, status]) => status === 'absent')
+                .map(([day]) => day.charAt(0).toUpperCase() + day.slice(1));
 
             if (absentDays.length > 0) {
-                const row = tableBody.insertRow();
-                row.insertCell().textContent = data.admissionId || 'N/A';
-                row.insertCell().textContent = data.learnerName || 'N/A';
-                row.insertCell().textContent = data.fullGradeSection || 'N/A';
-                row.insertCell().textContent = absentDays.join(', ');
-                absenteeCount++;
+                if (absenteeData.has(learnerId)) {
+                    const existing = absenteeData.get(learnerId);
+                    if (weekFilter === 'All') {
+                        existing.totalAbsences += absentDays.length;
+                    }
+                    // For single week view, we don't need to aggregate absent days text
+                } else {
+                    absenteeData.set(learnerId, {
+                        admissionId: data.admissionId,
+                        learnerName: data.learnerName,
+                        fullGradeSection: data.fullGradeSection,
+                        totalAbsences: absentDays.length,
+                        absentDaysText: absentDays.join(', ')
+                    });
+                }
             }
         });
 
-        let finalStatusText = `Found ${absenteeCount} learner(s) with absences in Week ${weekNumber}, ${year}`;
+        const sortedAbsentees = Array.from(absenteeData.values()).sort((a, b) => {
+            const surnameA = (a.learnerName || '').split(' ').pop() || '';
+            const surnameB = (b.learnerName || '').split(' ').pop() || '';
+            return surnameA.localeCompare(surnameB);
+        });
+
+        sortedAbsentees.forEach(data => {
+            const row = tableBody.insertRow();
+            row.insertCell().textContent = data.admissionId || 'N/A';
+            row.insertCell().textContent = data.learnerName || 'N/A';
+            row.insertCell().textContent = data.fullGradeSection || 'N/A';
+            // Display total count for term view, or day names for week view
+            row.insertCell().textContent = (weekFilter === 'All') ? data.totalAbsences : data.absentDaysText;
+        });
+
+        let finalStatusText = `Found ${sortedAbsentees.length} learner(s) with absences for the selected period`;
         if (classFilter !== 'All') finalStatusText += ` for Class ${classFilter}`;
         statusMessage.textContent = finalStatusText + '.';
-        if (absenteeCount === 0) {
-            statusMessage.textContent = `All learners were present for Week ${weekNumber}, ${year}` + (classFilter !== 'All' ? ` in Class ${classFilter}` : '') + '.';
+        if (sortedAbsentees.length === 0) {
+            statusMessage.textContent = `All learners were present for the selected period` + (classFilter !== 'All' ? ` in Class ${classFilter}` : '') + '.';
         }
 
     } catch (error) {

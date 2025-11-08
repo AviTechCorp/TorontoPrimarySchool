@@ -51,8 +51,8 @@ async function loadParentContactsForClass(selectedClass) {
             return;
         }
 
-        // Sort by parent name for consistency
-        parentsData.sort((a, b) => (a.parent1Name || '').localeCompare(b.parent1Name || ''));
+        // Sort by learner's surname for alphabetical order
+        parentsData.sort((a, b) => (a.learnerSurname || '').localeCompare(b.learnerSurname || ''));
 
         const table = document.createElement('table');
         table.id = 'teacher-parents-data-table'; // ID for styling
@@ -282,6 +282,8 @@ document.addEventListener('DOMContentLoaded', () => {
         db = firebase.firestore(); // Initialize the db variable
 
         loadTeacherProfile(userData);
+        // **NEW**: Load dynamic dashboard data
+        loadTeacherDashboard(db, userData);
         // **NEW**: Initialize material management features
         setupMaterialUpload(db, userData);
         loadCourseMaterials(db);
@@ -312,6 +314,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // **NEW**: Initialize the portfolio shareable link generator
     setupPortfolioLinkGenerator(userData);
+
+    // **NEW**: Initialize the Excel roster upload functionality
+    setupExcelRosterUpload(db);
 
     // Sidebar navigation logic
     // Select all links intended for section navigation, both in the sidebar and main content
@@ -483,6 +488,44 @@ async function loadTeacherProfile(userData) {
   } else {
     console.error("User data not found in session storage. Please log in again.");
   }
+}
+
+/**
+ * Loads and displays dynamic data for the teacher's dashboard.
+ * @param {firebase.firestore.Firestore} db - The Firestore database instance.
+ * @param {object} teacherAuthData - The authenticated teacher's data.
+ */
+async function loadTeacherDashboard(db, teacherAuthData) {
+    const eventsContainer = document.getElementById('dashboard-events');
+    const notificationsContainer = document.getElementById('dashboard-notifications');
+
+    if (eventsContainer) {
+        // Placeholder for future calendar/event integration
+        eventsContainer.innerHTML = `
+            <strong>Today:</strong> Staff Meeting at 3 PM.<br>
+            <strong>This Week:</strong> Report cards due Friday.
+        `;
+    }
+
+    if (notificationsContainer) {
+        try {
+            // Fetch unread messages
+            const chatSnapshot = await db.collection('chats')
+                .where('teacherId', '==', teacherAuthData.uid)
+                .where('unreadByTeacherCount', '>', 0)
+                .get();
+
+            const unreadMessages = chatSnapshot.size;
+
+            notificationsContainer.innerHTML = `
+                <i class="fas fa-envelope"></i> You have <strong>${unreadMessages}</strong> new message(s) from parents.<br>
+                <i class="fas fa-bell"></i> All grades must be submitted by the end of the term.
+            `;
+        } catch (error) {
+            console.error("Error loading dashboard notifications:", error);
+            notificationsContainer.textContent = 'Could not load notifications.';
+        }
+    }
 }
 
 /**
@@ -1181,12 +1224,8 @@ function renderClassRoster(container, className, learners) {
     `;
 
     if (learners.length > 0) {
-        // Sort learners alphabetically by surname, then name
-        learners.sort((a, b) => {
-            const nameA = `${a.learnerSurname || ''} ${a.learnerName || ''}`.trim();
-            const nameB = `${b.learnerSurname || ''} ${b.learnerName || ''}`.trim();
-            return nameA.localeCompare(nameB);
-        });
+        // **FIX**: Sort learners alphabetically by surname.
+        learners.sort((a, b) => (a.learnerSurname || '').localeCompare(b.learnerSurname || ''));
 
         tableHTML += `
             <div class="data-table-container" style="margin-top: 15px;">
@@ -1637,8 +1676,12 @@ function setupPortfolioLinkGenerator(teacherAuthData) {
         }
 
         // Construct the full URL to the new viewer page
-        const viewerPath = 'html/portfolio/portfolio-viewer.html'; // Path from the website root
-        const fullUrl = `${window.location.origin}/${viewerPath}?teacherId=${teacherAuthData.uid}`;
+        // **FIX**: Construct a relative URL to work correctly on GitHub Pages.
+        // This navigates up from the current '/html/auth/' directory to the root,
+        // then down into '/html/portfolio/'.
+        const viewerPath = `../portfolio/portfolio-viewer.html?teacherId=${teacherAuthData.uid}`;
+        // Create a full, clean URL from the relative path.
+        const fullUrl = new URL(viewerPath, window.location.href).href;
 
         linkInput.value = fullUrl;
         outputArea.style.display = 'block';
@@ -1672,6 +1715,119 @@ window.deletePortfolioItem = async (button) => {
         alert('Failed to delete item. Please try again.');
     }
 };
+
+/**
+ * Sets up the functionality for uploading and processing an Excel roster.
+ * @param {firebase.firestore.Firestore} db - The Firestore database instance.
+ */
+function setupExcelRosterUpload(db) {
+    const processBtn = document.getElementById('process-excel-btn');
+    const fileInput = document.getElementById('excel-roster-upload');
+    const statusContainer = document.getElementById('excel-upload-status');
+    const classSelect = document.getElementById('roster-setup-class-select');
+
+    if (!processBtn || !fileInput || !statusContainer || !classSelect) return;
+
+    processBtn.addEventListener('click', () => {
+        const selectedClass = classSelect.value;
+        const file = fileInput.files[0];
+
+        if (!selectedClass) {
+            alert('Please select your responsible class before processing a file.');
+            return;
+        }
+        if (!file) {
+            alert('Please select an Excel file to upload.');
+            return;
+        }
+
+        processBtn.disabled = true;
+        processBtn.innerHTML = '<i class="fas fa-sync fa-spin"></i> Processing...';
+        statusContainer.innerHTML = `<p class="info-message">Reading file...</p>`;
+
+        const reader = new FileReader();
+        reader.onload = async (event) => {
+            try {
+                const data = new Uint8Array(event.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const firstSheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[firstSheetName];
+                const learners = XLSX.utils.sheet_to_json(worksheet, {
+                    // Standardize headers to prevent issues with case or spacing
+                    header: ["Admission Number", "First Name", "Last Name"],
+                    range: 1 // Skip the header row in the data array
+                });
+
+                if (learners.length === 0) {
+                    throw new Error("The Excel file is empty or not formatted correctly.");
+                }
+
+                statusContainer.innerHTML = `<p class="info-message">File read successfully. Found ${learners.length} learners. Now updating database... (This may take a moment)</p>`;
+
+                const batch = db.batch();
+                const grade = selectedClass.match(/^\d+|[R]/)[0];
+                const section = selectedClass.replace(grade, '');
+                let processedCount = 0;
+                let errorMessages = [];
+
+                for (const learner of learners) {
+                    const admissionId = String(learner['Admission Number']).trim();
+                    const firstName = String(learner['First Name']).trim();
+                    const lastName = String(learner['Last Name']).trim();
+
+                    if (!admissionId || !firstName || !lastName) {
+                        errorMessages.push(`Skipped a row due to missing data.`);
+                        continue;
+                    }
+
+                    // Find if a learner with this admission ID already exists
+                    const query = db.collection('sams_registrations').where('admissionId', '==', admissionId).limit(1);
+                    const snapshot = await query.get();
+
+                    if (snapshot.empty) {
+                        // Learner does not exist, create them
+                        const newLearnerRef = db.collection('sams_registrations').doc();
+                        batch.set(newLearnerRef, {
+                            admissionId: admissionId,
+                            learnerName: firstName,
+                            learnerSurname: lastName,
+                            grade: (grade === 'R') ? 'R' : parseInt(grade, 10),
+                            section: section,
+                            fullGradeSection: selectedClass,
+                            importedAt: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                    } else {
+                        // Learner exists, update their class assignment
+                        const existingLearnerRef = snapshot.docs[0].ref;
+                        batch.update(existingLearnerRef, {
+                            grade: (grade === 'R') ? 'R' : parseInt(grade, 10),
+                            section: section,
+                            fullGradeSection: selectedClass
+                        });
+                    }
+                    processedCount++;
+                }
+
+                await batch.commit();
+
+                statusContainer.innerHTML = `<p class="success-message">${processedCount} learners have been successfully added/updated for class ${selectedClass}.</p>`;
+                if (errorMessages.length > 0) {
+                    statusContainer.innerHTML += `<p class="error-message">${errorMessages.join('<br>')}</p>`;
+                }
+                loadCurrentRoster(db, selectedClass, document.getElementById('current-roster-list')); // Refresh the view
+
+            } catch (error) {
+                console.error("Error processing Excel file:", error);
+                statusContainer.innerHTML = `<p class="error-message">Error: ${error.message}. Please ensure the file is a valid Excel file and the columns are named correctly.</p>`;
+            } finally {
+                processBtn.disabled = false;
+                processBtn.innerHTML = '<i class="fas fa-cogs"></i> Process File';
+                fileInput.value = ''; // Clear the file input
+            }
+        };
+        reader.readAsArrayBuffer(file);
+    });
+}
 
 /**
  * Renders the HTML for a single class roster and appends it to the container.
@@ -2121,27 +2277,43 @@ function setupAttendanceRegister(db, teacherData) {
                 tableBody.innerHTML = `<tr><td colspan="7" class="info-message">No learners found for this class.</td></tr>`;
                 return;
             }
-            const learners = learnersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            const learners = learnersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })).sort((a, b) => (a.learnerSurname || '').localeCompare(b.learnerSurname || ''));
 
-            // 2. Get all weekly attendance records for these learners for the current week
+            // 2. Get all weekly attendance records for these learners for the current week, handling the 10-item 'in' query limit.
             const learnerIds = learners.map(l => l.id);
-            const attendanceSnapshot = await db.collection('weekly_attendance')
-                .where('year', '==', year)
-                .where('weekNumber', '==', weekNumber)
-                .where('learnerId', 'in', learnerIds)
-                .get();
-
             const attendanceMap = new Map();
-            attendanceSnapshot.forEach(doc => {
-                const data = doc.data();
-                attendanceMap.set(data.learnerId, data.attendance);
-            });
+
+            if (learnerIds.length > 0) {
+                // Break the query into chunks of 10
+                const promises = [];
+                for (let i = 0; i < learnerIds.length; i += 10) {
+                    const chunk = learnerIds.slice(i, i + 10);
+                    promises.push(
+                        db.collection('weekly_attendance')
+                            .where('year', '==', year)
+                            .where('weekNumber', '==', weekNumber)
+                            .where('learnerId', 'in', chunk)
+                            .get()
+                    );
+                }
+
+                // Wait for all chunked queries to complete
+                const snapshots = await Promise.all(promises);
+
+                // Combine the results into a single map
+                snapshots.forEach(snapshot => {
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        attendanceMap.set(data.learnerId, data.attendance);
+                    });
+                });
+            }
 
             // 3. Render the table
             let tableRowsHTML = '';
             const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'];
 
-            learners.sort((a, b) => (a.learnerSurname || '').localeCompare(b.learnerSurname || '')).forEach(learner => {
+            learners.forEach(learner => {
                 const learnerAttendance = attendanceMap.get(learner.id) || {};
                 tableRowsHTML += `<tr data-learner-id="${learner.id}" data-admission-id="${learner.admissionId}" data-learner-name="${learner.learnerName} ${learner.learnerSurname}">`;
                 tableRowsHTML += `<td>${learner.admissionId || 'N/A'}</td>`;
