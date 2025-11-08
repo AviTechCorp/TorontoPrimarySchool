@@ -304,6 +304,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // **NEW**: Initialize the responsive sidebar functionality
     setupResponsiveSidebar();
 
+    // **NEW**: Initialize the portfolio manager
+    setupPortfolioManager(db, userData);
+
+    // **NEW**: Initialize the portfolio print functionality
+    setupPortfolioPrint(userData);
+
     // Sidebar navigation logic
     // Select all links intended for section navigation, both in the sidebar and main content
     const navLinks = document.querySelectorAll('.sidebar a[href^="#"], .portal-content-wrapper a[href^="#"]');
@@ -315,7 +321,8 @@ document.addEventListener('DOMContentLoaded', () => {
     function showSection(targetId) {
         // Define parent-child relationships for nested navigation
         const sectionMap = {
-            'attendance-form': 'students',
+            'attendance-form': 'students', // This seems to be a form, not a section
+            'grades-form': 'students',
             'class-setup': 'students'
         };
         const parentId = sectionMap[targetId] || targetId;
@@ -377,6 +384,11 @@ document.addEventListener('DOMContentLoaded', () => {
         // prevent potential duplicate data from showing
          const currentUserData = JSON.parse(sessionStorage.getItem('currentUser'));
         if (currentUserData) loadTeacherClassesAndLearners(db, currentUserData);
+      }
+
+      // **NEW**: Load portfolio items when the section is viewed
+      if (targetId === 'portfolio') {
+        loadPortfolioItems(db, userData);
       }
 
       // Update URL hash
@@ -1439,6 +1451,164 @@ async function loadCurrentRoster(db, className, container) {
     }
 }
 
+/**
+ * Sets up the portfolio upload form and listeners.
+ * @param {firebase.firestore.Firestore} db - The Firestore database instance.
+ * @param {object} teacherAuthData - The authenticated teacher's data.
+ */
+function setupPortfolioManager(db, teacherAuthData) {
+    const form = document.getElementById('upload-portfolio-item-form');
+    if (!form) return;
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const submitButton = form.querySelector('button[type="submit"]');
+        const statusMessage = document.getElementById('portfolio-upload-status');
+
+        const category = document.getElementById('portfolio-item-category').value;
+        const description = document.getElementById('portfolio-item-description').value;
+        const file = document.getElementById('portfolio-item-file').files[0];
+
+        if (!category || !description || !file) {
+            alert('Please fill out all fields and select a file.');
+            return;
+        }
+
+        submitButton.disabled = true;
+        submitButton.innerHTML = '<i class="fas fa-sync fa-spin"></i> Uploading...';
+        statusMessage.textContent = 'Upload in progress...';
+        statusMessage.className = 'status-message-box info';
+        statusMessage.style.display = 'block';
+
+        try {
+            const storageRef = firebase.storage().ref();
+            const filePath = `portfolios/${teacherAuthData.uid}/${category}/${Date.now()}_${file.name}`;
+            const fileRef = storageRef.child(filePath);
+
+            const snapshot = await fileRef.put(file);
+            const downloadURL = await snapshot.ref.getDownloadURL();
+
+            await db.collection('teacher_portfolios').add({
+                teacherId: teacherAuthData.uid,
+                category: category,
+                description: description,
+                fileName: file.name,
+                url: downloadURL,
+                storagePath: filePath,
+                uploadedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+
+            statusMessage.textContent = 'Item uploaded successfully!';
+            statusMessage.className = 'status-message-box success';
+            form.reset();
+            loadPortfolioItems(db, teacherAuthData); // Refresh the list
+
+        } catch (error) {
+            console.error("Error uploading portfolio item:", error);
+            statusMessage.textContent = 'An error occurred during upload. Please try again.';
+            statusMessage.className = 'status-message-box error';
+        } finally {
+            submitButton.disabled = false;
+            submitButton.innerHTML = '<i class="fas fa-cloud-upload-alt"></i> Upload to Portfolio';
+        }
+    });
+}
+
+/**
+ * Loads and displays the teacher's portfolio items from Firestore.
+ * @param {firebase.firestore.Firestore} db - The Firestore database instance.
+ * @param {object} teacherAuthData - The authenticated teacher's data.
+ */
+async function loadPortfolioItems(db, teacherAuthData) {
+    const container = document.getElementById('portfolio-items-container');
+    if (!container) return;
+
+    container.innerHTML = '<h3><i class="fas fa-folder-open"></i> My Uploaded Items</h3><p class="info-message">Loading portfolio...</p>';
+
+    try {
+        const snapshot = await db.collection('teacher_portfolios')
+            .where('teacherId', '==', teacherAuthData.uid)
+            .orderBy('uploadedAt', 'desc')
+            .get();
+
+        if (snapshot.empty) {
+            container.innerHTML = '<h3><i class="fas fa-folder-open"></i> My Uploaded Items</h3><p class="info-message">Your portfolio is empty. Use the form on the left to add your first item.</p>';
+            return;
+        }
+
+        const itemsByCategory = {};
+        snapshot.forEach(doc => {
+            const item = { id: doc.id, ...doc.data() };
+            if (!itemsByCategory[item.category]) {
+                itemsByCategory[item.category] = [];
+            }
+            itemsByCategory[item.category].push(item);
+        });
+
+        let portfolioHTML = '<h3><i class="fas fa-folder-open"></i> My Uploaded Items</h3>';
+        for (const category in itemsByCategory) {
+            portfolioHTML += `<h4 class="portfolio-category-title">${category}</h4><ul class="resource-list">`;
+            itemsByCategory[category].forEach(item => {
+                portfolioHTML += `
+                    <li data-doc-id="${item.id}" data-storage-path="${item.storagePath}">
+                        <i class="far fa-file-alt"></i>
+                        <a href="${item.url}" target="_blank" rel="noopener noreferrer" title="Uploaded: ${item.uploadedAt.toDate().toLocaleDateString()}">${item.description}</a>
+                        <button class="cta-button-small danger" onclick="deletePortfolioItem(this)"><i class="fas fa-trash-alt"></i></button>
+                    </li>`;
+            });
+            portfolioHTML += `</ul>`;
+        }
+        container.innerHTML = portfolioHTML;
+
+    } catch (error) {
+        console.error("Error loading portfolio items:", error);
+        container.innerHTML = '<h3><i class="fas fa-folder-open"></i> My Uploaded Items</h3><p class="error-message">Could not load portfolio items.</p>';
+    }
+}
+
+/**
+ * Sets up the "Print Portfolio" button functionality.
+ * @param {object} teacherAuthData - The authenticated teacher's data.
+ */
+function setupPortfolioPrint(teacherAuthData) {
+    const printBtn = document.getElementById('print-portfolio-btn');
+    if (!printBtn) return;
+
+    printBtn.addEventListener('click', () => {
+        // 1. Populate the cover page with dynamic data
+        const teacherNameEl = document.getElementById('print-cover-teacher-name');
+        const dateEl = document.getElementById('print-cover-date');
+        
+        if (teacherNameEl) {
+            teacherNameEl.textContent = `${teacherAuthData.preferredName || ''} ${teacherAuthData.surname || ''}`;
+        }
+        if (dateEl) {
+            dateEl.textContent = `Generated on: ${new Date().toLocaleDateString()}`;
+        }
+
+        // 2. Trigger the browser's print dialog
+        window.print();
+    });
+}
+
+window.deletePortfolioItem = async (button) => {
+    const listItem = button.closest('li');
+    const docId = listItem.dataset.docId;
+    const storagePath = listItem.dataset.storagePath;
+
+    if (!confirm(`Are you sure you want to permanently delete this portfolio item?`)) return;
+
+    try {
+        // Delete from Firestore and Storage
+        await firebase.firestore().collection('teacher_portfolios').doc(docId).delete();
+        await firebase.storage().ref(storagePath).delete();
+        listItem.remove(); // Remove from UI
+        alert('Item deleted successfully.');
+    } catch (error) {
+        console.error("Error deleting portfolio item:", error);
+        alert('Failed to delete item. Please try again.');
+    }
+};
 
 /**
  * Renders the HTML for a single class roster and appends it to the container.
