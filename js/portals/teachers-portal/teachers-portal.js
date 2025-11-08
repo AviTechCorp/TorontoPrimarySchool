@@ -1452,6 +1452,25 @@ async function loadCurrentRoster(db, className, container) {
 }
 
 /**
+ * Defines the fixed order for portfolio categories.
+ */
+const PORTFOLIO_CATEGORY_ORDER = [
+    "Table Of Content",
+    "Job Description",
+    "Mission and Vision",
+    "School Calender",
+    "Personal Time Table",
+    "Lesson Plans",
+    "Student Assessments",
+    "Classroom Management",
+    "Teaching Philosophy",
+    "Student Work Samples",
+    "Professional Development",
+    "Parent Communication",
+    "Other"
+];
+
+/**
  * Sets up the portfolio upload form and listeners.
  * @param {firebase.firestore.Firestore} db - The Firestore database instance.
  * @param {object} teacherAuthData - The authenticated teacher's data.
@@ -1546,9 +1565,13 @@ async function loadPortfolioItems(db, teacherAuthData) {
         });
 
         let portfolioHTML = '<h3><i class="fas fa-folder-open"></i> My Uploaded Items</h3>';
-        for (const category in itemsByCategory) {
-            portfolioHTML += `<h4 class="portfolio-category-title">${category}</h4><ul class="resource-list">`;
-            itemsByCategory[category].forEach(item => {
+        // **FIX**: Iterate through the predefined category order instead of the object keys.
+        PORTFOLIO_CATEGORY_ORDER.forEach(category => {
+            // Check if there are any items uploaded for this category
+            if (itemsByCategory[category]) {
+                portfolioHTML += `<h4 class="portfolio-category-title">${category}</h4><ul class="resource-list">`;
+                // The items are already sorted by date from the query
+                itemsByCategory[category].forEach(item => {
                 portfolioHTML += `
                     <li data-doc-id="${item.id}" data-storage-path="${item.storagePath}">
                         <i class="far fa-file-alt"></i>
@@ -1556,8 +1579,9 @@ async function loadPortfolioItems(db, teacherAuthData) {
                         <button class="cta-button-small danger" onclick="deletePortfolioItem(this)"><i class="fas fa-trash-alt"></i></button>
                     </li>`;
             });
-            portfolioHTML += `</ul>`;
-        }
+                portfolioHTML += `</ul>`;
+            }
+        });
         container.innerHTML = portfolioHTML;
 
     } catch (error) {

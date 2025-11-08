@@ -11,7 +11,7 @@
  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
  <link rel="stylesheet" href="../../global.css">
  <link rel="stylesheet" href="../../css/portals/teachers-portal/teachers-portal.css">
- <link rel="stylesheet" href="../../css/portals/teachers-portal/print-style-teacher-portfolio.css">
+ <link rel="stylesheet" href="../../css/portals/teachers-portal/print-teacher-portfolio.css">
  <link rel="shortcut icon" href="../../images/44.png" type="image/x-icon">
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
@@ -417,7 +417,7 @@
 
     <!-- This section is hidden by default and only visible during printing -->
     <div id="portfolio-print-cover" class="print-only">
-        <h1 id="print-cover-title">Professional Teaching Portfolio</h1>
+        <h1 id="print-cover-title">Educator's Portfolio File</h1>
         <h2 id="print-cover-teacher-name"></h2>
         <p id="print-cover-date"></p>
     </div>
@@ -430,9 +430,15 @@
             <label for="portfolio-item-category">Category</label>
             <select id="portfolio-item-category" required>
                 <option value="">-- Select a Category --</option>
-                <option value="Teaching Philosophy">Teaching Philosophy</option>
+                <option value="Table Of Content">Table Of Content</option>
+                <option value="Job Description">Job Description</option>
+                <option value="Mission and Vision">Mission and Vision</option>
+                <option value="School Calender">School Calender</option>
+                <option value="Personal Time Table">Personal Time Table</option>
                 <option value="Lesson Plans">Lesson Plans</option>
                 <option value="Student Assessments">Student Assessments</option>
+                <option value="Classroom Management">Classroom Management</option>
+                <option value="Teaching Philosophy">Teaching Philosophy</option>
                 <option value="Student Work Samples">Student Work Samples</option>
                 <option value="Professional Development">Professional Development</option>
                 <option value="Parent Communication">Parent Communication</option>
