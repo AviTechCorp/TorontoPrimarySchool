@@ -396,10 +396,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // **NEW**: Load portfolio items when the section is viewed
       if (targetId === 'portfolio') {
-        loadPortfolioItems(db, userData);
+        // **FIX**: The portfolio section now shows a list of subjects first.
+        // The actual items are loaded when a subject is selected.
+        // We just need to ensure the main view is displayed.
+        showPortfolioListView();
       }
 
       // Update URL hash
+      // history.pushState(null, null, `#${targetId}`);
       history.pushState(null, null, `#${targetId}`);
     });
   });
@@ -1518,11 +1522,21 @@ const PORTFOLIO_CATEGORY_ORDER = [
  * @param {object} teacherAuthData - The authenticated teacher's data.
  */
 function setupPortfolioManager(db, teacherAuthData) {
+    // This function now sets up the main portfolio view which lists subject portfolios.
+    // The form listener is moved to a function that's called when a specific portfolio is opened.
+    showPortfolioListView(); // Ensure the main list view is shown by default.
+
+    document.getElementById('back-to-portfolio-list').addEventListener('click', showPortfolioListView);
+}
+
+function setupPortfolioUploadForm(db, teacherAuthData, subject, grade) {
     const form = document.getElementById('upload-portfolio-item-form');
     if (!form) return;
 
-    form.addEventListener('submit', async (e) => {
+    // Use a named function to be able to remove the listener later
+    const formSubmitHandler = async (e) => {
         e.preventDefault();
+
         const submitButton = form.querySelector('button[type="submit"]');
         const statusMessage = document.getElementById('portfolio-upload-status');
 
@@ -1530,7 +1544,7 @@ function setupPortfolioManager(db, teacherAuthData) {
         const description = document.getElementById('portfolio-item-description').value;
         const file = document.getElementById('portfolio-item-file').files[0];
 
-        if (!category || !description || !file) {
+        if (!category || !description || !file || !subject || !grade) {
             alert('Please fill out all fields and select a file.');
             return;
         }
@@ -1543,7 +1557,7 @@ function setupPortfolioManager(db, teacherAuthData) {
 
         try {
             const storageRef = firebase.storage().ref();
-            const filePath = `portfolios/${teacherAuthData.uid}/${category}/${Date.now()}_${file.name}`;
+            const filePath = `portfolios/${teacherAuthData.uid}/${grade}/${subject}/${category}/${Date.now()}_${file.name}`;
             const fileRef = storageRef.child(filePath);
 
             const snapshot = await fileRef.put(file);
@@ -1552,6 +1566,8 @@ function setupPortfolioManager(db, teacherAuthData) {
             await db.collection('teacher_portfolios').add({
                 teacherId: teacherAuthData.uid,
                 category: category,
+                subject: subject,
+                grade: grade,
                 description: description,
                 fileName: file.name,
                 url: downloadURL,
@@ -1562,7 +1578,7 @@ function setupPortfolioManager(db, teacherAuthData) {
             statusMessage.textContent = 'Item uploaded successfully!';
             statusMessage.className = 'status-message-box success';
             form.reset();
-            loadPortfolioItems(db, teacherAuthData); // Refresh the list
+            loadPortfolioItems(db, teacherAuthData, subject, grade); // Refresh the list for the current subject/grade
 
         } catch (error) {
             console.error("Error uploading portfolio item:", error);
@@ -1572,63 +1588,133 @@ function setupPortfolioManager(db, teacherAuthData) {
             submitButton.disabled = false;
             submitButton.innerHTML = '<i class="fas fa-cloud-upload-alt"></i> Upload to Portfolio';
         }
+    }
+
+    // Clean up previous listener before adding a new one to prevent duplicates
+    form.removeEventListener('submit', form.lastSubmitHandler);
+    form.addEventListener('submit', formSubmitHandler);
+    form.lastSubmitHandler = formSubmitHandler; // Store reference for cleanup
+};
+
+/**
+ * Shows the main portfolio view which lists all subject-specific portfolios.
+ */
+async function showPortfolioListView() {
+    document.getElementById('portfolio-subject-list-container').style.display = 'block';
+    document.getElementById('portfolio-detail-view').style.display = 'none';
+
+    const linksContainer = document.getElementById('portfolio-subject-links');
+    linksContainer.innerHTML = '<p class="info-message">Loading your teaching assignments...</p>';
+
+    const userData = JSON.parse(sessionStorage.getItem('currentUser'));
+    if (!userData) return;
+
+    const teacherDoc = await firebase.firestore().collection('users').doc(userData.uid).get();
+    if (!teacherDoc.exists) {
+        linksContainer.innerHTML = '<p class="error-message">Could not find your teacher profile.</p>';
+        return;
+    }
+
+    const assignments = teacherDoc.data().teachingAssignments || [];
+    if (assignments.length === 0) {
+        linksContainer.innerHTML = '<p class="info-message">You have no teaching assignments. No portfolios to display.</p>';
+        return;
+    }
+
+    linksContainer.innerHTML = ''; // Clear loading message
+    assignments.forEach(assignment => {
+        const { subject, grade, fullClass } = assignment;
+        const link = document.createElement('a');
+        link.href = '#';
+        link.className = 'portfolio-subject-link';
+        link.innerHTML = `<i class="fas fa-folder"></i> Portfolio for <strong>${subject}</strong> - Class ${fullClass}`;
+        link.onclick = (e) => {
+            e.preventDefault();
+            openPortfolioDetailView(subject, grade, fullClass);
+        };
+        linksContainer.appendChild(link);
     });
 }
 
 /**
- * Loads and displays the teacher's portfolio items from Firestore.
+ * Opens the detailed view for a specific subject portfolio.
+ * @param {string} subject - The subject of the portfolio.
+ * @param {string} grade - The grade of the portfolio.
+ * @param {string} fullClass - The full class name for display.
+ */
+function openPortfolioDetailView(subject, grade, fullClass) {
+    document.getElementById('portfolio-subject-list-container').style.display = 'none';
+    document.getElementById('portfolio-detail-view').style.display = 'block';
+
+    document.getElementById('portfolio-detail-header').textContent = `Managing Portfolio for ${subject} - Class ${fullClass}`;
+
+    const userData = JSON.parse(sessionStorage.getItem('currentUser'));
+    const db = firebase.firestore();
+
+    // Load items for this specific portfolio
+    loadPortfolioItems(db, userData, subject, grade);
+
+    // Set up the upload form for this specific context
+    setupPortfolioUploadForm(db, userData, subject, grade);
+
+    // Set up the link generator for this specific context
+    setupPortfolioLinkGenerator(userData, subject, grade);
+}
+
+
+/**
+ * Loads and displays portfolio items for a specific subject and grade.
  * @param {firebase.firestore.Firestore} db - The Firestore database instance.
  * @param {object} teacherAuthData - The authenticated teacher's data.
+ * @param {string} subject - The subject to filter by.
+ * @param {string} grade - The grade to filter by.
  */
-async function loadPortfolioItems(db, teacherAuthData) {
+async function loadPortfolioItems(db, teacherAuthData, subject, grade) {
     const container = document.getElementById('portfolio-items-container');
     if (!container) return;
 
-    container.innerHTML = '<h3><i class="fas fa-folder-open"></i> My Uploaded Items</h3><p class="info-message">Loading portfolio...</p>';
+    container.innerHTML = '<h3><i class="fas fa-folder-open"></i> Uploaded Items</h3><p class="info-message">Loading portfolio items...</p>';
 
     try {
         const snapshot = await db.collection('teacher_portfolios')
             .where('teacherId', '==', teacherAuthData.uid)
+            .where('subject', '==', subject)
+            .where('grade', '==', grade)
             .orderBy('uploadedAt', 'desc')
             .get();
 
         if (snapshot.empty) {
-            container.innerHTML = '<h3><i class="fas fa-folder-open"></i> My Uploaded Items</h3><p class="info-message">Your portfolio is empty. Use the form on the left to add your first item.</p>';
+            container.innerHTML = '<h3><i class="fas fa-folder-open"></i> Uploaded Items</h3><p class="info-message">This portfolio is empty. Use the form on the left to add your first item.</p>';
             return;
         }
 
         const itemsByCategory = {};
         snapshot.forEach(doc => {
             const item = { id: doc.id, ...doc.data() };
-            if (!itemsByCategory[item.category]) {
-                itemsByCategory[item.category] = [];
-            }
+            if (!itemsByCategory[item.category]) itemsByCategory[item.category] = [];
             itemsByCategory[item.category].push(item);
         });
 
-        let portfolioHTML = '<h3><i class="fas fa-folder-open"></i> My Uploaded Items</h3>';
-        // **FIX**: Iterate through the predefined category order instead of the object keys.
+        let portfolioHTML = '<h3><i class="fas fa-folder-open"></i> Uploaded Items</h3>';
         PORTFOLIO_CATEGORY_ORDER.forEach(category => {
-            // Check if there are any items uploaded for this category
             if (itemsByCategory[category]) {
                 portfolioHTML += `<h4 class="portfolio-category-title">${category}</h4><ul class="resource-list">`;
-                // The items are already sorted by date from the query
                 itemsByCategory[category].forEach(item => {
-                portfolioHTML += `
-                    <li data-doc-id="${item.id}" data-storage-path="${item.storagePath}">
-                        <i class="far fa-file-alt"></i>
-                        <a href="${item.url}" target="_blank" rel="noopener noreferrer" title="Uploaded: ${item.uploadedAt.toDate().toLocaleDateString()}">${item.description}</a>
-                        <button class="cta-button-small danger" onclick="deletePortfolioItem(this)"><i class="fas fa-trash-alt"></i></button>
-                    </li>`;
-            });
+                    portfolioHTML += `
+                        <li data-doc-id="${item.id}" data-storage-path="${item.storagePath}">
+                            <i class="far fa-file-alt"></i>
+                            <a href="${item.url}" target="_blank" rel="noopener noreferrer" title="Uploaded: ${item.uploadedAt.toDate().toLocaleDateString()}">${item.description}</a>
+                            <button class="cta-button-small danger" onclick="deletePortfolioItem(this, '${subject}', '${grade}')"><i class="fas fa-trash-alt"></i></button>
+                        </li>`;
+                });
                 portfolioHTML += `</ul>`;
             }
         });
         container.innerHTML = portfolioHTML;
 
     } catch (error) {
-        console.error("Error loading portfolio items:", error);
-        container.innerHTML = '<h3><i class="fas fa-folder-open"></i> My Uploaded Items</h3><p class="error-message">Could not load portfolio items.</p>';
+        console.error("Error loading portfolio items for subject/grade:", error);
+        container.innerHTML = '<h3><i class="fas fa-folder-open"></i> Uploaded Items</h3><p class="error-message">Could not load portfolio items.</p>';
     }
 }
 
@@ -1660,8 +1746,10 @@ function setupPortfolioPrint(teacherAuthData) {
 /**
  * Sets up the "Generate Shareable Link" button functionality.
  * @param {object} teacherAuthData - The authenticated teacher's data.
+ * @param {string} subject - The subject for the link.
+ * @param {string} grade - The grade for the link.
  */
-function setupPortfolioLinkGenerator(teacherAuthData) {
+function setupPortfolioLinkGenerator(teacherAuthData, subject, grade) {
     const generateBtn = document.getElementById('generate-share-link-btn');
     if (!generateBtn) return;
 
@@ -1671,16 +1759,16 @@ function setupPortfolioLinkGenerator(teacherAuthData) {
         const copyBtn = document.getElementById('copy-portfolio-link-btn');
 
         if (!teacherAuthData || !teacherAuthData.uid) {
-            alert('Could not generate link. User ID is missing.');
+            alert('Could not generate link. User ID is missing.'); return;
+        }
+        if (!subject || !grade) {
+            alert('Could not generate link. Subject or grade is missing.');
             return;
         }
 
-        // Construct the full URL to the new viewer page
-        // **FIX**: Construct a relative URL to work correctly on GitHub Pages.
-        // This navigates up from the current '/html/auth/' directory to the root,
-        // then down into '/html/portfolio/'.
-        const viewerPath = `../portfolio/portfolio-viewer.html?teacherId=${teacherAuthData.uid}`;
-        // Create a full, clean URL from the relative path.
+        // Construct a relative URL with all necessary parameters
+        const viewerPath = `../portfolio/portfolio-viewer.html?teacherId=${teacherAuthData.uid}&subject=${encodeURIComponent(subject)}&grade=${encodeURIComponent(grade)}`;
+        // Create a full, clean URL
         const fullUrl = new URL(viewerPath, window.location.href).href;
 
         linkInput.value = fullUrl;
@@ -1697,7 +1785,7 @@ function setupPortfolioLinkGenerator(teacherAuthData) {
     });
 }
 
-window.deletePortfolioItem = async (button) => {
+window.deletePortfolioItem = async (button, subject, grade) => {
     const listItem = button.closest('li');
     const docId = listItem.dataset.docId;
     const storagePath = listItem.dataset.storagePath;
@@ -1710,6 +1798,10 @@ window.deletePortfolioItem = async (button) => {
         await firebase.storage().ref(storagePath).delete();
         listItem.remove(); // Remove from UI
         alert('Item deleted successfully.');
+
+        // Refresh the list to check if the category is now empty
+        const userData = JSON.parse(sessionStorage.getItem('currentUser'));
+        loadPortfolioItems(firebase.firestore(), userData, subject, grade);
     } catch (error) {
         console.error("Error deleting portfolio item:", error);
         alert('Failed to delete item. Please try again.');

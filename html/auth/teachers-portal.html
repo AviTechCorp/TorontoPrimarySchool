@@ -20,7 +20,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script src="../../js/portals/teachers-portal/firebase-config.js"></script>
 </head>
-<body>
+<body class="print-container">
 
   <header class="fixed top-0 left-0 w-full bg-indigo-700 text-white shadow-xl z-20">
     <div class="flex items-center justify-between p-4 max-w-7xl mx-auto">
@@ -427,61 +427,77 @@
 
    <div id="portfolio" class="portal-section hidden-section">
     <h2>My Professional Portfolio</h2>
-    <p class="no-print">Upload, manage, and showcase documents that represent your teaching journey, skills, and accomplishments.</p>
-    <div class="portfolio-actions no-print" style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;">
-        <button id="print-portfolio-btn" class="cta-button primary-blue"><i class="fas fa-print"></i> Print / Save as PDF</button>
-        <button id="generate-share-link-btn" class="cta-button"><i class="fas fa-link"></i> Generate Shareable Link</button>
+    <p>Your portfolio is automatically organized by the subjects and grades you teach. Select a portfolio below to manage its contents or generate a shareable link.</p>
+
+    <!-- This container will list the links to each subject-specific portfolio -->
+    <div id="portfolio-subject-list-container" class="tool-card" style="margin-top: 20px;">
+        <h3>My Subject Portfolios</h3>
+        <div id="portfolio-subject-links" class="resource-list">
+            <p class="info-message">Loading your teaching assignments...</p>
+        </div>
     </div>
 
-    <div id="portfolio-link-output-area" class="no-print" style="display: none; margin-bottom: 20px;">
-        <h4>Shareable Portfolio Link:</h4>
-        <input type="text" id="generated-portfolio-link" readonly style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; background: #f9f9f9; margin-top: 5px;">
-        <button id="copy-portfolio-link-btn" class="cta-button-small" style="margin-top: 10px;"><i class="fas fa-copy"></i> Copy Link</button>
-    </div>
+    <!-- This view will be shown when a specific portfolio is selected -->
+    <div id="portfolio-detail-view" style="display: none; margin-top: 20px;">
+        <button id="back-to-portfolio-list" class="cta-button-secondary" style="margin-bottom: 20px;">
+            <i class="fas fa-arrow-left"></i> Back to All Portfolios
+        </button>
+        <h2 id="portfolio-detail-header"></h2>
 
-    <!-- This section is hidden by default and only visible during printing -->
-    <div id="portfolio-print-cover" class="print-only">
-        <h1 id="print-cover-title">Educator's Portfolio File</h1>
-        <h2 id="print-cover-teacher-name"></h2>
-        <p id="print-cover-date"></p>
-    </div>
+        <div class="portfolio-actions no-print" style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;">
+            <button id="print-portfolio-btn" class="cta-button primary-blue"><i class="fas fa-print"></i> Print / Save as PDF</button>
+            <button id="generate-share-link-btn" class="cta-button"><i class="fas fa-link"></i> Generate Shareable Link</button>
+        </div>
 
-    <div class="grid-container materials-area">
-     <div class="tool-card accent-3 no-print">
-      <h3><i class="fas fa-upload"></i> Add New Portfolio Item</h3>
-      <form id="upload-portfolio-item-form">
-        <div class="form-group">
-            <label for="portfolio-item-category">Category</label>
-            <select id="portfolio-item-category" required>
-                <option value="">-- Select a Category --</option>
-                <option value="Table Of Content">Table Of Content</option>
-                <option value="Job Description">Job Description</option>
-                <option value="Mission and Vision">Mission and Vision</option>
-                <option value="School Calender">School Calender</option>
-                <option value="Personal Time Table">Personal Time Table</option>
-                <option value="Lesson Plans">Lesson Plans</option>
-                <option value="Student Assessments">Student Assessments</option>
-                <option value="Classroom Management">Classroom Management</option>
-                <option value="Teaching Philosophy">Teaching Philosophy</option>
-                <option value="Student Work Samples">Student Work Samples</option>
-                <option value="Professional Development">Professional Development</option>
-                <option value="Parent Communication">Parent Communication</option>
-                <option value="Other">Other</option>
-            </select>
+        <div id="portfolio-link-output-area" class="no-print" style="display: none; margin-bottom: 20px;">
+            <h4>Shareable Portfolio Link:</h4>
+            <input type="text" id="generated-portfolio-link" readonly style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; background: #f9f9f9; margin-top: 5px;">
+            <button id="copy-portfolio-link-btn" class="cta-button-small" style="margin-top: 10px;"><i class="fas fa-copy"></i> Copy Link</button>
         </div>
-        <div class="form-group">
-            <label for="portfolio-item-description">Item Description</label>
-            <input type="text" id="portfolio-item-description" placeholder="e.g., Grade 5 Fractions Unit Plan" required>
+
+        <div id="portfolio-print-cover" class="print-only">
+            <h1 id="print-cover-title">Educator's Portfolio File</h1>
+            <h2 id="print-cover-teacher-name"></h2>
+            <p id="print-cover-date"></p>
         </div>
-        <div class="form-group">
-            <label for="portfolio-item-file">Select File (PDF, DOCX, JPG, etc.)</label>
-            <input type="file" id="portfolio-item-file" required>
+
+        <div class="grid-container materials-area">
+            <div class="tool-card accent-3 no-print">
+                <h3><i class="fas fa-upload"></i> Add New Item to this Portfolio</h3>
+                <form id="upload-portfolio-item-form">
+                    <div class="form-group">
+                        <label for="portfolio-item-category">Category</label>
+                        <select id="portfolio-item-category" required>
+                            <option value="">-- Select a Category --</option>
+                            <option value="Table Of Content">Table Of Content</option>
+                            <option value="Job Description">Job Description</option>
+                            <option value="Mission and Vision">Mission and Vision</option>
+                            <option value="School Calender">School Calender</option>
+                            <option value="Personal Time Table">Personal Time Table</option>
+                            <option value="Lesson Plans">Lesson Plans</option>
+                            <option value="Student Assessments">Student Assessments</option>
+                            <option value="Classroom Management">Classroom Management</option>
+                            <option value="Teaching Philosophy">Teaching Philosophy</option>
+                            <option value="Student Work Samples">Student Work Samples</option>
+                            <option value="Professional Development">Professional Development</option>
+                            <option value="Parent Communication">Parent Communication</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="portfolio-item-description">Item Description</label>
+                        <input type="text" id="portfolio-item-description" placeholder="e.g., Grade 5 Fractions Unit Plan" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="portfolio-item-file">Select File (PDF, DOCX, JPG, etc.)</label>
+                        <input type="file" id="portfolio-item-file" required>
+                    </div>
+                    <p id="portfolio-upload-status" class="status-message-box" style="display: none;"></p>
+                    <button type="submit" class="cta-button primary-blue"><i class="fas fa-cloud-upload-alt"></i> Upload to Portfolio</button>
+                </form>
+            </div>
+            <div id="portfolio-items-container" class="tool-card accent-1" style="grid-column: span 2;"></div>
         </div>
-        <p id="portfolio-upload-status" class="status-message-box" style="display: none;"></p>
-        <button type="submit" class="cta-button primary-blue"><i class="fas fa-cloud-upload-alt"></i> Upload to Portfolio</button>
-      </form>
-     </div>
-     <div id="portfolio-items-container" class="tool-card accent-1" style="grid-column: span 2;"></div>
     </div>
    </div>
 

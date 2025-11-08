@@ -11,20 +11,28 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!firebase.apps.length) {
         firebase.initializeApp(firebaseConfig);
     }
+    
     const db = firebase.firestore();
 
-    const urlParams = new URLSearchParams(window.location.search);
-    const teacherId = urlParams.get('teacherId');
+    const params = new URLSearchParams(window.location.search);
+    const teacherId = params.get('teacherId');
 
-    if (!teacherId) {
-        document.getElementById('portfolio-items-container').innerHTML = '<p class="status-message" style="color: red;">Error: No teacher ID provided.</p>';
-        document.getElementById('print-cover-teacher-name').textContent = 'Unknown Teacher';
+    // **NEW**: Get subject and grade from URL
+    const subject = params.get('subject');
+    const grade = params.get('grade');
+
+    if (!teacherId || !subject || !grade) {
+        document.getElementById('portfolio-items-container').innerHTML = '<p class="status-message error">Error: Missing Teacher ID, Subject, or Grade in the URL.</p>';
         return;
     }
 
-    loadFullPortfolio(db, teacherId);
+    // Load teacher's name for the cover page first
+    loadTeacherName(db, teacherId, subject, grade);
 
-    // **NEW**: Add print button functionality
+    // Then load the portfolio items
+    loadPortfolioForViewing(db, teacherId, subject, grade);
+
+    // Add print button functionality
     const printBtn = document.getElementById('print-page-btn');
     if (printBtn) {
         printBtn.addEventListener('click', () => window.print());
@@ -51,42 +59,68 @@ const PORTFOLIO_CATEGORY_ORDER = [
 ];
 
 /**
- * Loads the teacher's profile and all portfolio items.
- * @param {firebase.firestore.Firestore} db - Firestore instance.
+ * Loads the teacher's name and portfolio subject/grade for the cover page.
+ * @param {firebase.firestore.Firestore} db - The Firestore instance.
  * @param {string} teacherId - The UID of the teacher.
+ * @param {string} subject - The subject of the portfolio.
+ * @param {string} grade - The grade of the portfolio.
  */
-async function loadFullPortfolio(db, teacherId) {
+async function loadTeacherName(db, teacherId, subject, grade) {
     const teacherNameEl = document.getElementById('print-cover-teacher-name');
-    const dateEl = document.getElementById('print-cover-date');
-    const container = document.getElementById('portfolio-items-container');
-    const lastUpdatedEl = document.getElementById('last-updated-date');
+    const subjectGradeEl = document.getElementById('print-cover-subject-grade');
 
     try {
-        // 1. Fetch teacher's name for the cover page
         const teacherDoc = await db.collection('users').doc(teacherId).get();
         if (teacherDoc.exists) {
             const teacherData = teacherDoc.data();
-            teacherNameEl.textContent = `${teacherData.preferredName || ''} ${teacherData.surname || ''}`;
+            const fullName = `${teacherData.preferredName || ''} ${teacherData.surname || ''}`.trim();
+            teacherNameEl.textContent = fullName || 'Educator';
+            if (subjectGradeEl) {
+                subjectGradeEl.textContent = `${subject} - Grade ${grade}`;
+            }
         } else {
-            teacherNameEl.textContent = 'Teacher Not Found';
+            teacherNameEl.textContent = 'Unknown Teacher';
         }
-        dateEl.textContent = `Portfolio as of: ${new Date().toLocaleDateString()}`;
+    } catch (error) {
+        console.error("Error loading teacher name:", error);
+        teacherNameEl.textContent = 'Error Loading Name';
+    }
+}
 
-        // 2. Fetch portfolio items
+/**
+ * Loads and displays portfolio items for a specific teacher, subject, and grade.
+ * @param {firebase.firestore.Firestore} db - The Firestore instance.
+ * @param {string} teacherId - The UID of the teacher whose portfolio to load.
+ * @param {string} subject - The subject to filter by.
+ * @param {string} grade - The grade to filter by.
+ */
+async function loadPortfolioForViewing(db, teacherId, subject, grade) {
+    const container = document.getElementById('portfolio-items-container');
+    const lastUpdatedEl = document.getElementById('last-updated-date');
+    const dateEl = document.getElementById('print-cover-date');
+    container.innerHTML = '<p class="status-message"><i class="fas fa-sync fa-spin"></i> Loading portfolio contents...</p>';
+
+    try {
+        // **NEW**: Filter by subject and grade
         const snapshot = await db.collection('teacher_portfolios')
             .where('teacherId', '==', teacherId)
+            .where('subject', '==', subject)
+            .where('grade', '==', grade)
             .orderBy('uploadedAt', 'desc')
             .get();
 
         if (snapshot.empty) {
-            container.innerHTML = '<p class="status-message">This portfolio is currently empty.</p>';
+            container.innerHTML = '<p class="status-message">This portfolio section is currently empty.</p>';
             return;
         }
 
-        // **NEW**: Find the most recent upload date for the "Last Updated" footer
-        const mostRecentTimestamp = snapshot.docs[0].data().uploadedAt; // Because the query is ordered by date desc
+        // Find the most recent upload date for the "Last Updated" footer
+        const mostRecentTimestamp = snapshot.docs[0].data().uploadedAt;
         if (lastUpdatedEl && mostRecentTimestamp) {
             lastUpdatedEl.textContent = mostRecentTimestamp.toDate().toLocaleString();
+        }
+        if (dateEl) {
+            dateEl.textContent = `Portfolio as of: ${new Date().toLocaleDateString()}`;
         }
 
         const itemsByCategory = {};
@@ -98,11 +132,13 @@ async function loadFullPortfolio(db, teacherId) {
             itemsByCategory[item.category].push(item);
         });
 
-        // 3. Render items in the correct order
+        // Render items in the correct order
         let portfolioHTML = '';
         PORTFOLIO_CATEGORY_ORDER.forEach(category => {
             if (itemsByCategory[category]) {
                 portfolioHTML += `<h4 class="portfolio-category-title">${category}</h4><ul class="resource-list">`;
+                // Sort items within the category by date as well
+                itemsByCategory[category].sort((a, b) => b.uploadedAt.toMillis() - a.uploadedAt.toMillis());
                 itemsByCategory[category].forEach(item => {
                     portfolioHTML += `
                         <li>
@@ -118,5 +154,8 @@ async function loadFullPortfolio(db, teacherId) {
     } catch (error) {
         console.error("Error loading portfolio:", error);
         container.innerHTML = '<p class="status-message" style="color: red;">Could not load portfolio due to an error.</p>';
+        if (error.code === 'failed-precondition') {
+            container.innerHTML += '<p class="status-message error" style="font-size: 0.9rem;"><strong>Action Required:</strong> This query requires a database index. Please check the browser console for a link to create it in Firebase.</p>';
+        }
     }
 }
