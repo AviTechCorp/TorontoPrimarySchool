@@ -413,7 +413,16 @@
    <div id="portfolio" class="portal-section hidden-section">
     <h2>My Professional Portfolio</h2>
     <p class="no-print">Upload, manage, and showcase documents that represent your teaching journey, skills, and accomplishments.</p>
-    <button id="print-portfolio-btn" class="cta-button primary-blue no-print" style="margin-bottom: 20px;"><i class="fas fa-print"></i> Print / Save as PDF</button>
+    <div class="portfolio-actions no-print" style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;">
+        <button id="print-portfolio-btn" class="cta-button primary-blue"><i class="fas fa-print"></i> Print / Save as PDF</button>
+        <button id="generate-share-link-btn" class="cta-button"><i class="fas fa-link"></i> Generate Shareable Link</button>
+    </div>
+
+    <div id="portfolio-link-output-area" class="no-print" style="display: none; margin-bottom: 20px;">
+        <h4>Shareable Portfolio Link:</h4>
+        <input type="text" id="generated-portfolio-link" readonly style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; background: #f9f9f9; margin-top: 5px;">
+        <button id="copy-portfolio-link-btn" class="cta-button-small" style="margin-top: 10px;"><i class="fas fa-copy"></i> Copy Link</button>
+    </div>
 
     <!-- This section is hidden by default and only visible during printing -->
     <div id="portfolio-print-cover" class="print-only">

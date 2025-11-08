@@ -310,6 +310,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // **NEW**: Initialize the portfolio print functionality
     setupPortfolioPrint(userData);
 
+    // **NEW**: Initialize the portfolio shareable link generator
+    setupPortfolioLinkGenerator(userData);
+
     // Sidebar navigation logic
     // Select all links intended for section navigation, both in the sidebar and main content
     const navLinks = document.querySelectorAll('.sidebar a[href^="#"], .portal-content-wrapper a[href^="#"]');
@@ -1612,6 +1615,42 @@ function setupPortfolioPrint(teacherAuthData) {
 
         // 2. Trigger the browser's print dialog
         window.print();
+    });
+}
+
+/**
+ * Sets up the "Generate Shareable Link" button functionality.
+ * @param {object} teacherAuthData - The authenticated teacher's data.
+ */
+function setupPortfolioLinkGenerator(teacherAuthData) {
+    const generateBtn = document.getElementById('generate-share-link-btn');
+    if (!generateBtn) return;
+
+    generateBtn.addEventListener('click', () => {
+        const outputArea = document.getElementById('portfolio-link-output-area');
+        const linkInput = document.getElementById('generated-portfolio-link');
+        const copyBtn = document.getElementById('copy-portfolio-link-btn');
+
+        if (!teacherAuthData || !teacherAuthData.uid) {
+            alert('Could not generate link. User ID is missing.');
+            return;
+        }
+
+        // Construct the full URL to the new viewer page
+        const viewerPath = 'html/portfolio/portfolio-viewer.html'; // Path from the website root
+        const fullUrl = `${window.location.origin}/${viewerPath}?teacherId=${teacherAuthData.uid}`;
+
+        linkInput.value = fullUrl;
+        outputArea.style.display = 'block';
+
+        copyBtn.onclick = () => {
+            linkInput.select();
+            document.execCommand('copy');
+            copyBtn.textContent = 'Copied!';
+            setTimeout(() => {
+                copyBtn.innerHTML = '<i class="fas fa-copy"></i> Copy Link';
+            }, 2000);
+        };
     });
 }
 
