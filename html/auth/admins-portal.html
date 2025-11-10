@@ -9,14 +9,16 @@
 
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
   <link rel="stylesheet" href="../../css/portals/admins-portal/admins-portal.css">
- 
+  <!-- **NEW**: Add SheetJS library for reading/writing Excel files -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
 
     <script src="../../js/portals/admins-portal/firebase-config.js"></script> 	
-    <script type="module" src="../../js/portals/admins-portal/announcement-manager.js"></script>
     <script src="../../js/portals/admins-portal/data-functions.js"></script>
+    <script src="../../js/portals/admins-portal/data-export-functions.js"></script>
     <script src="../../js/portals/admins-portal/ui-handlers.js"></script> 	
     <script src="../../js/portals/admins-portal/sams-data-loaders.js"></script> 	
     <script src="../../js/portals/admins-portal/lms-manager.js"></script> 	
@@ -30,6 +32,28 @@
 
     <!-- auth.js uses ES module imports — load it as a module and expose logout to window (see auth.js change) -->
     <script type="module" src="../../js/auth/auth.js"></script>
+
+    <style id="print-styles">
+      @media print {
+        /* **FIX**: Instead of hiding everything, hide specific non-printable sections */
+        body > header, .portal-main-content {
+          display: none !important;
+        }
+
+        #print-container, #print-container * { visibility: visible; }
+        #print-container {
+          display: block !important; /* Ensure the container itself is visible */
+          position: absolute;
+          left: 0;
+          top: 0;
+          width: 100%;
+        }
+        .print-header { font-size: 1.5rem; font-weight: bold; margin-bottom: 1rem; }
+        .print-table { width: 100%; border-collapse: collapse; }
+        .print-table th, .print-table td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+        .print-table th { background-color: #f2f2f2; }
+      }
+    </style>
 
 </head>
 <body>
@@ -74,6 +98,7 @@
             <li><a href="#attendance-records"><i class="fas fa-calendar-times"></i> Attendance Records</a></li>
             <li><a href="#grade-assignment"><i class="fas fa-pencil-alt"></i> Class Assignment</a></li>
             <li><a href="#grade-sections"><i class="fas fa-layer-group"></i> Grade Sections</a></li>
+            <li><a href="#mark-sheets"><i class="fas fa-award"></i> Mark Sheets</a></li>
             <li><a href="#sams-educators"><i class="fas fa-chalkboard-teacher"></i> Educator Management</a></li>
             <li><a href="#sams-parents"><i class="fas fa-users"></i> Parent Data</a></li>
           </ul>
@@ -169,6 +194,11 @@
           </div>
           <div id="all-active-learners-list" style="margin-top: 0;">
             <h3>Active Learners Summary</h3>
+            
+            <div class="export-actions" style="margin-bottom: 20px; display: flex; gap: 10px;">
+                <button id="export-lms-excel-btn" class="cta-button-small primary-green"><i class="fas fa-file-excel"></i> Export to Excel</button>
+                <button id="export-lms-pdf-btn" class="cta-button-small primary-red"><i class="fas fa-file-pdf"></i> Export to PDF</button>
+            </div>
 
             <div class="form-group" style="max-width: 250px; margin-bottom: 20px;">
                 <label for="grade-filter">Filter by Grade:</label>
@@ -423,6 +453,11 @@
 
         <div id="grade-section-display" class="tool-card">
             <h3 id="grade-section-header">Select a Grade to Begin</h3>
+            
+            <div class="export-actions" style="margin-top: 15px; margin-bottom: 20px; display: flex; gap: 10px;">
+                <button id="export-grade-section-excel-btn" class="cta-button-small primary-green"><i class="fas fa-file-excel"></i> Export to Excel</button>
+                <button id="export-grade-section-pdf-btn" class="cta-button-small primary-red"><i class="fas fa-file-pdf"></i> Export to PDF</button>
+            </div>
 
             <table id="grade-section-learners-table">
                 <thead>
@@ -437,6 +472,42 @@
             <p class="data-status-message" id="grade-section-learners-status">Please select a grade from the buttons above.</p>
         </div>
       </section>
+
+      <section id="mark-sheets" class="portal-section">
+        <h2>Generate Academic Mark Sheets</h2>
+        <div class="tool-card">
+            <div class="grade-management-header" style="display: flex; gap: 20px; align-items: flex-end; margin-bottom: 20px;">
+                <div class="form-group" style="flex: 1;">
+                    <label for="admin-marksheet-class-select">Select Class:</label>
+                    <select id="admin-marksheet-class-select">
+                        <option value="">-- Loading Classes... --</option>
+                    </select>
+                </div>
+                <div class="form-group" style="flex: 1;">
+                    <label for="admin-marksheet-subject-select">Select Subject:</label>
+                    <select id="admin-marksheet-subject-select" disabled>
+                        <option value="">-- Select Class First --</option>
+                    </select>
+                </div>
+            </div>
+
+            <div id="admin-gradebook-container" style="display: none;">
+                <div class="gradebook-header-actions">
+                    <h3 id="admin-gradebook-header">Gradebook</h3>
+                    <button id="admin-generate-marksheet-btn" class="cta-button-small primary-green" style="display: none;">
+                        <i class="fas fa-print"></i> Generate Mark Sheet
+                    </button>
+                </div>
+                <div id="admin-gradebook-table-container" class="data-table-container"></div>
+                <p id="admin-gradebook-status" class="data-status-message">Select a class and subject to load the gradebook.</p>
+            </div>
+        </div>
+      </section>
+
+      <!-- Modal for Printable Mark Sheet (re-used from teacher portal) -->
+      <div id="marksheet-modal" class="modal">
+          <div id="marksheet-modal-content" class="modal-content printable-area"></div>
+      </div>
 
       <section id="sams-educators" class="portal-section">
           <h2>Educator Management System</h2>
@@ -481,6 +552,42 @@
           <div id="teacher-details-display" class="details-view-container" style="display: none;">
               </div>
       </section>
+
+      <section id="mark-sheets" class="portal-section">
+        <h2>Generate Academic Mark Sheets</h2>
+        <div class="tool-card">
+            <div class="grade-management-header" style="display: flex; gap: 20px; align-items: flex-end; margin-bottom: 20px;">
+                <div class="form-group" style="flex: 1;">
+                    <label for="admin-marksheet-class-select">Select Class:</label>
+                    <select id="admin-marksheet-class-select">
+                        <option value="">-- Loading Classes... --</option>
+                    </select>
+                </div>
+                <div class="form-group" style="flex: 1;">
+                    <label for="admin-marksheet-subject-select">Select Subject:</label>
+                    <select id="admin-marksheet-subject-select" disabled>
+                        <option value="">-- Select Class First --</option>
+                    </select>
+                </div>
+            </div>
+
+            <div id="admin-gradebook-container" style="display: none;">
+                <div class="gradebook-header-actions">
+                    <h3 id="admin-gradebook-header">Gradebook</h3>
+                    <button id="admin-generate-marksheet-btn" class="cta-button-small primary-green" style="display: none;">
+                        <i class="fas fa-print"></i> Generate Mark Sheet
+                    </button>
+                </div>
+                <div id="admin-gradebook-table-container" class="data-table-container"></div>
+                <p id="admin-gradebook-status" class="data-status-message">Select a class and subject to load the gradebook.</p>
+            </div>
+        </div>
+      </section>
+
+      <!-- Modal for Printable Mark Sheet (re-used from teacher portal) -->
+      <div id="marksheet-modal" class="modal">
+          <div id="marksheet-modal-content" class="modal-content printable-area"></div>
+      </div>
 
       <section id="sams-parents" class="portal-section">
         <h2>Parent Data Management</h2>
@@ -547,8 +654,22 @@
               <label for="announcement-date">Date</label>
               <input type="date" id="announcement-date" name="date" required>
             </div>
+            <div class="form-group">
+              <label for="announcement-duration">Visible For (days)</label>
+              <input type="number" id="announcement-duration" name="duration" min="1" value="7" required>
+              <small>The announcement will be automatically removed after this many days from its display date.</small>
+            </div>
             <button type="submit" class="cta-button">Publish Announcement</button>
           </form>
+        </div>
+
+        <div class="tool-card" style="margin-top: 30px;">
+            <h3>Current & Upcoming Announcements</h3>
+            <p>Manually delete announcements if needed. Expired announcements are removed automatically.</p>
+            <div id="current-announcements-list">
+                <p class="data-status-message" id="current-announcements-status">Loading announcements...</p>
+                <!-- Announcements will be loaded here -->
+            </div>
         </div>
       </section>
 
@@ -568,7 +689,15 @@
         </div>
       </section>
     </div>
+
+    <!-- Modal for Printable Mark Sheet (re-used from teacher portal) -->
+    <div id="marksheet-modal" class="modal">
+        <div id="marksheet-modal-content" class="modal-content printable-area"></div>
+    </div>
   </main>
+
+  <!-- Container for printing content -->
+  <div id="print-container" style="display: none;"></div>
 
   <footer>
     <p>© 2023 Toronto Primary School. All rights reserved.</p>

@@ -872,3 +872,52 @@ footer a:hover {
     background: #cbd5e0;
     border-radius: 3px;
 }
+
+/* ==========================================================================
+   Mark Sheet Specific Styles
+   ========================================================================== */
+
+.marksheet-header {
+    text-align: center;
+    margin-bottom: 25px;
+    border-bottom: 2px solid #333;
+    padding-bottom: 15px;
+}
+.marksheet-header .school-logo {
+    max-height: 80px;
+    margin: 0 auto 10px;
+}
+.marksheet-header h1 {
+    margin: 0;
+    font-size: 1.8em;
+    font-weight: 700;
+}
+.marksheet-header h2 {
+    margin: 5px 0;
+    font-size: 1.4em;
+    font-weight: 600;
+    color: #333;
+}
+.marksheet-header p {
+    margin: 2px 0;
+    font-size: 1em;
+    color: #555;
+}
+
+.marksheet-table th, .marksheet-table td {
+    text-align: center;
+    padding: 10px 8px; /* Adjust padding for compactness */
+}
+.marksheet-table td:nth-child(2) { /* Learner Name column */
+    text-align: left;
+}
+.marksheet-table tbody tr:nth-child(even) {
+    background-color: #f9fafb; /* Light gray for even rows */
+}
+.marksheet-footer {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 1px solid #ccc;
+}

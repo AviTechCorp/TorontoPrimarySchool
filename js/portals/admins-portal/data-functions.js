@@ -28,11 +28,14 @@ async function loadSamsRegistrations() {
             return;
         }
 
-        snapshot.forEach(doc => {
+        // Sort the results by surname (learnerName) before rendering
+        const sortedDocs = snapshot.docs.sort((a, b) => (a.data().learnerName || '').localeCompare(b.data().learnerName || ''));
+
+        sortedDocs.forEach(doc => {
             const data = doc.data();
             const admissionId = data.admissionId;
 
-            if (!admissionId || uniqueApplications.has(admissionId)) {
+            if (!admissionId) { // Removed unique check as sorting handles display order
                 return;
             }
             uniqueApplications.add(admissionId);
@@ -72,6 +75,66 @@ async function loadSamsRegistrations() {
     }
 }
 
+/**
+ * Loads all current and upcoming announcements into the management list.
+ */
+async function loadAnnouncementsForManagement() {
+    const container = document.getElementById('current-announcements-list');
+    if (!container) return;
+
+    container.innerHTML = '<p class="data-status-message" id="current-announcements-status">Loading announcements...</p>';
+
+    try {
+        const snapshot = await db.collection('announcements').orderBy('date', 'desc').get();
+
+        if (snapshot.empty) {
+            container.innerHTML = '<p class="data-status-message">No current or upcoming announcements found.</p>';
+            return;
+        }
+
+        let announcementsHTML = '<ul class="resource-list">';
+        snapshot.forEach(doc => {
+            const announcement = doc.data();
+            const announcementId = doc.id;
+            announcementsHTML += `
+                <li data-id="${announcementId}" style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <strong>${announcement.title}</strong> (Display Date: ${announcement.date})
+                        <p style="font-size: 0.9em; color: #666; margin-top: 4px;">${(announcement.content || '').substring(0, 100)}...</p>
+                    </div>
+                    <button class="cta-button-small danger" onclick="deleteAnnouncement('${announcementId}', '${announcement.title.replace(/'/g, "\\'")}')">
+                        <i class="fas fa-trash"></i> Delete
+                    </button>
+                </li>
+            `;
+        });
+        announcementsHTML += '</ul>';
+
+        container.innerHTML = announcementsHTML;
+
+    } catch (error) {
+        console.error("Error loading announcements for management:", error);
+        container.innerHTML = '<p class="data-status-message error">Could not load announcements.</p>';
+    }
+}
+
+/**
+ * Deletes a specific announcement from Firestore after confirmation.
+ * @param {string} announcementId - The ID of the announcement document to delete.
+ * @param {string} announcementTitle - The title of the announcement for the confirmation dialog.
+ */
+window.deleteAnnouncement = async (announcementId, announcementTitle) => {
+    if (confirm(`Are you sure you want to permanently delete the announcement titled "${announcementTitle}"?`)) {
+        try {
+            await db.collection('announcements').doc(announcementId).delete();
+            alert('Announcement deleted successfully.');
+            loadAnnouncementsForManagement(); // Refresh the list
+        } catch (error) {
+            console.error("Error deleting announcement:", error);
+            alert('Failed to delete the announcement. Please try again.');
+        }
+    }
+};
 
 // =========================================================
 // === LEARNER MANAGEMENT SYSTEM (LMS) LIST FUNCTIONS ===
@@ -100,7 +163,7 @@ async function loadAllActiveLearners(filterGrade = 'All', reset = false) {
     statusMessage.textContent = `Fetching active learners for Grade ${filterGrade === 'All' ? 'R - 7' : filterGrade}...`;
     
     try {
-        let query = db.collection('sams_registrations').orderBy('admissionId');
+        let query = db.collection('sams_registrations');
         
         if (filterGrade !== 'All') {
             let gradeValue;
@@ -109,9 +172,11 @@ async function loadAllActiveLearners(filterGrade = 'All', reset = false) {
             } else {
                 gradeValue = parseInt(filterGrade, 10); 
             }
-            query = query.where('grade', '==', gradeValue).orderBy('admissionId'); 
+            query = query.where('grade', '==', gradeValue); 
         }
         
+        query = query.orderBy('admissionId');
+
         if (lastVisibleAll) {
             query = query.startAfter(lastVisibleAll);
         }
@@ -126,10 +191,13 @@ async function loadAllActiveLearners(filterGrade = 'All', reset = false) {
 
         const existingAdmissionIds = new Set(Array.from(tableBody.querySelectorAll('tr')).map(row => row.getAttribute('data-id')));
         
-        snapshot.forEach(doc => {
+        // Sort the fetched documents by surname (learnerName) before displaying
+        const sortedDocs = snapshot.docs.sort((a, b) => (a.data().learnerName || '').localeCompare(b.data().learnerName || ''));
+
+        sortedDocs.forEach(doc => {
             const data = doc.data();
             const admissionId = data.admissionId;
-
+            
             if (!admissionId || existingAdmissionIds.has(admissionId)) {
                  return;
             }
@@ -137,6 +205,9 @@ async function loadAllActiveLearners(filterGrade = 'All', reset = false) {
             const row = tableBody.insertRow();
             row.setAttribute('data-id', admissionId); 
             
+            // **FIX**: Add an empty cell for the checkbox column to align data correctly.
+            row.insertCell();
+
             row.insertCell().textContent = admissionId;
             row.insertCell().textContent = `${data.learnerName || ''} ${data.learnerSurname || ''}`;
             row.insertCell().textContent = data.fullGradeSection || data.grade; 
@@ -213,8 +284,8 @@ async function loadLearnersByGradeAndClass(grade, classSection = 'All') {
 
         let learnerCount = 0;
         const sortedDocs = snapshot.docs.sort((a, b) => {
-            const nameA = `${a.data().learnerSurname || ''} ${a.data().learnerName || ''}`;
-            const nameB = `${b.data().learnerSurname || ''} ${b.data().learnerName || ''}`;
+            const nameA = `${a.data().learnerName || ''} ${a.data().learnerSurname || ''}`;
+            const nameB = `${b.data().learnerName || ''} ${b.data().learnerSurname || ''}`;
             return nameA.localeCompare(nameB);
         });
 
@@ -240,6 +311,47 @@ async function loadLearnersByGradeAndClass(grade, classSection = 'All') {
     }
 }
 
+/**
+ * Finds and automatically deletes announcements with a date in the past.
+ * This runs in the background when the admin portal is loaded.
+ */
+async function deletePastAnnouncements() {
+    console.log("Checking for expired announcements to delete...");
+
+    // Get today's date at midnight for a clean comparison.
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // Convert today's date to a Firestore Timestamp for querying.
+    const todayTimestamp = firebase.firestore.Timestamp.fromDate(today);
+
+    try {
+        // Query for announcements where the expiration date is before today.
+        const snapshot = await db.collection('announcements')
+            .where('expiresAt', '<', todayTimestamp)
+            .get();
+
+        if (snapshot.empty) {
+            console.log("No expired announcements found to delete.");
+            return;
+        }
+
+        console.log(`Found ${snapshot.size} expired announcement(s).`);
+
+        // Use a batch to delete all found documents efficiently.
+        const batch = db.batch();
+        snapshot.forEach(doc => {
+            console.log(`Queueing deletion for announcement: ${doc.id} ('${doc.data().title}')`);
+            batch.delete(doc.ref);
+        });
+
+        await batch.commit();
+        console.log(`Successfully deleted ${snapshot.size} expired announcement(s).`);
+
+    } catch (error) {
+        console.error("Error deleting expired announcements:", error);
+    }
+}
 
 // =========================================================
 // === GRADE ASSIGNMENT TOOL DATA FUNCTIONS ===
@@ -307,10 +419,16 @@ async function loadUnassignedLearners(filterGrade = 'All', reset = false) {
             return data.grade === gradeValue || String(data.grade) === filterGrade;
         });
 
-        const learnersToShow = filteredLearners.slice(0, PAGE_SIZE);
+        // Sort the filtered learners by surname (learnerName)
+        const sortedLearners = filteredLearners.sort((a, b) => (a.learnerName || '').localeCompare(b.learnerName || ''));
+
+        const learnersToShow = sortedLearners.slice(0, PAGE_SIZE);
 
         learnersToShow.forEach(data => {
             const row = tableBody.insertRow();
+            // **FIX**: Add an empty cell for the checkbox column to align data correctly.
+            row.insertCell();
+
             row.insertCell().textContent = data.admissionId;
             row.insertCell().textContent = `${data.learnerName || ''} ${data.learnerSurname || ''}`;
             row.insertCell().textContent = data.grade; 
@@ -411,10 +529,15 @@ async function loadAssignedLearners(filterGrade = 'All', reset = false) {
             return data.grade === gradeValue || String(data.grade) === filterGrade;
         });
         
-        const learnersToShow = filteredLearners.slice(0, PAGE_SIZE);
+        // Sort the filtered learners by surname (learnerName)
+        const sortedLearners = filteredLearners.sort((a, b) => (a.learnerName || '').localeCompare(b.learnerName || ''));
+
+        const learnersToShow = sortedLearners.slice(0, PAGE_SIZE);
 
         learnersToShow.forEach(data => {
             const row = tableBody.insertRow();
+            // **FIX**: Add an empty cell for the checkbox column to align data correctly.
+            row.insertCell();
             
             row.insertCell().textContent = data.admissionId;
             row.insertCell().textContent = `${data.learnerName || ''} ${data.learnerSurname || ''}`;
@@ -563,8 +686,8 @@ async function loadAttendanceRecords(year, term, weekFilter = 'All', classFilter
         });
 
         const sortedAbsentees = Array.from(absenteeData.values()).sort((a, b) => {
-            const surnameA = (a.learnerName || '').split(' ').pop() || '';
-            const surnameB = (b.learnerName || '').split(' ').pop() || '';
+            const surnameA = (a.learnerName || '').split(' ')[0] || ''; // The first word is the surname
+            const surnameB = (b.learnerName || '').split(' ')[0] || '';
             return surnameA.localeCompare(surnameB);
         });
 
@@ -779,21 +902,35 @@ async function publishAnnouncement() {
     const title = document.getElementById('announcement-title').value;
     const content = document.getElementById('announcement-content').value;
     const date = document.getElementById('announcement-date').value;
+    const durationDays = parseInt(document.getElementById('announcement-duration').value, 10);
 
-    if (!title || !content || !date) {
+    if (!title || !content || !date || !durationDays) {
         alert("Please fill in all announcement fields.");
         return;
     }
+
+    // Calculate the expiration date
+    const startDate = new Date(date);
+    startDate.setHours(0, 0, 0, 0); // Normalize to start of the day
+    const expiresAtDate = new Date(startDate);
+    expiresAtDate.setDate(startDate.getDate() + durationDays);
+
+    // Convert to Firestore Timestamp
+    const expiresAtTimestamp = firebase.firestore.Timestamp.fromDate(expiresAtDate);
 
     try {
         await db.collection('announcements').add({
             title,
             content,
             date,
+            durationDays,
+            expiresAt: expiresAtTimestamp,
             createdAt: firebase.firestore.FieldValue.serverTimestamp() 
         });
         alert('Announcement successfully published!');
         announcementForm.reset();
+        // Set duration back to default
+        document.getElementById('announcement-duration').value = 7;
     } catch (e) {
         console.error("Error adding document: ", e);
         alert('An error occurred while publishing the announcement. Please try again.');
@@ -1014,6 +1151,9 @@ async function loadAllTeachers(filterGrade = 'All', reset = false) {
     } catch (error) {
         console.error("Error loading Teacher data from Firebase: ", error);
         statusMessage.textContent = 'Error loading data. Check console for details.';
+        if (error.code === 'failed-precondition') {
+            statusMessage.innerHTML += '<br><strong>Action Required:</strong> This query requires a composite index. Please check the browser console for a link to create it in Firebase.';
+        }
     }
 }
 

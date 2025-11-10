@@ -16,7 +16,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-storage-compat.js"></script>
-  <!-- **NEW**: Add SheetJS library for reading Excel files -->
+  <!-- **NEW**: Add SheetJS library for reading/writing Excel files -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script src="../../js/portals/teachers-portal/firebase-config.js"></script>
 </head>
@@ -57,6 +57,7 @@
     <li><a href="#portfolio"><i class="fas fa-briefcase"></i> My Portfolio</a></li>
     <li><a href="#profile"><i class="fas fa-user-circle"></i> My Profile</a></li>
     <li><a href="#students"><i class="fas fa-users"></i> Learner Management</a></li>
+    <li><a href="#grades-form"><i class="fas fa-edit"></i> Grading & Academics</a></li>
     <li><a href="#classes"><i class="fas fa-chalkboard-teacher"></i> My Classes</a></li>
     <li><a href="#quiz-generator"><i class="fas fa-puzzle-piece"></i> Quiz Generator</a></li>
     <li><a href="#materials"><i class="fas fa-book-open"></i> Course Materials</a></li>
@@ -234,7 +235,7 @@
     </div>
    </div>
    <div id="grades-form" class="portal-section hidden-section">
-    <h2>Manage Grades</h2>
+    <h2>Grading & Academics</h2>
     <div class="tool-card">
         <div class="grade-management-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
             <div class="form-group" style="flex: 1; margin-right: 20px;">
@@ -249,12 +250,33 @@
             </button>
         </div>
 
+        <!-- **NEW**: Descriptive card for the gradebook and mark sheet process -->
+        <div id="gradebook-info-card" class="tool-card accent-1" style="margin-bottom: 20px;">
+            <h3><i class="fas fa-book-reader"></i> Gradebook & Mark Sheets</h3>
+            <p>Select a class and subject from the dropdown above to manage grades for your learners. Once the gradebook is loaded, you can:</p>
+            <ul style="list-style-type: disc; padding-left: 20px; margin-top: 10px;">
+                <li>Enter and update scores for assignments.</li>
+                <li>Generate a printable <strong>Mark Sheet</strong> for official records.</li>
+            </ul>
+        </div>
+
         <div id="gradebook-container" style="display: none;">
-            <h3 id="gradebook-header">Gradebook</h3>
+            <div class="gradebook-header-actions">
+                <h3 id="gradebook-header">Gradebook</h3>
+                <button id="generate-marksheet-btn" class="cta-button-small primary-green" style="display: none;">
+                    <i class="fas fa-print"></i> Generate Mark Sheet
+                </button>
+            </div>
             <div id="gradebook-table-container" class="data-table-container">
                 <!-- Gradebook table will be dynamically generated here -->
             </div>
             <p id="gradebook-status" class="data-status-message">Select a class and subject to load the gradebook.</p>
+        </div>
+    </div>
+
+    <!-- Modal for Printable Mark Sheet -->
+    <div id="marksheet-modal" class="modal">
+        <div id="marksheet-modal-content" class="modal-content printable-area">
         </div>
     </div>
 

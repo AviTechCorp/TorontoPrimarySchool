@@ -51,8 +51,8 @@ async function loadParentContactsForClass(selectedClass) {
             return;
         }
 
-        // Sort by learner's surname for alphabetical order
-        parentsData.sort((a, b) => (a.learnerSurname || '').localeCompare(b.learnerSurname || ''));
+        // Sort by learner's surname (which is in the learnerName field)
+        parentsData.sort((a, b) => (a.learnerName || '').localeCompare(b.learnerName || ''));
 
         const table = document.createElement('table');
         table.id = 'teacher-parents-data-table'; // ID for styling
@@ -315,6 +315,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // **NEW**: Initialize the portfolio shareable link generator
     setupPortfolioLinkGenerator(userData);
 
+    // **NEW**: Expose assignment deletion function to the global scope for onclick handlers
+    window.confirmDeleteAssignment = confirmDeleteAssignment;
+
     // **NEW**: Initialize the Excel roster upload functionality
     setupExcelRosterUpload(db);
 
@@ -328,9 +331,8 @@ document.addEventListener('DOMContentLoaded', () => {
   // Function to show the target section and hide others
     function showSection(targetId) {
         // Define parent-child relationships for nested navigation
-        const sectionMap = {
-            'attendance-form': 'students', // This seems to be a form, not a section
-            'grades-form': 'students',
+        const sectionMap = { // **FIX**: Removed 'grades-form' from this map.
+            'attendance-form': 'students',
             'class-setup': 'students'
         };
         const parentId = sectionMap[targetId] || targetId;
@@ -371,7 +373,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const targetId = this.getAttribute('href').substring(1);
 
       // Define which sections are part of the learner management module
-      const learnerMgmtSections = ['students', 'attendance-form', 'class-setup', 'grades-form'];
+      const learnerMgmtSections = ['students', 'attendance-form', 'class-setup'];
 
       // Remove active class from all sidebar links
       sidebarLinks.forEach(l => l.classList.remove('active'));
@@ -929,6 +931,10 @@ function setupAssignmentModal(db, classSubjectSelect) {
  * @param {string} subject - The subject name.
  */
 async function loadGradebook(db, fullClass, subject) {
+    // **NEW**: Get the generate marksheet button
+    const generateBtn = document.getElementById('generate-marksheet-btn');
+    generateBtn.style.display = 'none'; // Hide it until data is loaded
+
     const container = document.getElementById('gradebook-table-container');
     const status = document.getElementById('gradebook-status');
     document.getElementById('gradebook-header').textContent = `Gradebook for ${subject} - Class ${fullClass}`;
@@ -938,20 +944,36 @@ async function loadGradebook(db, fullClass, subject) {
     try {
         // 1. Fetch all learners for the class
         const learnersSnapshot = await db.collection('sams_registrations').where('fullGradeSection', '==', fullClass).get();
-        const learners = learnersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })).sort((a, b) => (a.learnerSurname || '').localeCompare(b.learnerSurname || ''));
+        const learners = learnersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })).sort((a, b) => (a.learnerName || '').localeCompare(b.learnerName || ''));
 
         // 2. Fetch all assignments for the class/subject
         const assignmentsSnapshot = await db.collection('assignments').where('fullClass', '==', fullClass).where('subject', '==', subject).orderBy('createdAt').get();
-        const assignments = assignmentsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        const assignments = assignmentsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })).sort((a, b) => a.createdAt.toMillis() - b.createdAt.toMillis());
 
         // 3. Fetch all existing grades for these learners
         const learnerIds = learners.map(l => l.id);
         const gradesMap = new Map();
         if (learnerIds.length > 0) {
-            const gradesSnapshot = await db.collection('grades').where('learnerId', 'in', learnerIds).get();
-            gradesSnapshot.forEach(doc => {
-                const gradeData = doc.data();
-                gradesMap.set(`${gradeData.learnerId}-${gradeData.assignmentId}`, gradeData.score);
+            // **FIX**: Break the query into chunks of 10 to handle Firestore's 'in' query limit.
+            const promises = [];
+            for (let i = 0; i < learnerIds.length; i += 10) {
+                const chunk = learnerIds.slice(i, i + 10);
+                promises.push(
+                    db.collection('grades')
+                      .where('learnerId', 'in', chunk)
+                      .get()
+                );
+            }
+
+            // Wait for all chunked queries to complete
+            const snapshots = await Promise.all(promises);
+
+            // Combine the results into a single map
+            snapshots.forEach(snapshot => {
+                snapshot.forEach(doc => {
+                    const gradeData = doc.data();
+                    gradesMap.set(`${gradeData.learnerId}-${gradeData.assignmentId}`, parseInt(gradeData.score, 10));
+                });
             });
         }
 
@@ -963,7 +985,12 @@ async function loadGradebook(db, fullClass, subject) {
         // 4. Build the table
         let tableHTML = '<table class="data-table"><thead><tr><th>Learner Name</th>';
         assignments.forEach(a => {
-            tableHTML += `<th>${a.name} (${a.totalMarks})</th>`;
+            // **NEW**: Add a delete button to each assignment header
+            tableHTML += `
+                <th class="assignment-header">
+                    <span>${a.name} (${a.totalMarks})</span>
+                    <button class="delete-assignment-btn" onclick="confirmDeleteAssignment('${a.id}', '${a.name.replace(/'/g, "\\'")}')" title="Delete this assignment"><i class="fas fa-trash-alt"></i></button>
+                </th>`;
         });
         tableHTML += '</tr></thead><tbody>';
 
@@ -971,7 +998,7 @@ async function loadGradebook(db, fullClass, subject) {
             tableHTML += `<tr><td>${learner.learnerName} ${learner.learnerSurname}</td>`;
             assignments.forEach(assignment => {
                 const grade = gradesMap.get(`${learner.id}-${assignment.id}`) || '';
-                tableHTML += `<td><input type="number" class="grade-input" value="${grade}" data-learner-id="${learner.id}" data-assignment-id="${assignment.id}" placeholder="--"></td>`;
+                tableHTML += `<td><input type="number" class="grade-input" value="${grade}" data-learner-id="${learner.id}" data-assignment-id="${assignment.id}" max="${assignment.totalMarks}" placeholder="--"></td>`;
             });
             tableHTML += '</tr>';
         });
@@ -979,12 +1006,27 @@ async function loadGradebook(db, fullClass, subject) {
         container.innerHTML = tableHTML;
         status.textContent = `Displaying gradebook for ${learners.length} learners.`;
 
+        // **NEW**: Show and set up the "Generate Mark Sheet" button
+        if (learners.length > 0 && assignments.length > 0) {
+            generateBtn.style.display = 'inline-block';
+            generateBtn.onclick = () => generateMarkSheet(fullClass, subject, learners, assignments, gradesMap);
+        }
+
+
         // 5. Add event listeners to save grades on input change
         document.querySelectorAll('.grade-input').forEach(input => {
             input.addEventListener('change', async (e) => {
                 const learnerId = e.target.dataset.learnerId;
                 const assignmentId = e.target.dataset.assignmentId;
                 const score = e.target.value;
+                const totalMarks = parseInt(e.target.max, 10);
+
+                // **NEW**: Validate input against total marks
+                if (parseInt(score, 10) > totalMarks) {
+                    alert(`Error: The score cannot be greater than the total marks for this assignment (${totalMarks}).`);
+                    e.target.value = ''; // Clear the invalid input
+                    return;
+                }
 
                 // Use a composite ID for the grade document to prevent duplicates
                 const gradeDocId = `${learnerId}_${assignmentId}`;
@@ -999,6 +1041,9 @@ async function loadGradebook(db, fullClass, subject) {
                         subject,
                         lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
                     }, { merge: true });
+
+                    // **FIX**: Update the local gradesMap so the mark sheet is always current
+                    gradesMap.set(gradeDocId.replace('_', '-'), score ? parseInt(score, 10) : undefined);
                     e.target.style.backgroundColor = '#d1fae5'; // Green flash for success
                     setTimeout(() => e.target.style.backgroundColor = '', 1000);
                 } catch (error) {
@@ -1014,7 +1059,211 @@ async function loadGradebook(db, fullClass, subject) {
     }
 }
 
+/**
+ * **NEW**: Confirms and then initiates the deletion of an assignment and all its associated grades.
+ * This function is exposed to the window object to be accessible from an onclick attribute.
+ * @param {string} assignmentId - The ID of the assignment to delete.
+ * @param {string} assignmentName - The name of the assignment for the confirmation dialog.
+ */
+async function confirmDeleteAssignment(assignmentId, assignmentName) {
+    if (!confirm(`Are you sure you want to permanently delete the assignment "${assignmentName}"?\n\nThis will also delete ALL scores entered for this assignment. This action cannot be undone.`)) {
+        return;
+    }
 
+    const db = firebase.firestore();
+    const status = document.getElementById('gradebook-status');
+    status.textContent = `Deleting assignment "${assignmentName}"...`;
+
+    try {
+        // Step 1: Delete the assignment document itself.
+        await db.collection('assignments').doc(assignmentId).delete();
+
+        // Step 2: Find and delete all grades associated with this assignment.
+        // We must fetch the documents first, then delete them in a batch.
+        const gradesSnapshot = await db.collection('grades').where('assignmentId', '==', assignmentId).get();
+
+        if (!gradesSnapshot.empty) {
+            const batch = db.batch();
+            gradesSnapshot.forEach(doc => {
+                batch.delete(doc.ref);
+            });
+            await batch.commit();
+        }
+
+        alert(`Assignment "${assignmentName}" and all its scores have been deleted successfully.`);
+
+        // Step 3: Reload the gradebook to reflect the changes.
+        const classSubjectSelect = document.getElementById('grading-class-subject-select');
+        const [fullClass, subject] = classSubjectSelect.value.split('|');
+        if (fullClass && subject) {
+            loadGradebook(db, fullClass, subject);
+        }
+    } catch (error) {
+        console.error("Error deleting assignment:", error);
+        alert(`Failed to delete assignment: ${error.message}`);
+        status.textContent = 'An error occurred while deleting the assignment.';
+    }
+}
+
+/**
+ * **NEW**: Exports the mark sheet data to an Excel file.
+ * @param {string} fullClass - The full class name.
+ * @param {string} subject - The subject name.
+ * @param {Array} learners - Array of learner objects.
+ * @param {Array} assignments - Array of assignment objects.
+ * @param {Map} gradesMap - Map of grades.
+ */
+function exportMarkSheetToExcel(fullClass, subject, learners, assignments, gradesMap) {
+    const dataForExport = [];
+    const headers = ['Admission No.', 'Learner Name'];
+    let totalPossibleMarks = 0;
+
+    assignments.forEach(a => {
+        headers.push(`${a.name} (${a.totalMarks})`);
+        totalPossibleMarks += a.totalMarks;
+    });
+    headers.push(`Total (${totalPossibleMarks})`, '%', 'Level');
+    dataForExport.push(headers);
+
+    learners.forEach(learner => {
+        const row = [learner.admissionId || 'N/A', `${learner.learnerName} ${learner.learnerSurname}`];
+        let learnerTotalScore = 0;
+        assignments.forEach(assignment => {
+            const score = gradesMap.get(`${learner.id}-${assignment.id}`);
+            row.push(score !== undefined ? score : '');
+            if (score !== undefined) learnerTotalScore += score;
+        });
+        const percentage = totalPossibleMarks > 0 ? ((learnerTotalScore / totalPossibleMarks) * 100) : 0;
+        row.push(learnerTotalScore, percentage.toFixed(1) + '%', getAchievementLevel(percentage).level);
+        dataForExport.push(row);
+    });
+
+    const worksheet = XLSX.utils.aoa_to_sheet(dataForExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Mark Sheet');
+    XLSX.writeFile(workbook, `MarkSheet_${subject}_${fullClass}_${new Date().toISOString().split('T')[0]}.xlsx`);
+}
+
+/**
+ * Generates a printable mark sheet and displays it in a modal.
+ * @param {string} fullClass - The full class name (e.g., "7A").
+ * @param {string} subject - The subject name.
+ * @param {Array} learners - Array of learner objects.
+ * @param {Array} assignments - Array of assignment objects.
+ * @param {Map} gradesMap - Map of grades with key `${learnerId}-${assignmentId}`.
+ */
+function generateMarkSheet(fullClass, subject, learners, assignments, gradesMap) {
+    const modal = document.getElementById('marksheet-modal');
+    const content = document.getElementById('marksheet-modal-content');
+    const teacherData = JSON.parse(sessionStorage.getItem('currentUser'));
+
+    let totalPossibleMarks = 0;
+    assignments.forEach(a => { totalPossibleMarks += a.totalMarks; });
+
+    // **FIX**: Ensure learners are always sorted alphabetically by surname (which is in the 'learnerName' field).
+    learners.sort((a, b) => (a.learnerName || '').localeCompare(b.learnerName || ''));
+
+    let tableRows = '';
+    learners.forEach(learner => {
+        let learnerTotalScore = 0;
+        let assignmentCells = '';
+
+        assignments.forEach(assignment => {
+            const score = gradesMap.get(`${learner.id}-${assignment.id}`);
+            assignmentCells += `<td>${score !== undefined ? score : 'N/A'}</td>`;
+            if (score !== undefined) {
+                learnerTotalScore += score;
+            }
+        });
+
+        const percentage = totalPossibleMarks > 0 ? ((learnerTotalScore / totalPossibleMarks) * 100).toFixed(1) : 0;
+        const level = getAchievementLevel(percentage);
+
+        tableRows += `
+            <tr>
+                <td>${learner.admissionId || 'N/A'}</td>
+                <td>${learner.learnerName} ${learner.learnerSurname}</td>
+                ${assignmentCells}
+                <td>${learnerTotalScore}</td>
+                <td>${percentage}%</td>
+                <td>${level.level} (${level.description})</td>
+            </tr>
+        `;
+    });
+
+    const marksheetHTML = `
+        <div class="marksheet-header">
+            <span class="modal-close-btn no-print">&times;</span>
+            <img src="../../images/Logo.png" alt="School Logo" class="school-logo">
+            <h1>Toronto Primary School</h1>
+            <h2>Mark Sheet: ${subject} - Class ${fullClass}</h2>
+            <p><strong>Educator:</strong> ${teacherData.preferredName || ''} ${teacherData.surname || ''}</p>
+            <p><strong>Date Generated:</strong> ${new Date().toLocaleDateString()}</p>
+        </div>
+        <div class="data-table-container">
+            <table class="data-table marksheet-table">
+                <thead>
+                    <tr>
+                        <th>Adm No.</th>
+                        <th>Learner Name</th>
+                        ${assignments.map(a => `<th>${a.name}<br>(${a.totalMarks})</th>`).join('')}
+                        <th>Total<br>(${totalPossibleMarks})</th>
+                        <th>%</th>
+                        <th>Level</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${tableRows}
+                </tbody>
+            </table>
+        </div>
+        <div class="marksheet-footer">
+            <div class="signature-line">
+                <p>Educator's Signature:</p>
+                <span>_________________________</span>
+            </div>
+            <div class="signature-line">
+                <p>Date:</p>
+                <span>_________________________</span>
+            </div>
+        </div>
+        <div class="marksheet-actions no-print" style="margin-top: 20px; display: flex; gap: 10px;">
+            <button onclick="window.print()" class="cta-button"><i class="fas fa-print"></i> Print Mark Sheet</button>
+            <button id="export-excel-btn" class="cta-button primary-green">
+                <i class="fas fa-file-excel"></i> Export to Excel
+            </button>
+        </div>
+    `;
+
+    content.innerHTML = marksheetHTML;
+    modal.style.display = 'block';
+
+    // Add listeners to close the modal
+    modal.querySelector('.modal-close-btn').onclick = () => { modal.style.display = 'none'; };
+    window.onclick = (event) => {
+        if (event.target == modal) {
+            modal.style.display = 'none';
+        }
+    };
+
+    // **NEW**: Add listener for the new Excel export button
+    document.getElementById('export-excel-btn').onclick = () => exportMarkSheetToExcel(fullClass, subject, learners, assignments, gradesMap);
+}
+
+/**
+ * Calculates the achievement level based on a percentage score.
+ * @param {number} percentage - The percentage score.
+ * @returns {{level: number, description: string}}
+ */
+function getAchievementLevel(percentage) {
+    if (percentage >= 80) return { level: 7, description: "Outstanding" };
+    if (percentage >= 70) return { level: 6, description: "Meritorious" };
+    if (percentage >= 60) return { level: 5, description: "Substantial" };
+    if (percentage >= 50) return { level: 4, description: "Adequate" };
+    if (percentage >= 40) return { level: 3, description: "Moderate" };
+    if (percentage >= 30) return { level: 2, description: "Elementary" };
+    return { level: 1, description: "Not Achieved" };
+}
 
 // =========================================================
 // === ADD LEARNER TO CLASS TOOL ===
@@ -1218,7 +1467,7 @@ document.addEventListener('click', globalChatMenuClickListener);
  * @param {Array<object>} learners - An array of learner data objects.
  */
 function renderClassRoster(container, className, learners) {
-    const card = document.createElement('div');
+    const card = document.createElement('div'); 
     card.className = 'tool-card accent-1';
     card.dataset.className = className; // Add data attribute for filtering
 
@@ -1228,8 +1477,8 @@ function renderClassRoster(container, className, learners) {
     `;
 
     if (learners.length > 0) {
-        // **FIX**: Sort learners alphabetically by surname.
-        learners.sort((a, b) => (a.learnerSurname || '').localeCompare(b.learnerSurname || ''));
+        // **FIX**: Sort learners alphabetically by surname (which is in the learnerName field).
+        learners.sort((a, b) => (a.learnerName || '').localeCompare(b.learnerName || ''));
 
         tableHTML += `
             <div class="data-table-container" style="margin-top: 15px;">
@@ -2369,7 +2618,7 @@ function setupAttendanceRegister(db, teacherData) {
                 tableBody.innerHTML = `<tr><td colspan="7" class="info-message">No learners found for this class.</td></tr>`;
                 return;
             }
-            const learners = learnersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })).sort((a, b) => (a.learnerSurname || '').localeCompare(b.learnerSurname || ''));
+            const learners = learnersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })).sort((a, b) => (a.learnerName || '').localeCompare(b.learnerName || ''));
 
             // 2. Get all weekly attendance records for these learners for the current week, handling the 10-item 'in' query limit.
             const learnerIds = learners.map(l => l.id);

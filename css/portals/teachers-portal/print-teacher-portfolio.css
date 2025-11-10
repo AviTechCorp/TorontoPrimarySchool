@@ -5,8 +5,34 @@
 
 @media print {
     /* Hide everything by default when printing */
-    body * {
+    body * {        
         visibility: hidden;
+    }
+
+    /* **FIX**: Make the mark sheet modal and its contents visible for printing */
+    #marksheet-modal, #marksheet-modal * {
+        visibility: visible;
+    }
+    #marksheet-modal {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: visible !important;
+    }
+
+    /* **FIX**: Override modal content width for printing */
+    #marksheet-modal .modal-content {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 10px !important;
+        border: none !important;
+        box-shadow: none !important;
+    }
+    .marksheet-table {
+        font-size: 9pt; /* Reduce font size to fit more columns */
     }
 
     /* Make the portfolio section and its contents visible */

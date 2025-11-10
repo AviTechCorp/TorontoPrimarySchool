@@ -1,23 +1,24 @@
-/* Professional redesign for Application Form */
+/* Enhanced and Professional Styles for Application Form */
 
 :root{
-    --bg: #f4f6f8;
-    --card: #ffffff;
-    --muted: #6b7280;
-    --accent: #c01b2b; /* crimson-ish */
-    --accent-dark: #9f141e;
-    --glass: rgba(255,255,255,0.6);
-    --radius: 12px;
-    --shadow: 0 6px 24px rgba(16,24,40,0.08);
-    --gap: 20px;
-    --max-width: 980px;
-    --form-padding: 36px;
-    font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    --form-bg: #f8f9fa;
+    --form-card-bg: #ffffff;
+    --form-text-color: #212529;
+    --form-muted-text: #6c757d;
+    --form-accent-color: #c01b2b; /* Crimson-ish red */
+    --form-accent-dark: #9f141e;
+    --form-border-color: #dee2e6;
+    --form-input-bg: #ffffff;
+    --form-radius: 8px;
+    --form-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    --form-gap: 22px;
+    --form-max-width: 980px;
+    --form-padding: 40px;
 }
 
 body {
-    background: linear-gradient(180deg, #f7f9fb 0%, var(--bg) 100%);
-    color: #111827;
+    background-color: var(--form-bg);
+    color: var(--form-text-color);
 }
 
 header img {
@@ -25,51 +26,48 @@ header img {
     display: block;
 }
 
-/* Container + card */
+/* Main Form Container */
 .application-form {
-    max-width: var(--max-width);
+    max-width: var(--form-max-width);
     margin: 28px auto;
-    background: var(--card);
+    background: var(--form-card-bg);
     padding: var(--form-padding);
-    border-radius: var(--radius);
-    box-shadow: var(--shadow);
-    border: 1px solid rgba(16,24,40,0.04);
+    border-radius: var(--form-radius);
+    box-shadow: var(--form-shadow);
+    border: 1px solid var(--form-border-color);
     box-sizing: border-box;
 }
 
-/* Fieldset + legend */
+/* Fieldset & Legend Styling */
 .application-form fieldset {
-    border: 1px solid rgba(16,24,40,0.06);
+    border: 1px solid #e9ecef;
     border-radius: 10px;
-    padding: 18px;
-    margin-bottom: 22px;
-    background: linear-gradient(180deg, rgba(255,255,255,0.72), rgba(255,255,255,0.9));
+    padding: 24px;
+    margin-bottom: 28px;
 }
 
 .application-form legend {
-    font-size: 1.05rem;
+    font-size: 1.1rem;
     font-weight: 700;
-    color: var(--accent);
+    color: var(--form-accent-color);
     padding: 0 8px;
-    display: inline-block;
     margin-left: 8px;
-    background: transparent;
 }
 
 /* CSS Grid for form fields */
 .form-grid {
     display: grid;
-    gap: var(--gap);
+    gap: var(--form-gap);
     grid-template-columns: 1fr;
 }
 
 @media (min-width: 720px){
     .form-grid {
-        grid-template-columns: repeat(2, minmax(0,1fr));
+        grid-template-columns: repeat(2, 1fr);
     }
 }
 
-/* Form groups */
+/* Form Group & Labels */
 .form-group {
     display: flex;
     flex-direction: column;
@@ -77,27 +75,28 @@ header img {
 
 .application-form .form-group label {
     font-weight: 600;
-    color: #111827;
+    color: var(--form-text-color);
     margin-bottom: 8px;
     font-size: 0.95rem;
 }
 
-/* Inputs */
+/* Input, Select, Textarea Styling */
 .application-form input[type="text"],
 .application-form input[type="date"],
 .application-form input[type="tel"],
 .application-form input[type="email"],
+.application-form input[type="file"],
 .application-form select,
 .application-form textarea {
     width: 100%;
     padding: 12px 14px;
-    border: 1px solid rgba(16,24,40,0.08);
-    border-radius: 8px;
+    border: 1px solid var(--form-border-color);
+    border-radius: var(--form-radius);
     box-sizing: border-box;
     font-size: 0.95rem;
-    color: #111827;
-    background: linear-gradient(180deg,#fff,#fbfdff);
-    transition: box-shadow 0.15s ease, border-color 0.15s ease, transform 0.06s ease;
+    color: var(--form-text-color);
+    background-color: var(--form-input-bg);
+    transition: box-shadow 0.2s ease, border-color 0.2s ease;
     outline: none;
 }
 
@@ -105,80 +104,82 @@ header img {
 
 .application-form input::placeholder,
 .application-form textarea::placeholder {
-    color: #9ca3af;
-    font-style: italic;
+    color: var(--form-muted-text);
+    opacity: 0.8;
 }
 
 /* Focus state */
 .application-form input:focus,
 .application-form textarea:focus,
 .application-form select:focus {
-    border-color: rgba(192,27,43,0.9);
-    box-shadow: 0 4px 18px rgba(192,27,43,0.08);
-    transform: translateY(-1px);
+    border-color: var(--form-accent-color);
+    box-shadow: 0 0 0 3px rgba(192, 27, 43, 0.1);
 }
 
 /* Select styling */
 .application-form select {
     appearance: none;
-    background-image: linear-gradient(45deg, transparent 50%, #6b7280 50%),
-                      linear-gradient(135deg, #6b7280 50%, transparent 50%);
+    background-image: linear-gradient(45deg, transparent 50%, var(--form-muted-text) 50%),
+                      linear-gradient(135deg, var(--form-muted-text) 50%, transparent 50%);
     background-position: calc(100% - 18px) calc(1em + 2px), calc(100% - 13px) calc(1em + 2px);
     background-size: 6px 6px, 6px 6px;
     background-repeat: no-repeat;
     padding-right: 36px;
 }
 
-/* Documents link styled as subtle button */
-.documents-upload {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    font-size: 1rem;
-    color: var(--muted);
-    margin-bottom: 8px;
+/* File Input Styling */
+.application-form input[type="file"] {
+    padding: 8px;
+    background-color: #f8f9fa;
+}
+.application-form input[type="file"]::file-selector-button {
+    background-color: var(--form-accent-color);
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    margin-right: 12px;
+    transition: background-color 0.2s ease;
+}
+.application-form input[type="file"]::file-selector-button:hover {
+    background-color: var(--form-accent-dark);
 }
 
-.documents-upload a {
-    background: linear-gradient(90deg, var(--accent), var(--accent-dark));
-    color: #fff;
-    text-decoration: none;
-    padding: 10px 14px;
-    border-radius: 8px;
-    font-weight: 700;
-    box-shadow: 0 6px 18px rgba(192,27,43,0.12);
-    transition: transform 0.12s ease, box-shadow 0.12s ease;
-}
 
-.documents-upload a:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 28px rgba(16,24,40,0.08);
-}
 
 /* Submit button */
 .application-form button[type="submit"] {
     width: 100%;
     border: none;
     cursor: pointer;
-    font-size: 1.05rem;
-    background: linear-gradient(90deg,var(--accent),var(--accent-dark));
+    font-size: 1.1rem;
+    background: linear-gradient(90deg, var(--form-accent-color), var(--form-accent-dark));
     color: #fff;
     padding: 14px;
     border-radius: 10px;
     font-weight: 700;
-    transition: transform 0.12s ease, box-shadow 0.12s ease;
-    margin-top: 6px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    margin-top: 12px;
 }
 
 .application-form button[type="submit"]:hover {
     transform: translateY(-3px);
-    box-shadow: 0 10px 28px rgba(16,24,40,0.08);
+    box-shadow: 0 10px 20px rgba(192, 27, 43, 0.15);
+}
+
+.application-form button[type="submit"]:disabled {
+    background: #adb5bd;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
 }
 
 /* Small helper text */
 .form-note, .muted {
     font-size: 0.9rem;
-    color: var(--muted);
+    color: var(--form-muted-text);
 }
 
 /* Submission confirmation message */
@@ -188,7 +189,7 @@ header img {
 }
 
 .confirmation-message h2 {
-  color: #28a745; 
+  color: #198754; /* Bootstrap success green */
   font-size: 2.5em;
   margin-bottom: 20px;
 }
@@ -201,7 +202,7 @@ header img {
 .confirmation-message a {
   display: inline-block;
   margin-top: 30px;
-  padding: 15px 30px;
+  padding: 14px 28px;
   background-color: crimson;
   color: white;
   text-decoration: none;
@@ -215,34 +216,11 @@ header img {
 }
 
 /* Footer spacing specific to form area */
-@media (min-width: 980px){
-    .application-form { padding: 44px; }
+@media (min-width: 1024px){
+    .application-form { padding: 50px; }
 }
 
-/* Accessibility improvements */
-.application-form label[for]::after {
-    content: "";
-    display: inline-block;
-    width: 6px;
-    height: 6px;
-    margin-left: 8px;
-    vertical-align: middle;
-    border-radius: 50%;
-    background: transparent;
-}
-
-/* Accessibility improvements - show a subtle required asterisk only on labels marked as required */
-.application-form label.required::after {
-    content: " *";
-    color: var(--accent);
-    margin-left: 6px;
-    vertical-align: middle;
-    font-weight: 700;
-    font-size: 0.95rem;
-}
-
-/* Tweak for small screens */
+/* Responsive Tweaks */
 @media (max-width: 420px){
     .application-form { padding: 20px; border-radius: 8px; }
-    .documents-upload { flex-direction: column; align-items: flex-start; gap: 8px; }
 }

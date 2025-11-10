@@ -149,6 +149,7 @@ function renderApplicantTable(container, filteredApplications) {
                 <th>Learner Name</th>
                 <th>Grade Applied</th>
                 <th>Current Status</th>
+                <th>Documents</th>
                 <th>Actions</th>
             </tr>
         </thead>
@@ -167,7 +168,29 @@ function renderApplicantTable(container, filteredApplications) {
         const grade = app["grade"] || 'N/A';
         // Use the corrected header key: "Status"
         const status = app["Status"] || 'New Submission'; 
-        const statusClass = status.replace(/\s/g, '-').toLowerCase();
+        const statusClass = status.replace(/\s+/g, '-').toLowerCase();
+
+        // **NEW**: Build the document links dropdown for the new column
+        const docLinks = [ // **FIX**: Use all-lowercase keys to match Google Sheet headers
+            { key: 'birthcertificateurl', label: "Birth Certificate" },
+            { key: 'parentidurl', label: 'Parent ID' },
+            { key: 'proofofresidenceurl', label: 'Proof of Residence' },
+            { key: 'reportcardurl', label: 'Report Card' }
+        ];
+
+        let hasDocs = false;
+        let linksHTML = '';
+        docLinks.forEach(doc => {
+            if (app[doc.key]) {
+                hasDocs = true;
+                linksHTML += `<a href="${app[doc.key]}" class="document-link" target="_blank" rel="noopener noreferrer"><i class="fas fa-file-alt"></i> ${doc.label}</a>`;
+            }
+        });
+
+        let docsCellHTML = '<span class="no-docs">No Docs</span>';
+        if (hasDocs) {
+            docsCellHTML = `<div class="docs-dropdown-container"><button class="cta-button-small secondary" onclick="this.nextElementSibling.style.display = this.nextElementSibling.style.display === 'block' ? 'none' : 'block'">View</button><div class="docs-dropdown">${linksHTML}</div></div>`;
+        }
         
         tableHTML += `
             <tr>
@@ -175,6 +198,7 @@ function renderApplicantTable(container, filteredApplications) {
                 <td>${learnerName}</td>
                 <td>${grade}</td>
                 <td><span class="status-badge status-${statusClass}">${status}</span></td>
+                <td>${docsCellHTML}</td>
                 <td class="py-2">
                     <button onclick="viewApplicantDetails(${originalIndex})" class="cta-button-small"><i class="fas fa-search mr-2"></i> Details</button>
                 </td>
@@ -221,8 +245,8 @@ function viewApplicantDetails(index) {
     const learnerFullName = `${applicant["learner-name"] || ''} ${applicant["learner-surname"] || 'N/A'}`; 
     
     // Keys to exclude from the main details grid for a cleaner view
-    // NOTE: The detail view uses the key 'status' as a temporary exclusion, but reads 'Status' for the current status.
-    const EXCLUDE_KEYS = ['timestamp', 'Status', 'Row Number']; 
+    // Exclude file URLs from the main grid as they will be displayed separately.
+    const EXCLUDE_KEYS = ['timestamp', 'Status', 'Row Number', 'birthcertificateurl', 'parentidurl', 'proofofresidenceurl', 'reportcardurl']; 
 
     // Build details view (using the keys from the Google Sheet)
     let detailsHTML = `
@@ -249,7 +273,23 @@ function viewApplicantDetails(index) {
         }
     }
 
-    detailsHTML += `</div><hr><h4>Update Application Status</h4>`;
+    detailsHTML += `</div><hr>`;
+
+    // **NEW**: Section for uploaded documents
+    const docLinks = [ // **FIX**: Use all-lowercase keys to match Google Sheet headers
+        { key: 'birthcertificateurl', label: "Learner's Birth Certificate" },
+        { key: 'parentidurl', label: 'Parent/Guardian ID' },
+        { key: 'proofofresidenceurl', label: 'Proof of Residence' },
+        { key: 'reportcardurl', label: 'Latest School Report' }
+    ];
+
+    detailsHTML += `<h4>Uploaded Documents</h4><ul class="document-links-list">`;
+    docLinks.forEach(doc => {
+        if (applicant[doc.key]) {
+            detailsHTML += `<li><a href="${applicant[doc.key]}" target="_blank" rel="noopener noreferrer"><i class="fas fa-file-alt"></i> ${doc.label}</a></li>`;
+        }
+    });
+    detailsHTML += `</ul><hr>`;
 
     // Status Dropdown and Update Button
     // Use the corrected header key: "Status"
@@ -257,6 +297,7 @@ function viewApplicantDetails(index) {
     
     detailsHTML += `
         <div class="status-update-controls">
+            <h4>Update Application Status</h4>
             <select id="new-status-${sheetRowNumber}" class="status-dropdown">
                 ${STATUS_OPTIONS.map(status => `
                     <option value="${status}" ${currentStatus === status ? 'selected' : ''}>${status}</option>

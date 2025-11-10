@@ -435,6 +435,11 @@ function handleNavigation() {
         const classFilter = document.getElementById('parent-class-filter');
         loadAllParentData(gradeFilter.value, classFilter.value);
     }
+
+    // Announcements Management View
+    if (targetId === 'announcements-mgmt') {
+        loadAnnouncementsForManagement();
+    }
 }
 
 
@@ -1068,10 +1073,323 @@ function populateAttendanceWeekFilter(year, term) {
     }
 }
 
+/**
+ * **NEW**: Exports the mark sheet data to an Excel file. (Copied from Teacher's Portal)
+ * @param {string} fullClass - The full class name.
+ * @param {string} subject - The subject name.
+ * @param {Array} learners - Array of learner objects.
+ * @param {Array} assignments - Array of assignment objects.
+ * @param {Map} gradesMap - Map of grades.
+ */
+function exportMarkSheetToExcel(fullClass, subject, learners, assignments, gradesMap) {
+    const dataForExport = [];
+    const headers = ['Admission No.', 'Learner Name'];
+    let totalPossibleMarks = 0;
+
+    assignments.forEach(a => {
+        headers.push(`${a.name} (${a.totalMarks})`);
+        totalPossibleMarks += a.totalMarks;
+    });
+    headers.push(`Total (${totalPossibleMarks})`, '%', 'Level');
+    dataForExport.push(headers);
+
+    learners.forEach(learner => {
+        const row = [learner.admissionId || 'N/A', `${learner.learnerName} ${learner.learnerSurname}`];
+        let learnerTotalScore = 0;
+        assignments.forEach(assignment => {
+            const score = gradesMap.get(`${learner.id}-${assignment.id}`);
+            row.push(score !== undefined ? score : '');
+            if (score !== undefined) learnerTotalScore += score;
+        });
+        const percentage = totalPossibleMarks > 0 ? ((learnerTotalScore / totalPossibleMarks) * 100) : 0;
+        row.push(learnerTotalScore, percentage.toFixed(1) + '%', getAchievementLevel(percentage).level);
+        dataForExport.push(row);
+    });
+
+    const worksheet = XLSX.utils.aoa_to_sheet(dataForExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Mark Sheet');
+    XLSX.writeFile(workbook, `MarkSheet_${subject}_${fullClass}_${new Date().toISOString().split('T')[0]}.xlsx`);
+}
+
+// =========================================================
+// === MARK SHEET GENERATION (ADMIN) ===
+// =========================================================
+
+/**
+ * Sets up the Mark Sheet generation tool for administrators.
+ */
+async function setupMarkSheetTool() {
+    const classSelect = document.getElementById('admin-marksheet-class-select');
+    const subjectSelect = document.getElementById('admin-marksheet-subject-select');
+    const gradebookContainer = document.getElementById('admin-gradebook-container');
+
+    if (!classSelect || !subjectSelect) return;
+
+    // 1. Populate the class dropdown with all unique classes in the system
+    try {
+        const classesSnapshot = await db.collection('sams_registrations').get();
+        const uniqueClasses = new Set();
+        classesSnapshot.forEach(doc => {
+            const data = doc.data();
+            if (data.fullGradeSection) {
+                uniqueClasses.add(data.fullGradeSection);
+            }
+        });
+
+        classSelect.innerHTML = '<option value="">-- Select a Class --</option>';
+        Array.from(uniqueClasses).sort().forEach(className => {
+            classSelect.add(new Option(className, className));
+        });
+
+    } catch (error) {
+        console.error("Error loading classes for mark sheets:", error);
+        classSelect.innerHTML = '<option value="">Could not load classes</option>';
+    }
+
+    // 2. When a class is selected, populate the subject dropdown
+    classSelect.addEventListener('change', async () => {
+        const selectedClass = classSelect.value;
+        subjectSelect.innerHTML = '<option value="">-- Loading Subjects... --</option>';
+        subjectSelect.disabled = true;
+        gradebookContainer.style.display = 'none';
+
+        if (!selectedClass) {
+            subjectSelect.innerHTML = '<option value="">-- Select Class First --</option>';
+            return;
+        }
+
+        try {
+            const assignmentsSnapshot = await db.collection('assignments').where('fullClass', '==', selectedClass).get();
+            const uniqueSubjects = new Set();
+            assignmentsSnapshot.forEach(doc => {
+                uniqueSubjects.add(doc.data().subject);
+            });
+
+            subjectSelect.innerHTML = '<option value="">-- Select a Subject --</option>';
+            if (uniqueSubjects.size === 0) {
+                subjectSelect.innerHTML = '<option value="">No subjects with assignments</option>';
+            } else {
+                Array.from(uniqueSubjects).sort().forEach(subject => {
+                    subjectSelect.add(new Option(subject, subject));
+                });
+                subjectSelect.disabled = false;
+            }
+        } catch (error) {
+            console.error("Error loading subjects for mark sheets:", error);
+            subjectSelect.innerHTML = '<option value="">Could not load subjects</option>';
+        }
+    });
+
+    // 3. When a subject is selected, load the gradebook
+    subjectSelect.addEventListener('change', () => {
+        const selectedClass = classSelect.value;
+        const selectedSubject = subjectSelect.value;
+
+        if (selectedClass && selectedSubject) {
+            gradebookContainer.style.display = 'block';
+            loadGradebookForAdmin(selectedClass, selectedSubject);
+        } else {
+            gradebookContainer.style.display = 'none';
+        }
+    });
+}
+
+/**
+ * Loads a read-only gradebook for the selected class and subject.
+ * @param {string} fullClass - The full class name.
+ * @param {string} subject - The subject name.
+ */
+async function loadGradebookForAdmin(fullClass, subject) {
+    const generateBtn = document.getElementById('admin-generate-marksheet-btn');
+    const container = document.getElementById('admin-gradebook-table-container');
+    const status = document.getElementById('admin-gradebook-status');
+    
+    generateBtn.style.display = 'none';
+    document.getElementById('admin-gradebook-header').textContent = `Gradebook for ${subject} - Class ${fullClass}`;
+    status.textContent = 'Loading gradebook data...';
+    container.innerHTML = '';
+
+    try {
+        // Fetch learners, assignments, and grades (logic adapted from teacher's portal)
+        const learnersSnapshot = await db.collection('sams_registrations').where('fullGradeSection', '==', fullClass).get();
+        const learners = learnersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })).sort((a, b) => (a.learnerName || '').localeCompare(b.learnerName || ''));
+
+        const assignmentsSnapshot = await db.collection('assignments').where('fullClass', '==', fullClass).where('subject', '==', subject).orderBy('createdAt').get();
+        const assignments = assignmentsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+        const learnerIds = learners.map(l => l.id);
+        const gradesMap = new Map();
+        if (learnerIds.length > 0) {
+            const promises = [];
+            for (let i = 0; i < learnerIds.length; i += 10) {
+                const chunk = learnerIds.slice(i, i + 10);
+                promises.push(db.collection('grades').where('learnerId', 'in', chunk).get());
+            }
+            const snapshots = await Promise.all(promises);
+            snapshots.forEach(snapshot => {
+                snapshot.forEach(doc => {
+                    const gradeData = doc.data();
+                    gradesMap.set(`${gradeData.learnerId}-${gradeData.assignmentId}`, parseInt(gradeData.score, 10));
+                });
+            });
+        }
+
+        if (learners.length === 0) {
+            status.textContent = 'No learners found in this class.';
+            return;
+        }
+
+        // Build read-only table
+        let tableHTML = '<table class="data-table"><thead><tr><th>Learner Name</th>';
+        assignments.forEach(a => { tableHTML += `<th>${a.name} (${a.totalMarks})</th>`; });
+        tableHTML += '</tr></thead><tbody>';
+
+        learners.forEach(learner => {
+            tableHTML += `<tr><td>${learner.learnerName} ${learner.learnerSurname}</td>`;
+            assignments.forEach(assignment => {
+                const grade = gradesMap.get(`${learner.id}-${assignment.id}`);
+                tableHTML += `<td>${grade !== undefined ? grade : '--'}</td>`;
+            });
+            tableHTML += '</tr>';
+        });
+        tableHTML += '</tbody></table>';
+        container.innerHTML = tableHTML;
+        status.textContent = `Displaying gradebook for ${learners.length} learners.`;
+
+        // Show "Generate Mark Sheet" button if there's data
+        if (learners.length > 0 && assignments.length > 0) {
+            generateBtn.style.display = 'inline-block';
+            // Re-use the generateMarkSheet function from teacher's portal (must be available)
+            generateBtn.onclick = () => generateMarkSheet(fullClass, subject, learners, assignments, gradesMap);
+        }
+
+    } catch (error) {
+        console.error('Error loading gradebook for admin:', error);
+        status.textContent = 'An error occurred while loading the gradebook.';
+    }
+}
+
+/**
+ * Generates a printable mark sheet. (Copied from teachers-portal.js)
+ * This function is now globally available via ui-handlers.js
+ */
+function generateMarkSheet(fullClass, subject, learners, assignments, gradesMap) {
+    const modal = document.getElementById('marksheet-modal');
+    const content = document.getElementById('marksheet-modal-content');
+    const adminData = JSON.parse(sessionStorage.getItem('currentUser'));
+
+    let totalPossibleMarks = 0;
+    assignments.forEach(a => { totalPossibleMarks += a.totalMarks; });
+
+    learners.sort((a, b) => (a.learnerName || '').localeCompare(b.learnerName || ''));
+
+    let tableRows = learners.map(learner => {
+        let learnerTotalScore = 0;
+        const assignmentCells = assignments.map(assignment => {
+            const score = gradesMap.get(`${learner.id}-${assignment.id}`);
+            if (score !== undefined) learnerTotalScore += score;
+            return `<td>${score !== undefined ? score : 'N/A'}</td>`;
+        }).join('');
+
+        const percentage = totalPossibleMarks > 0 ? ((learnerTotalScore / totalPossibleMarks) * 100).toFixed(1) : 0;
+        const level = getAchievementLevel(percentage);
+
+        return `<tr>
+                    <td>${learner.admissionId || 'N/A'}</td>
+                    <td>${learner.learnerName} ${learner.learnerSurname}</td>
+                    ${assignmentCells}
+                    <td>${learnerTotalScore}</td>
+                    <td>${percentage}%</td>
+                    <td>${level.level} (${level.description})</td>
+                </tr>`;
+    }).join('');
+
+    // **FIX**: Complete the function by generating the full HTML for the modal.
+    const marksheetHTML = `
+        <div class="marksheet-header">
+            <span class="modal-close-btn no-print">&times;</span>
+            <img src="../../images/Logo.png" alt="School Logo" class="school-logo">
+            <h1>Toronto Primary School</h1>
+            <h2>Mark Sheet: ${subject} - Class ${fullClass}</h2>
+            <p><strong>Generated By:</strong> Admin (${adminData.preferredName || ''} ${adminData.surname || ''})</p>
+            <p><strong>Date Generated:</strong> ${new Date().toLocaleDateString()}</p>
+        </div>
+        <div class="data-table-container">
+            <table class="data-table marksheet-table">
+                <thead>
+                    <tr>
+                        <th>Adm No.</th>
+                        <th>Learner Name</th>
+                        ${assignments.map(a => `<th>${a.name}<br>(${a.totalMarks})</th>`).join('')}
+                        <th>Total<br>(${totalPossibleMarks})</th>
+                        <th>%</th>
+                        <th>Level</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${tableRows}
+                </tbody>
+            </table>
+        </div>
+        <div class="marksheet-footer">
+            <div class="signature-line">
+                <p>Administrator's Signature:</p>
+                <span>_________________________</span>
+            </div>
+            <div class="signature-line">
+                <p>Date:</p>
+                <span>_________________________</span>
+            </div>
+        </div>
+        <div class="marksheet-actions no-print" style="margin-top: 20px; display: flex; gap: 10px;">
+            <button onclick="window.print()" class="cta-button"><i class="fas fa-print"></i> Print Mark Sheet</button>
+            <button id="admin-export-excel-btn" class="cta-button primary-green">
+                <i class="fas fa-file-excel"></i> Export to Excel
+            </button>
+        </div>
+    `;
+
+    content.innerHTML = marksheetHTML;
+    modal.style.display = 'block';
+
+    // Add listeners to close the modal
+    modal.querySelector('.modal-close-btn').onclick = () => { modal.style.display = 'none'; };
+    window.onclick = (event) => {
+        if (event.target == modal) {
+            modal.style.display = 'none';
+        }
+    };
+
+    // **NEW**: Add listener for the new Excel export button
+    document.getElementById('admin-export-excel-btn').onclick = () => exportMarkSheetToExcel(fullClass, subject, learners, assignments, gradesMap);
+}
+
+/**
+ * **NEW**: Calculates the achievement level based on a percentage score.
+ * @param {number} percentage - The percentage score.
+ * @returns {{level: number, description: string}}
+ */
+function getAchievementLevel(percentage) {
+    if (percentage >= 80) return { level: 7, description: "Outstanding" };
+    if (percentage >= 70) return { level: 6, description: "Meritorious" };
+    if (percentage >= 60) return { level: 5, description: "Substantial" };
+    if (percentage >= 50) return { level: 4, description: "Adequate" };
+    if (percentage >= 40) return { level: 3, description: "Moderate" };
+    if (percentage >= 30) return { level: 2, description: "Elementary" };
+    return { level: 1, description: "Not Achieved" };
+}
+
 
 document.addEventListener('DOMContentLoaded', () => {
     loadAdminProfile();
     
+    // **NEW**: Run the cleanup function for past announcements on page load.
+    deletePastAnnouncements();
+
+    // **NEW**: Set up the mark sheet tool
+    setupMarkSheetTool();
+
     const initialHash = window.location.hash.substring(1);
     handleNavigation(); 
     window.addEventListener('hashchange', handleNavigation);
@@ -1284,6 +1602,44 @@ document.addEventListener('DOMContentLoaded', () => {
         attendanceClassFilter.addEventListener('change', reloadAttendance);
     }
 
+    // --- EXPORT LISTENERS ---
+    const exportLmsExcelBtn = document.getElementById('export-lms-excel-btn');
+    if (exportLmsExcelBtn) {
+        exportLmsExcelBtn.addEventListener('click', () => {
+            const data = getTableData('active-learners-table');
+            exportToExcel(data, 'Active_Learners_List');
+        });
+    }
+
+    const exportLmsPdfBtn = document.getElementById('export-lms-pdf-btn');
+    if (exportLmsPdfBtn) {
+        exportLmsPdfBtn.addEventListener('click', () => {
+            const data = getTableData('active-learners-table');
+            exportToPdf(data, 'Active Learners List');
+        });
+    }
+
+    const exportGradeSectionExcelBtn = document.getElementById('export-grade-section-excel-btn');
+    if (exportGradeSectionExcelBtn) {
+        exportGradeSectionExcelBtn.addEventListener('click', () => {
+            const data = getTableData('grade-section-learners-table');
+            const grade = document.getElementById('grade-section-grade-filter').value;
+            const classSection = document.getElementById('grade-section-class-filter').value;
+            const fileName = `Learners_Grade_${grade}_Class_${classSection}`;
+            exportToExcel(data, fileName);
+        });
+    }
+
+    const exportGradeSectionPdfBtn = document.getElementById('export-grade-section-pdf-btn');
+    if (exportGradeSectionPdfBtn) {
+        exportGradeSectionPdfBtn.addEventListener('click', () => {
+            const data = getTableData('grade-section-learners-table');
+            const grade = document.getElementById('grade-section-grade-filter').value;
+            const classSection = document.getElementById('grade-section-class-filter').value;
+            const title = `Learners for Grade ${grade}, Class ${classSection === 'All' ? 'All' : classSection}`;
+            exportToPdf(data, title);
+        });
+    }
 
     // --- PARENT DATA LISTENERS ---
     const parentGradeFilter = document.getElementById('parent-grade-filter');
