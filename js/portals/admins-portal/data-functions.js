@@ -197,7 +197,9 @@ async function loadAllActiveLearners(filterGrade = 'All', reset = false) {
         sortedDocs.forEach(doc => {
             const data = doc.data();
             const admissionId = data.admissionId;
-            
+
+            // **FIX**: Added a check to ensure the admissionId is not null or undefined before proceeding.
+            // This prevents potential errors if a record is malformed.
             if (!admissionId || existingAdmissionIds.has(admissionId)) {
                  return;
             }
@@ -1034,6 +1036,121 @@ async function updateLearnerDetails(admissionId) {
         console.error("Error updating learner details:", error);
         statusMessageElement.textContent = "An error occurred during save. Check console.";
         statusMessageElement.classList.add('error');
+    }
+}
+
+/**
+ * **NEW**: Reads form data and updates the admin's Firestore document.
+ * @param {string} adminUid - The UID of the admin to update.
+ */
+async function updateAdminProfile(adminUid) {
+    const statusMessage = document.getElementById('admin-edit-profile-status');
+    const form = document.getElementById('admin-edit-profile-form');
+    const submitButton = form.querySelector('button[type="submit"]');
+
+    const updatedData = {
+        preferredName: document.getElementById('admin-edit-preferred-name').value.trim(),
+        surname: document.getElementById('admin-edit-surname').value.trim(),
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    };
+
+    if (!updatedData.preferredName || !updatedData.surname) {
+        alert('Please fill in all required fields.');
+        return;
+    }
+
+    submitButton.disabled = true;
+    submitButton.innerHTML = '<i class="fas fa-sync fa-spin"></i> Saving...';
+    statusMessage.style.display = 'none';
+
+    try {
+        await db.collection('users').doc(adminUid).update(updatedData);
+
+        // Update session storage to reflect changes immediately
+        const currentUser = JSON.parse(sessionStorage.getItem('currentUser'));
+        const newSessionUser = { ...currentUser, ...updatedData };
+        sessionStorage.setItem('currentUser', JSON.stringify(newSessionUser));
+
+        statusMessage.textContent = 'Profile updated successfully!';
+        statusMessage.className = 'status-message-box success';
+        statusMessage.style.display = 'block';
+
+        // Refresh the profile display and hide the form
+        loadAdminProfile(); // This will re-render the display with new data
+        setTimeout(() => {
+            document.querySelector('#profile .profile-card').style.display = 'flex';
+            document.getElementById('admin-edit-profile-form-container').style.display = 'none';
+        }, 2000);
+
+    } catch (error) {
+        console.error("Error updating admin profile:", error);
+        statusMessage.textContent = 'Failed to update profile. Please try again.';
+        statusMessage.className = 'status-message-box error';
+        statusMessage.style.display = 'block';
+    } finally {
+        submitButton.disabled = false;
+        submitButton.innerHTML = '<i class="fas fa-save"></i> Save Changes';
+    }
+}
+
+/**
+ * **NEW**: Handles the upload of a new profile picture for the admin.
+ * @param {Event} e - The file input change event.
+ * @param {string} adminUid - The UID of the admin user.
+ */
+async function uploadAdminProfilePicture(e, adminUid) {
+    const file = e.target.files[0];
+    const statusIndicator = document.getElementById('admin-profile-pic-upload-status');
+    const profilePic = document.getElementById('admin-profile-pic');
+
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+        alert('Please select an image file.');
+        return;
+    }
+    if (file.size > 2 * 1024 * 1024) { // 2MB limit
+        alert('File is too large. Please select an image smaller than 2MB.');
+        return;
+    }
+
+    statusIndicator.style.display = 'flex';
+    statusIndicator.innerHTML = '<i class="fas fa-sync fa-spin"></i>';
+
+    try {
+        const storage = firebase.storage(); // Get storage instance
+        const storageRef = storage.ref();
+        const filePath = `profile_pictures/${adminUid}/profile.jpg`;
+        const fileRef = storageRef.child(filePath);
+
+        const snapshot = await fileRef.put(file);
+        const downloadURL = await snapshot.ref.getDownloadURL();
+
+        await db.collection('users').doc(adminUid).update({
+            photoUrl: downloadURL
+        });
+
+        // Update UI and session storage
+        profilePic.src = downloadURL;
+        const currentUser = JSON.parse(sessionStorage.getItem('currentUser'));
+        currentUser.photoUrl = downloadURL;
+        sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
+
+        statusIndicator.innerHTML = '<i class="fas fa-check"></i>';
+        setTimeout(() => {
+            statusIndicator.style.display = 'none';
+        }, 2000);
+
+    } catch (error) {
+        console.error("Error uploading admin profile picture:", error);
+        statusIndicator.innerHTML = '<i class="fas fa-times"></i>';
+        alert('Failed to upload profile picture.');
+        setTimeout(() => {
+            statusIndicator.style.display = 'none';
+        }, 3000);
+    } finally {
+        // Clear the file input value to allow re-uploading the same file
+        e.target.value = '';
     }
 }
 

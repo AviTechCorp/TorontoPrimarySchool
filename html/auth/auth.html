@@ -77,7 +77,9 @@
      <option value="learner">Learner</option>
      <option value="parent">Parent</option>
      <option value="teacher">Teacher</option>
-     <option value="admissions-team">Admissions Team</option>      <option value="admin">Admin (System)</option>
+     <option value="admissions-team">Admissions Team</option>
+     <option value="smt">SMT (School Management)</option>
+     <option value="admin">Admin (System)</option>
     </select>
 
     <div id="parent-fields" class="role-fields">
@@ -184,6 +186,43 @@
       </div>
      </fieldset>
     </div>
+
+    <div id="smt-fields" class="role-fields">
+      <div class="form-group"><input type="text" name="smt-surname" placeholder="Surname" required></div>
+      <div class="form-group"><input type="text" name="smt-preferred-name" placeholder="Preferred Name" required></div>
+      <div class="form-group"><input type="email" name="smt-email" placeholder="Email" required></div>
+      <div class="form-group">
+        <select name="smt-specific-role" required>
+          <option value="">-- Select SMT Role --</option>
+          <option value="principal">Principal</option>
+          <option value="deputy-principal-1">1st Deputy Principal</option>
+          <option value="deputy-principal-2">2nd Deputy Principal</option>
+          <option value="dh">DH (Departmental Head)</option>
+        </select>
+      </div>
+      <!-- **NEW**: Fields specific to Departmental Heads (DH) -->
+      <div id="dh-specific-fields" style="display: none; grid-column: 1 / -1;">
+        <fieldset class="role-specific-fieldset">
+            <legend>Departmental Head Details</legend>
+            <div class="form-group">
+                <label>Department(s) - Select all that apply</label>
+                <div class="checkbox-group">
+                    <label><input type="checkbox" name="dh-department" value="Science & Maths"> Science & Maths</label>
+                    <label><input type="checkbox" name="dh-department" value="Languages"> Languages</label>
+                    <label><input type="checkbox" name="dh-department" value="Humanities"> Humanities (SS, LO)</label>
+                    <label><input type="checkbox" name="dh-department" value="Foundation Phase"> Foundation Phase (All)</label>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Responsible for which Grade(s) - Select all that apply</label>
+                <div class="checkbox-group">
+                    <label><input type="checkbox" name="dh-grade" value="R-3"> Foundation (R-3)</label>
+                    <label><input type="checkbox" name="dh-grade" value="4-7"> Intersen (4-7)</label>
+                </div>
+            </div>
+        </fieldset>
+      </div>
+    </div>
         
             <div id="admissions-team-fields" class="role-fields">
      <div class="form-group"><input type="text" name="admissions-surname" placeholder="Surname" required></div>
@@ -223,7 +262,9 @@
      <option value="learner">Learner</option>
      <option value="parent">Parent</option>
      <option value="teacher">Teacher</option>
-     <option value="admissions-team">Admissions Team</option>      <option value="admin">Admin (System)</option>
+     <option value="admissions-team">Admissions Team</option>
+     <option value="smt">SMT (School Management)</option>
+     <option value="admin">Admin (System)</option>
     </select>
     <input type="email" name="email" placeholder="Email" id="loginEmail" required>
     <div class="password-wrapper">

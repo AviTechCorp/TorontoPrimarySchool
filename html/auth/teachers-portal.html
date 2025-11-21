@@ -56,6 +56,7 @@
     <li><a href="#dashboard" class="active"><i class="fas fa-home"></i> Home</a></li>
     <li><a href="#portfolio"><i class="fas fa-briefcase"></i> My Portfolio</a></li>
     <li><a href="#profile"><i class="fas fa-user-circle"></i> My Profile</a></li>
+    <li><a href="#learner-profiles"><i class="fas fa-id-card"></i> Learner Profiles</a></li>
     <li><a href="#students"><i class="fas fa-users"></i> Learner Management</a></li>
     <li><a href="#grades-form"><i class="fas fa-edit"></i> Grading & Academics</a></li>
     <li><a href="#classes"><i class="fas fa-chalkboard-teacher"></i> My Classes</a></li>
@@ -100,13 +101,105 @@
    <div id="profile" class="portal-section hidden-section">
     <h2>My Profile</h2>
     <div class="profile-card">
-     <img src="../../images/placeholder-profile.png" alt="Teacher Profile Picture" class="profile-pic">
+      <div class="profile-pic-container">
+        <img src="../../images/placeholder-profile.png" alt="Teacher Profile Picture" class="profile-pic" id="teacher-profile-pic">
+        <label for="profile-pic-upload" class="profile-pic-upload-label" title="Upload new profile picture">
+            <i class="fas fa-camera"></i>
+        </label>
+        <input type="file" id="profile-pic-upload" accept="image/jpeg, image/png" style="display: none;">
+        <div id="profile-pic-upload-status" class="upload-status-indicator" style="display: none;"></div>
+      </div>
      <div class="profile-details">
       <p class="profile-surname"><strong>Surname:</strong> Loading...</p>
       <p class="profile-preferred-name"><strong>Preferred Name:</strong> Loading...</p>
       <p class="profile-email"><strong>Email:</strong> Loading...</p>
             <p class="profile-contact"><strong>Contact:</strong> Loading...</p>
-     </div><a href="#" class="cta-button-edit">Edit Profile</a>
+     </div><a href="#" id="edit-profile-btn" class="cta-button-edit">Edit Profile</a>
+    </div>
+
+    <!-- **NEW**: Edit Profile Form (hidden by default) -->
+    <div id="edit-profile-form-container" class="tool-card" style="display: none; margin-top: 20px;">
+        <h3>Edit My Profile</h3>
+        <form id="edit-profile-form">
+            <div class="grid-container" style="grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));">
+                <div class="form-group">
+                    <label for="edit-profile-preferred-name">Preferred Name</label>
+                    <input type="text" id="edit-profile-preferred-name" required>
+                </div>
+                <div class="form-group">
+                    <label for="edit-profile-surname">Surname</label>
+                    <input type="text" id="edit-profile-surname" required>
+                </div>
+                <div class="form-group">
+                    <label for="edit-profile-contact">Contact Number</label>
+                    <input type="tel" id="edit-profile-contact">
+                </div>
+            </div>
+            <p id="edit-profile-status" class="status-message-box" style="display: none;"></p>
+            <button type="submit" class="cta-button"><i class="fas fa-save"></i> Save Changes</button>
+            <button type="button" id="cancel-edit-profile-btn" class="cta-button-secondary" style="margin-left: 10px;">Cancel</button>
+        </form>
+    </div>
+   </div>
+
+   <div id="learner-profiles" class="portal-section hidden-section">
+    <h2>Learner Profiles</h2>
+    <p>Select one of your classes to view a list of learners. Click on a learner to see their detailed profile.</p>
+
+    <!-- Main View: Class selection and learner list -->
+    <div id="learner-profile-list-view">
+        <div class="tool-card">
+            <div class="form-group" style="max-width: 300px; margin-bottom: 20px;">
+                <label for="profile-class-filter">Select Class:</label>
+                <select id="profile-class-filter">
+                    <option value="">-- Select a Class --</option>
+                </select>
+            </div>
+            <p id="learner-profile-list-status" class="data-status-message">Please select a class to load learners.</p>
+            <div id="learner-profile-list-container" class="data-table-container">
+                <!-- Learner list will be populated here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Detail View: A single learner's full profile -->
+    <div id="learner-profile-detail-view" style="display: none;">
+        <button id="back-to-learner-profile-list" class="cta-button-secondary" style="margin-bottom: 20px;">
+            <i class="fas fa-arrow-left"></i> Back to Learner List
+        </button>
+        <div id="learner-profile-content" class="profile-card-full">
+            <!-- Detailed profile content will be injected here by JavaScript -->
+            <p class="data-status-message">Loading learner profile...</p>
+        </div>
+
+        <!-- Behavioral Comments Section -->
+        <div class="tool-card" style="margin-top: 20px;">
+            <h3><i class="fas fa-comments"></i> Behavioral Comments & Observations</h3>
+            <div id="learner-comments-history" class="comments-container scroll-container">
+                <p class="data-status-message">Loading comments...</p>
+            </div>
+            <form id="add-comment-form" style="margin-top: 15px;">
+                <div class="form-group">
+                    <label for="new-comment-text">Add a New Comment</label>
+                    <textarea id="new-comment-text" rows="4" placeholder="Enter your observation about the learner's behavior, progress, or any incidents..." required></textarea>
+                </div>
+                <button type="submit" class="cta-button">
+                    <i class="fas fa-plus-circle"></i> Save Comment
+                </button>
+                <p id="comment-status-message" class="status-message-box" style="display: none;"></p>
+            </form>
+        </div>
+
+        <!-- Documents Section -->
+        <div class="tool-card" style="margin-top: 20px;">
+            <h3><i class="fas fa-folder-open"></i> Learner Documents</h3>
+            <p>The following documents were submitted during the application process.</p>
+            <ul id="learner-document-links" class="resource-list">
+                <!-- Document links will be injected here -->
+                <p class="info-message">No documents found for this learner.</p>
+            </ul>
+        </div>
+
     </div>
    </div>
 

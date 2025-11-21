@@ -52,6 +52,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const parentFields = document.getElementById('parent-fields');
   const teacherFields = document.getElementById('teacher-fields');
   const admissionsTeamFields = document.getElementById('admissions-team-fields'); 
+  const smtFields = document.getElementById('smt-fields');
   const adminFields = document.getElementById('admin-fields');
   const registerPasswordInput = document.getElementById('registerPassword');
   const confirmPasswordInput = document.getElementById('confirmPassword');
@@ -91,6 +92,16 @@ document.addEventListener('DOMContentLoaded', () => {
     // initialize if already selected
     showRoleFields(registerRoleSelect.value);
   }
+
+  // SMT role -> show DH-specific fields
+  const smtRoleSelect = document.querySelector('select[name="smt-specific-role"]');
+  if (smtRoleSelect) {
+      const dhFields = document.getElementById('dh-specific-fields');
+      smtRoleSelect.addEventListener('change', () => {
+          dhFields.style.display = (smtRoleSelect.value === 'dh') ? 'block' : 'none';
+      });
+  }
+
 
   // Class-teacher-select -> show responsible class dropdown
   if (isClassTeacherSelect) {
@@ -267,6 +278,16 @@ document.addEventListener('DOMContentLoaded', () => {
         userData.surname = document.querySelector('input[name="admissions-surname"]')?.value || '';
         userData.preferredName = document.querySelector('input[name="admissions-preferred-name"]')?.value || '';
         userData.specialId = document.querySelector('input[name="admissions-special-id"]')?.value || '';
+      } else if (role === 'smt') {
+        userData.email = document.querySelector('input[name="smt-email"]')?.value || '';
+        userData.surname = document.querySelector('input[name="smt-surname"]')?.value || '';
+        userData.preferredName = document.querySelector('input[name="smt-preferred-name"]')?.value || '';
+        userData.smtRole = document.querySelector('select[name="smt-specific-role"]')?.value || '';
+        // **NEW**: Collect DH-specific data if the role is 'dh'
+        if (userData.smtRole === 'dh') {
+            userData.dhDepartments = getCheckedValues('dh-department');
+            userData.dhGrades = getCheckedValues('dh-grade');
+        }
       } else if (role === 'admin') {
         userData.email = document.querySelector('input[name="admin-email"]')?.value || '';
         userData.surname = document.querySelector('input[name="admin-surname"]')?.value || '';
@@ -380,9 +401,9 @@ document.addEventListener('DOMContentLoaded', () => {
           }
           // Add details from SAMS record to the user profile to be created
           userData.admissionNumber = admissionNumber;
-          userData.name = learnerData.parent1Name;
-          userData.surname = learnerData.parent1Surname || ''; // Assuming surname might not be separate
-          userData.contact = learnerData.parent1Contact || '';
+          userData.name = learnerData.parent1Name; // This line already exists
+          userData.surname = learnerData.parent1Surname || ''; // This line already exists
+          userData.contactNumber = learnerData.parent1Contact || ''; // This is the line to add/correct
       }
 
       // Capture the admission number before creating the user, as it's part of the form, not the user data object yet.
@@ -450,6 +471,7 @@ document.addEventListener('DOMContentLoaded', () => {
               case 'parent': portalPath = "parents-portal.html"; break;
               case 'teacher': portalPath = "teachers-portal.html"; break;
               case 'admissions-team': portalPath = "admission-team-portal.html"; break;
+              case 'smt': portalPath = "smt-portal.html"; break;
               case 'admin': portalPath = "admins-portal.html"; break;
               default: portalPath = "index.html"; break;
             }
@@ -637,7 +659,8 @@ onAuthStateChanged(auth, (user) => {
         'parents-portal.html',
         'teachers-portal.html',
         'admins-portal.html',
-        'admission-team-portal.html' 
+        'admission-team-portal.html',
+        'smt-portal.html'
     ];
     const isProtectedPage = protectedPages.some(page => currentPath.endsWith(page));
 

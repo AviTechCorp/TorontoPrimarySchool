@@ -1002,10 +1002,93 @@ function displayDuplicateLearners(duplicatesMap) {
 function loadAdminProfile() {
     const userData = JSON.parse(sessionStorage.getItem('currentUser'));
 
+    // **NEW**: Add profile picture upload functionality
+    const profileSection = document.getElementById('profile');
+    const profileCard = profileSection.querySelector('.profile-card');
+    const profilePicContainer = profileCard.querySelector('.profile-pic-container');
+
+    // Inject the upload elements if they don't exist
+    if (profilePicContainer && !profilePicContainer.querySelector('.profile-pic-upload-label')) {
+        profilePicContainer.innerHTML += `
+            <label for="admin-profile-pic-upload" class="profile-pic-upload-label" title="Upload new profile picture">
+                <i class="fas fa-camera"></i>
+            </label>
+            <input type="file" id="admin-profile-pic-upload" accept="image/jpeg, image/png" style="display: none;">
+            <div id="admin-profile-pic-upload-status" class="upload-status-indicator" style="display: none;"></div>
+        `;
+    }
+
     if (userData) {
         document.querySelector('#profile .profile-details p:nth-child(1)').innerHTML = `<strong>Name:</strong> ${userData.preferredName || 'Admin'} ${userData.surname || 'User'}`;
-        document.querySelector('#profile .profile-details p:nth-child(2)').innerHTML = `<strong>Role:</strong> Admin`; 
+        document.querySelector('#profile .profile-details p:nth-child(2)').innerHTML = `<strong>Role:</strong> ${userData.role || 'Admin'}`; 
         document.querySelector('#profile .profile-details p:nth-child(3)').innerHTML = `<strong>Email:</strong> ${userData.email || 'N/A'}`;
+
+        // **NEW**: Add edit profile functionality
+        const profileSection = document.getElementById('profile');
+        const profileCard = profileSection.querySelector('.profile-card'); // This is duplicated, but safe
+        const adminProfilePic = document.getElementById('admin-profile-pic');
+        if (adminProfilePic) adminProfilePic.src = userData.photoUrl || '../../images/placeholder-profile.png';
+        
+        // Ensure edit button and form don't already exist
+        if (!profileCard.querySelector('#admin-edit-profile-btn')) {
+            
+            const editButton = document.createElement('a');
+            editButton.href = '#';
+            editButton.id = 'admin-edit-profile-btn';
+            editButton.className = 'cta-button-edit';
+            editButton.textContent = 'Edit Profile';
+            profileCard.appendChild(editButton);
+
+            const editFormHTML = `
+                <div id="admin-edit-profile-form-container" class="tool-card" style="display: none; margin-top: 20px;">
+                    <h3>Edit My Profile</h3>
+                    <form id="admin-edit-profile-form">
+                        <div class="grid-container" style="grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));">
+                            <div class="form-group">
+                                <label for="admin-edit-preferred-name">Preferred Name</label>
+                                <input type="text" id="admin-edit-preferred-name" value="${userData.preferredName || ''}" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="admin-edit-surname">Surname</label>
+                                <input type="text" id="admin-edit-surname" value="${userData.surname || ''}" required>
+                            </div>
+                        </div>
+                        <p id="admin-edit-profile-status" class="status-message-box" style="display: none;"></p>
+                        <button type="submit" class="cta-button"><i class="fas fa-save"></i> Save Changes</button>
+                        <button type="button" id="admin-cancel-edit-btn" class="cta-button-secondary" style="margin-left: 10px;">Cancel</button>
+                    </form>
+                </div>
+            `;
+            profileSection.insertAdjacentHTML('beforeend', editFormHTML);
+
+            const editFormContainer = document.getElementById('admin-edit-profile-form-container');
+            const cancelBtn = document.getElementById('admin-cancel-edit-btn');
+            const editForm = document.getElementById('admin-edit-profile-form');
+
+            editButton.addEventListener('click', (e) => {
+                e.preventDefault();
+                profileCard.style.display = 'none';
+                editFormContainer.style.display = 'block';
+            });
+
+            cancelBtn.addEventListener('click', () => {
+                profileCard.style.display = 'flex';
+                editFormContainer.style.display = 'none';
+            });
+
+            editForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                updateAdminProfile(userData.uid); // Assumes function exists in data-functions.js
+            });
+
+            // Add listener for the new profile pic upload
+            const picUploadInput = document.getElementById('admin-profile-pic-upload');
+            if (picUploadInput) {
+                picUploadInput.addEventListener('change', (e) => {
+                    uploadAdminProfilePicture(e, userData.uid);
+                });
+            }
+        }
     } else {
         console.error("User data not found in session storage. Please log in again.");
     }

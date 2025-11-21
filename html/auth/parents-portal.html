@@ -12,6 +12,7 @@
  <link rel="stylesheet" href="../../css/portals/parents-portal/parents-portal.css">
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+ <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-storage-compat.js"></script>
 </head>
 <body>
   <header class="fixed top-0 left-0 w-full bg-indigo-700 text-white shadow-xl z-20">
@@ -46,7 +47,7 @@
    <h2 class="sidebar-title">Parent Menu</h2>
    <ul>
     <li><a href="#dashboard" class="active"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
-    <li><a href="#profile"><i class="fas fa-user-circle"></i> Your Profile</a></li>
+    <li><a href="#profile"><i class="fas fa-user-circle"></i> My Profile</a></li>
     <li><a href="#learner-section"><i class="fas fa-child"></i> Learner Section</a></li>
     <li><a href="#communication"><i class="fas fa-comments"></i> Communication</a></li>
     <li><a href="#resources"><i class="fas fa-book-open"></i> Useful Resources</a></li>
@@ -81,39 +82,35 @@
         </div>
       </section>
     <section id="profile" class="portal-section hidden-section">
-    <h2>Your Profile</h2>
+    <h2>My Profile</h2>
     <div class="profile-card">
-     <img src="../../images/placeholder-profile.png" alt="Parent Profile Picture" class="profile-pic">
-     <div class="profile-details">
-      <p class="profile-name"><strong>Name:</strong> Loading...</p>
-      <p class="profile-email"><strong>Email:</strong> Loading...</p>
-      <p class="profile-contact"><strong>Contact:</strong> Loading...</p>
-      <p class="profile-relationship"><strong>Relationship:</strong> Loading...</p>
-      <p class="note-blue"><strong>Please fill out the form below for contact purposes:</strong></p>
-      <form id="parent-profile-form" action="https://script.google.com/macros/s/AKfycbwknJUMHtoGLVTXzb_mB_qL4-0ik6tkKfnKdAkkOfxr2AtrwYp_mHdItGWHWjd__OkB5g/exec" method="post">
-       
-       <label for="parent-name">Your Full Name:</label>
-       <input type="text" id="parent-name" name="parentName" required>
-
-       <label for="parent-email">Email Address:</label>
-       <input type="email" id="parent-email" name="parentEmail" required>
-       
-       <label for="contact">Contact Number:</label>
-       <input type="tel" id="contact" name="contact">
-       
-       <label for="relationship">Relationship to Learner:</label>
-       <input type="text" id="relationship" name="relationship" placeholder="e.g., Mother, Father" required>
-
-       <label for="learner-name">Learner's Full Name:</label>
-       <input type="text" id="learner-name" name="learnerName" required>
-
-       <!-- **NEW**: Hidden field to carry the parent's Firebase UID -->
-       <input type="hidden" id="parent-uid" name="parentUid">
-
-       <button type="submit" class="cta-button">Save Profile Details</button>
-
-       </form>
-     </div>
+        <div class="profile-pic-container">
+            <img src="../../images/placeholder-profile.png" alt="Parent Profile Picture" class="profile-pic" id="parent-profile-pic">
+            <label for="parent-profile-pic-upload" class="profile-pic-upload-label" title="Upload new profile picture">
+                <i class="fas fa-camera"></i>
+            </label>
+            <input type="file" id="parent-profile-pic-upload" accept="image/jpeg, image/png" style="display: none;">
+            <div id="parent-profile-pic-upload-status" class="upload-status-indicator" style="display: none;"></div>
+        </div>
+        <div class="profile-details">
+            <p class="profile-name"><strong>Name:</strong> Loading...</p>
+            <p class="profile-email"><strong>Email:</strong> Loading...</p>
+            <p class="profile-contact"><strong>Contact:</strong> Loading...</p>
+        </div>
+        <a href="#" id="edit-parent-profile-btn" class="cta-button-edit">Edit Profile</a>
+    </div>
+    <!-- Edit Profile Form (hidden by default) -->
+    <div id="edit-parent-profile-form-container" class="tool-card" style="display: none; margin-top: 20px;">
+        <h3>Edit My Profile</h3>
+        <form id="edit-parent-profile-form">
+            <div class="form-group">
+                <label for="edit-parent-contact">Contact Number</label>
+                <input type="tel" id="edit-parent-contact" placeholder="e.g., 0812345678">
+            </div>
+            <p id="edit-parent-profile-status" class="status-message-box" style="display: none;"></p>
+            <button type="submit" class="cta-button"><i class="fas fa-save"></i> Save Changes</button>
+            <button type="button" id="cancel-edit-parent-profile-btn" class="cta-button-secondary" style="margin-left: 10px;">Cancel</button>
+        </form>
     </div>
     </section>   
    <section id="learner-section" class="portal-section hidden-section">
@@ -214,6 +211,7 @@
   <a href="#"><i class="fa-brands fa-linkedin-in"></i></a>
   <a href="#"><i class="fa-brands fa-square-youtube"></i></a>
  </footer>
+  <script src="../../js/portals/parents-portal/parent-profile.js"></script>
   <script type="module" src="../../js/auth/auth.js"></script>
   <script src="../../js/portals/parents-portal/parents-portal.js"></script>
   <script type="module" src="../../js/announcements/announcements.js"></script>

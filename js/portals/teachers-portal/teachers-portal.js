@@ -284,6 +284,11 @@ document.addEventListener('DOMContentLoaded', () => {
         loadTeacherProfile(userData);
         // **NEW**: Load dynamic dashboard data
         loadTeacherDashboard(db, userData);
+        // **NEW**: Set up the profile editing functionality
+        setupProfileEditing(db, userData);
+        // **NEW**: Set up profile picture upload functionality
+        setupProfilePictureUpload(db, userData);
+        loadTeacherDashboard(db, userData);
         // **NEW**: Initialize material management features
         setupMaterialUpload(db, userData);
         loadCourseMaterials(db);
@@ -404,6 +409,11 @@ document.addEventListener('DOMContentLoaded', () => {
         showPortfolioListView();
       }
 
+      // **NEW**: Load class filter for learner profiles when the section is viewed
+      if (targetId === 'learner-profiles') {
+        setupLearnerProfileSection(db, userData);
+      }
+
       // Update URL hash
       // history.pushState(null, null, `#${targetId}`);
       history.pushState(null, null, `#${targetId}`);
@@ -430,7 +440,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Handle page load based on URL hash (default to dashboard)
   const initialHash = window.location.hash.substring(1) || 'dashboard';
-  showSection(initialHash);
+  showSection(initialHash); // This will now handle the new section
   // Activate the correct sidebar link on page load
   const learnerMgmtSectionsOnLoad = ['students', 'attendance-form', 'class-setup', 'grades-form'];
   let initialSidebarTarget = learnerMgmtSectionsOnLoad.includes(initialHash) ? 'students' : initialHash;
@@ -457,6 +467,10 @@ async function loadTeacherProfile(userData) {
         const teacherName = teacherData.preferredName || 'Teacher';
 
         if (teacherNameDisplay) teacherNameDisplay.textContent = teacherName;
+        // **NEW**: Update profile picture
+        const profilePic = document.getElementById('teacher-profile-pic');
+        if (profilePic) profilePic.src = teacherData.photoUrl || '../../images/placeholder-profile.png';
+
         if (profileSurname) profileSurname.innerHTML = `<strong>Surname:</strong> ${teacherData.surname || 'N/A'}`;
         if (profilePreferredName) profilePreferredName.innerHTML = `<strong>Preferred Name:</strong> ${teacherData.preferredName || 'N/A'}`;
         if (profileEmail) profileEmail.innerHTML = `<strong>Email:</strong> ${teacherData.email || 'N/A'}`;
@@ -482,18 +496,255 @@ async function loadTeacherProfile(userData) {
             rosterSetupClassSelect.add(new Option(teacherData.responsibleClass, teacherData.responsibleClass));
         }
 
-        // **NEW**: Conditionally show attendance features only for class teachers
-        if (teacherData.isClassTeacher) {
-            document.querySelectorAll('.class-teacher-only').forEach(el => {
-                // Use 'block' or 'flex' based on the element's intended display style
-                const displayStyle = el.classList.contains('tool-card') ? 'flex' : 'block';
-                el.style.display = displayStyle;
+        // **NEW**: Populate the learner profile class filter
+        const profileClassFilter = document.getElementById('profile-class-filter');
+        if (profileClassFilter && teacherData.teachingAssignments && teacherData.teachingAssignments.length > 0) {
+            profileClassFilter.innerHTML = '<option value="">-- Select a Class --</option>';
+            const assignedClasses = [...new Set(teacherData.teachingAssignments.map(a => a.fullClass))].sort();
+            assignedClasses.forEach(className => {
+                profileClassFilter.add(new Option(className, className));
             });
+        } else {
+            // **FIX**: Handle case where teacher has no assignments for this dropdown
+            if (profileClassFilter) profileClassFilter.innerHTML = '<option value="">No classes assigned</option>';
         }
       }
   } else {
     console.error("User data not found in session storage. Please log in again.");
   }
+}
+
+/**
+ * **NEW**: Sets up the event listeners and logic for editing the teacher's profile.
+ * @param {firebase.firestore.Firestore} db - The Firestore database instance.
+ * @param {object} teacherAuthData - The authenticated teacher's data from session storage.
+ */
+function setupProfileEditing(db, teacherAuthData) {
+    const editBtn = document.getElementById('edit-profile-btn');
+    const cancelBtn = document.getElementById('cancel-edit-profile-btn');
+    const profileCard = document.querySelector('#profile .profile-card');
+    const editFormContainer = document.getElementById('edit-profile-form-container');
+    const editForm = document.getElementById('edit-profile-form');
+
+    if (!editBtn || !cancelBtn || !profileCard || !editFormContainer || !editForm) return;
+
+    // Show the edit form
+    editBtn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        
+        // Fetch the latest data to populate the form
+        const userDoc = await db.collection('users').doc(teacherAuthData.uid).get();
+        if (userDoc.exists) {
+            const data = userDoc.data();
+            document.getElementById('edit-profile-preferred-name').value = data.preferredName || '';
+            document.getElementById('edit-profile-surname').value = data.surname || '';
+            document.getElementById('edit-profile-contact').value = data.contactNumber || '';
+
+            profileCard.style.display = 'none';
+            editFormContainer.style.display = 'block';
+        } else {
+            alert('Could not load your profile data to edit.');
+        }
+    });
+
+    // Hide the edit form
+    cancelBtn.addEventListener('click', () => {
+        profileCard.style.display = 'flex';
+        editFormContainer.style.display = 'none';
+    });
+
+    // Handle form submission
+    editForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const statusMessage = document.getElementById('edit-profile-status');
+        const submitButton = editForm.querySelector('button[type="submit"]');
+
+        const updatedData = {
+            preferredName: document.getElementById('edit-profile-preferred-name').value.trim(),
+            surname: document.getElementById('edit-profile-surname').value.trim(),
+            contactNumber: document.getElementById('edit-profile-contact').value.trim(),
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+
+        submitButton.disabled = true;
+        submitButton.innerHTML = '<i class="fas fa-sync fa-spin"></i> Saving...';
+        statusMessage.style.display = 'none';
+
+        try {
+            await db.collection('users').doc(teacherAuthData.uid).update(updatedData);
+            statusMessage.textContent = 'Profile updated successfully!';
+            statusMessage.className = 'status-message-box success';
+            statusMessage.style.display = 'block';
+
+            // Refresh the profile display and hide the form
+            loadTeacherProfile(teacherAuthData);
+            setTimeout(() => {
+                profileCard.style.display = 'flex';
+                editFormContainer.style.display = 'none';
+                statusMessage.style.display = 'none';
+            }, 2000);
+
+        } catch (error) {
+            console.error("Error updating profile:", error);
+            statusMessage.textContent = 'Failed to update profile. Please try again.';
+            statusMessage.className = 'status-message-box error';
+            statusMessage.style.display = 'block';
+        } finally {
+            submitButton.disabled = false;
+            submitButton.innerHTML = '<i class="fas fa-save"></i> Save Changes';
+        }
+    });
+}
+
+/**
+ * **NEW**: Sets up the event listeners and logic for editing the teacher's profile.
+ * @param {firebase.firestore.Firestore} db - The Firestore database instance.
+ * @param {object} teacherAuthData - The authenticated teacher's data from session storage.
+ */
+function setupProfileEditing(db, teacherAuthData) {
+    const editBtn = document.getElementById('edit-profile-btn');
+    const cancelBtn = document.getElementById('cancel-edit-profile-btn');
+    const profileCard = document.querySelector('#profile .profile-card');
+    const editFormContainer = document.getElementById('edit-profile-form-container');
+    const editForm = document.getElementById('edit-profile-form');
+
+    if (!editBtn || !cancelBtn || !profileCard || !editFormContainer || !editForm) return;
+
+    // Show the edit form
+    editBtn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        
+        // Fetch the latest data to populate the form
+        const userDoc = await db.collection('users').doc(teacherAuthData.uid).get();
+        if (userDoc.exists) {
+            const data = userDoc.data();
+            document.getElementById('edit-profile-preferred-name').value = data.preferredName || '';
+            document.getElementById('edit-profile-surname').value = data.surname || '';
+            document.getElementById('edit-profile-contact').value = data.contactNumber || '';
+
+            profileCard.style.display = 'none';
+            editFormContainer.style.display = 'block';
+        } else {
+            alert('Could not load your profile data to edit.');
+        }
+    });
+
+    // Hide the edit form
+    cancelBtn.addEventListener('click', () => {
+        profileCard.style.display = 'flex';
+        editFormContainer.style.display = 'none';
+    });
+
+    // Handle form submission
+    editForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const statusMessage = document.getElementById('edit-profile-status');
+        const submitButton = editForm.querySelector('button[type="submit"]');
+
+        const updatedData = {
+            preferredName: document.getElementById('edit-profile-preferred-name').value.trim(),
+            surname: document.getElementById('edit-profile-surname').value.trim(),
+            contactNumber: document.getElementById('edit-profile-contact').value.trim(),
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+
+        submitButton.disabled = true;
+        submitButton.innerHTML = '<i class="fas fa-sync fa-spin"></i> Saving...';
+        statusMessage.style.display = 'none';
+
+        try {
+            await db.collection('users').doc(teacherAuthData.uid).update(updatedData);
+
+            statusMessage.textContent = 'Profile updated successfully!';
+            statusMessage.className = 'status-message-box success';
+            statusMessage.style.display = 'block';
+
+            // Refresh the profile display and hide the form
+            loadTeacherProfile(teacherAuthData);
+            setTimeout(() => {
+                profileCard.style.display = 'flex';
+                editFormContainer.style.display = 'none';
+                statusMessage.style.display = 'none';
+            }, 2000);
+
+        } catch (error) {
+            console.error("Error updating profile:", error);
+            statusMessage.textContent = 'Failed to update profile. Please try again.';
+            statusMessage.className = 'status-message-box error';
+            statusMessage.style.display = 'block';
+        } finally {
+            submitButton.disabled = false;
+            submitButton.innerHTML = '<i class="fas fa-save"></i> Save Changes';
+        }
+    });
+}
+
+/**
+ * **NEW**: Sets up the event listener for profile picture uploads.
+ * @param {firebase.firestore.Firestore} db - The Firestore database instance.
+ * @param {object} teacherAuthData - The authenticated teacher's data from session storage.
+ */
+function setupProfilePictureUpload(db, teacherAuthData) {
+    const fileInput = document.getElementById('profile-pic-upload');
+    const statusIndicator = document.getElementById('profile-pic-upload-status');
+    const profilePic = document.getElementById('teacher-profile-pic');
+
+    if (!fileInput || !statusIndicator || !profilePic) return;
+
+    fileInput.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        // Validate file type and size
+        if (!file.type.startsWith('image/')) {
+            alert('Please select an image file (e.g., JPG, PNG).');
+            return;
+        }
+        if (file.size > 2 * 1024 * 1024) { // 2MB limit
+            alert('File is too large. Please select an image smaller than 2MB.');
+            return;
+        }
+
+        statusIndicator.style.display = 'flex';
+        statusIndicator.innerHTML = '<i class="fas fa-sync fa-spin"></i>';
+
+        try {
+            const storageRef = firebase.storage().ref();
+            // Use a consistent file path to overwrite the old picture
+            const filePath = `profile_pictures/${teacherAuthData.uid}/profile.jpg`;
+            const fileRef = storageRef.child(filePath);
+
+            // Upload the file
+            const snapshot = await fileRef.put(file);
+            const downloadURL = await snapshot.ref.getDownloadURL();
+
+            // Update the user's document in Firestore
+            await db.collection('users').doc(teacherAuthData.uid).update({
+                photoUrl: downloadURL
+            });
+
+            // Update the UI immediately
+            profilePic.src = downloadURL;
+
+            // Update session storage so other parts of the app see the new picture
+            const currentUser = JSON.parse(sessionStorage.getItem('currentUser'));
+            currentUser.photoUrl = downloadURL;
+            sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
+
+            statusIndicator.innerHTML = '<i class="fas fa-check"></i>';
+            setTimeout(() => {
+                statusIndicator.style.display = 'none';
+            }, 2000);
+
+        } catch (error) {
+            console.error("Error uploading profile picture:", error);
+            statusIndicator.innerHTML = '<i class="fas fa-times"></i>';
+            alert('Failed to upload profile picture. Please try again.');
+            setTimeout(() => {
+                statusIndicator.style.display = 'none';
+            }, 3000);
+        }
+    });
 }
 
 /**
@@ -998,7 +1249,11 @@ async function loadGradebook(db, fullClass, subject) {
             tableHTML += `<tr><td>${learner.learnerName} ${learner.learnerSurname}</td>`;
             assignments.forEach(assignment => {
                 const grade = gradesMap.get(`${learner.id}-${assignment.id}`) || '';
-                tableHTML += `<td><input type="number" class="grade-input" value="${grade}" data-learner-id="${learner.id}" data-assignment-id="${assignment.id}" max="${assignment.totalMarks}" placeholder="--"></td>`;
+                // **FIX**: Added unique id and name attributes to the grade input for accessibility and autofill.
+                const inputId = `grade-input-${learner.id}-${assignment.id}`;
+                tableHTML += `<td>
+                                <input type="number" class="grade-input" id="${inputId}" name="${inputId}" value="${grade}" data-learner-id="${learner.id}" data-assignment-id="${assignment.id}" max="${assignment.totalMarks}" placeholder="--">
+                              </td>`;
             });
             tableHTML += '</tr>';
         });
@@ -2517,6 +2772,262 @@ function goBackToChatList() {
     document.removeEventListener('click', globalChatMenuClickListener);
     document.querySelectorAll('#chat-parent-list li').forEach(li => li.classList.remove('active'));
 }
+
+
+// =========================================================
+// === NEW LEARNER PROFILE SECTION ===
+// =========================================================
+
+/**
+ * Sets up the initial state and event listeners for the Learner Profiles section.
+ * @param {firebase.firestore.Firestore} db - The Firestore database instance.
+ * @param {object} teacherData - The authenticated teacher's data.
+ */
+function setupLearnerProfileSection(db, teacherData) {
+    const classFilter = document.getElementById('profile-class-filter');
+    const backButton = document.getElementById('back-to-learner-profile-list');
+
+    // Show the list view by default
+    document.getElementById('learner-profile-list-view').style.display = 'block';
+    document.getElementById('learner-profile-detail-view').style.display = 'none';
+
+    classFilter.addEventListener('change', (e) => {
+        const selectedClass = e.target.value;
+        if (selectedClass) {
+            loadLearnersForProfileList(db, selectedClass);
+        } else {
+            document.getElementById('learner-profile-list-container').innerHTML = '';
+            document.getElementById('learner-profile-list-status').textContent = 'Please select a class to load learners.';
+        }
+    });
+
+    backButton.addEventListener('click', () => {
+        document.getElementById('learner-profile-list-view').style.display = 'block';
+        document.getElementById('learner-profile-detail-view').style.display = 'none';
+    });
+}
+
+/**
+ * Loads and displays a list of learners for the selected class.
+ * @param {firebase.firestore.Firestore} db - The Firestore database instance.
+ * @param {string} className - The class to load learners for.
+ */
+async function loadLearnersForProfileList(db, className) {
+    const container = document.getElementById('learner-profile-list-container');
+    const status = document.getElementById('learner-profile-list-status');
+    status.textContent = `Loading learners for class ${className}...`;
+    container.innerHTML = '';
+
+    try {
+        const snapshot = await db.collection('sams_registrations').where('fullGradeSection', '==', className).get();
+
+        if (snapshot.empty) {
+            status.textContent = `No learners found in class ${className}.`;
+            return;
+        }
+
+        const learners = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+            .sort((a, b) => {
+                const nameA = `${a.learnerSurname || ''} ${a.learnerName || ''}`.toUpperCase();
+                const nameB = `${b.learnerSurname || ''} ${b.learnerName || ''}`.toUpperCase();
+                return nameA.localeCompare(nameB);
+            });
+
+        let listHTML = '<ul class="resource-list">';
+        learners.forEach(learner => {
+            listHTML += `
+                <li>
+                    <i class="fas fa-user-graduate"></i>
+                    <div>
+                        <h3>${learner.learnerName} ${learner.learnerSurname}</h3>
+                        <p>Admission No: ${learner.admissionId}</p>
+                    </div>
+                    <button class="cta-button-small" onclick="showLearnerProfileDetail('${learner.id}')">View Profile</button>
+                </li>
+            `;
+        });
+        listHTML += '</ul>';
+        container.innerHTML = listHTML;
+        status.textContent = `Displaying ${learners.length} learner(s) for class ${className}.`;
+
+    } catch (error) {
+        console.error("Error loading learners for profile list:", error);
+        status.textContent = 'An error occurred while loading learners.';
+    }
+}
+
+/**
+ * Fetches and displays the detailed profile for a single learner.
+ * @param {string} learnerDocId - The Firestore document ID of the learner.
+ */
+async function showLearnerProfileDetail(learnerDocId) {
+    // Switch views
+    document.getElementById('learner-profile-list-view').style.display = 'none';
+    document.getElementById('learner-profile-detail-view').style.display = 'block';
+
+    const contentContainer = document.getElementById('learner-profile-content');
+    contentContainer.innerHTML = '<p class="data-status-message">Loading learner profile...</p>';
+
+    const db = firebase.firestore();
+    const teacherData = JSON.parse(sessionStorage.getItem('currentUser'));
+
+    try {
+        const learnerDoc = await db.collection('sams_registrations').doc(learnerDocId).get();
+        if (!learnerDoc.exists) {
+            throw new Error("Learner document not found.");
+        }
+        const learnerData = learnerDoc.data();
+
+        // Render the main profile content
+        const profileHTML = `
+            <div class="profile-header">
+                <img src="${learnerData.photoUrl || '../../images/placeholder-profile.png'}" alt="Learner Photo" class="profile-pic-large">
+                <div class="profile-header-info">
+                    <h2>${learnerData.learnerName} ${learnerData.learnerSurname}</h2>
+                    <p><strong>Admission No:</strong> ${learnerData.admissionId}</p>
+                    <p><strong>Class:</strong> ${learnerData.fullGradeSection}</p>
+                </div>
+            </div>
+            <div class="profile-details-grid">
+                <div><h4>Learner Details</h4>
+                    <p><strong>Date of Birth:</strong> ${learnerData.learnerDOB || 'N/A'}</p>
+                    <p><strong>Gender:</strong> ${learnerData.gender || 'N/A'}</p>
+                    <p><strong>Home Language:</strong> ${learnerData.homeLanguage || 'N/A'}</p>
+                </div>
+                <div><h4>Parent/Guardian 1</h4>
+                    <p><strong>Name:</strong> ${learnerData.parent1Name || 'N/A'}</p>
+                    <p><strong>Contact:</strong> ${learnerData.parent1Contact || 'N/A'}</p>
+                    <p><strong>Email:</strong> ${learnerData.parent1Email || 'N/A'}</p>
+                </div>
+                 <div><h4>Parent/Guardian 2</h4>
+                    <p><strong>Name:</strong> ${learnerData.parent2Name || 'N/A'}</p>
+                    <p><strong>Contact:</strong> ${learnerData.parent2Contact || 'N/A'}</p>
+                    <p><strong>Email:</strong> ${learnerData.parent2Email || 'N/A'}</p>
+                </div>
+            </div>
+        `;
+        contentContainer.innerHTML = profileHTML;
+
+        // Load and display behavioral comments
+        loadBehavioralComments(db, learnerDocId);
+
+        // Set up the comment submission form
+        const commentForm = document.getElementById('add-comment-form');
+        commentForm.onsubmit = (e) => {
+            e.preventDefault();
+            saveBehavioralComment(db, learnerDocId, teacherData);
+        };
+
+        // Display document links
+        displayLearnerDocuments(learnerData);
+
+    } catch (error) {
+        console.error("Error showing learner profile detail:", error);
+        contentContainer.innerHTML = '<p class="data-status-message error">Could not load learner profile.</p>';
+    }
+}
+
+/**
+ * Loads and displays the history of behavioral comments for a learner.
+ * @param {firebase.firestore.Firestore} db - The Firestore database instance.
+ * @param {string} learnerDocId - The Firestore document ID of the learner.
+ */
+async function loadBehavioralComments(db, learnerDocId) {
+    const container = document.getElementById('learner-comments-history');
+    container.innerHTML = '<p class="data-status-message">Loading comments...</p>';
+
+    const commentsRef = db.collection('sams_registrations').doc(learnerDocId).collection('behavioral_comments').orderBy('timestamp', 'desc');
+    commentsRef.onSnapshot(snapshot => {
+        if (snapshot.empty) {
+            container.innerHTML = '<p class="info-message">No behavioral comments have been recorded for this learner.</p>';
+            return;
+        }
+        let commentsHTML = '';
+        snapshot.forEach(doc => {
+            const comment = doc.data();
+            const date = comment.timestamp.toDate().toLocaleString();
+            commentsHTML += `
+                <div class="comment-item">
+                    <p class="comment-text">${comment.commentText}</p>
+                    <p class="comment-meta">By ${comment.teacherName} on ${date}</p>
+                </div>
+            `;
+        });
+        container.innerHTML = commentsHTML;
+    }, error => {
+        console.error("Error loading comments:", error);
+        container.innerHTML = '<p class="data-status-message error">Could not load comments.</p>';
+    });
+}
+
+/**
+ * Saves a new behavioral comment to Firestore.
+ * @param {firebase.firestore.Firestore} db - The Firestore database instance.
+ * @param {string} learnerDocId - The Firestore document ID of the learner.
+ * @param {object} teacherData - The authenticated teacher's data.
+ */
+async function saveBehavioralComment(db, learnerDocId, teacherData) {
+    const commentInput = document.getElementById('new-comment-text');
+    const statusMessage = document.getElementById('comment-status-message');
+    const commentText = commentInput.value.trim();
+
+    if (!commentText) {
+        alert('Please enter a comment.');
+        return;
+    }
+
+    try {
+        await db.collection('sams_registrations').doc(learnerDocId).collection('behavioral_comments').add({
+            commentText: commentText,
+            teacherId: teacherData.uid,
+            teacherName: `${teacherData.preferredName} ${teacherData.surname}`,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        commentInput.value = ''; // Clear the textarea
+        statusMessage.textContent = 'Comment saved successfully.';
+        statusMessage.className = 'status-message-box success';
+        statusMessage.style.display = 'block';
+        setTimeout(() => statusMessage.style.display = 'none', 3000);
+    } catch (error) {
+        console.error("Error saving comment:", error);
+        statusMessage.textContent = 'Failed to save comment.';
+        statusMessage.className = 'status-message-box error';
+        statusMessage.style.display = 'block';
+    }
+}
+
+/**
+ * Displays links to the learner's uploaded documents.
+ * @param {object} learnerData - The learner's data object from Firestore.
+ */
+function displayLearnerDocuments(learnerData) {
+    const container = document.getElementById('learner-document-links');
+    const docLinks = [
+        { key: 'birthCertificateUrl', label: "Birth Certificate" },
+        { key: 'parentIDUrl', label: 'Parent ID' },
+        { key: 'proofOfResidenceUrl', label: 'Proof of Residence' },
+        { key: 'reportCardUrl', label: 'Previous Report Card' }
+    ];
+
+    let linksHTML = '';
+    let hasDocs = false;
+    docLinks.forEach(doc => {
+        if (learnerData[doc.key]) {
+            hasDocs = true;
+            linksHTML += `<li><a href="${learnerData[doc.key]}" target="_blank" rel="noopener noreferrer"><i class="far fa-file-pdf"></i> ${doc.label}</a></li>`;
+        }
+    });
+
+    if (hasDocs) {
+        container.innerHTML = linksHTML;
+    } else {
+        container.innerHTML = '<p class="info-message">No documents were found for this learner.</p>';
+    }
+}
+
+// Make the profile detail function globally accessible for the onclick handler
+window.showLearnerProfileDetail = showLearnerProfileDetail;
+
 
 // =========================================================
 // === NEW QUIZ LINK GENERATOR ===

@@ -32,7 +32,11 @@ function initializeParentPortal() {
     const db = firebase.firestore();
 
     // Load dynamic data into the portal
+    // **MODIFIED**: Call the profile setup functions
     loadParentProfile(db, userData);
+    setupParentProfileEditing(db, userData);
+    setupParentProfilePictureUpload(db, userData);
+
     loadParentDashboard(db, userData);
     setupParentChatEngine(db, userData);
 
