@@ -46,7 +46,7 @@ async function loadSamsRegistrations() {
             }
 
             row.insertCell().textContent = admissionId;
-            row.insertCell().textContent = `${data.learnerName} ${data.learnerSurname}`;
+            row.insertCell().textContent = formatLearnerName(data);
             row.insertCell().textContent = data.fullGradeSection || data.grade; 
             row.insertCell().textContent = data.parent1Email;
             row.insertCell().textContent = importedDate;

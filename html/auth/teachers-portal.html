@@ -13,6 +13,8 @@
  <link rel="stylesheet" href="../../css/portals/teachers-portal/teachers-portal.css">
  <link rel="stylesheet" href="../../css/portals/teachers-portal/print-teacher-portfolio.css">
  <link rel="shortcut icon" href="../../images/44.png" type="image/x-icon">
+ <!-- **NEW**: Add styles for the AI Content Generator -->
+ <link rel="stylesheet" href="../../css/portals/teachers-portal/ai-generator.css">
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-storage-compat.js"></script>
@@ -495,49 +497,99 @@
    </div>
 
    <div id="quiz-generator" class="portal-section hidden-section">
-    <h2><i class="fas fa-puzzle-piece"></i> School Quiz Link Generator</h2>
-    <p>Configure a quiz and generate a unique link to share with your learners. They can take the quiz in their own portal.</p>
-    <div class="tool-card accent-4">
-        <h3>Quiz Settings</h3>
-        <div class="settings grid-container" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
-            <div class="form-group">
-                <label for="quiz-category">Select Subject:</label>
-                <select id="quiz-category">
-                    <option value="">All Subjects</option>
-                    <option value="17">Science & Nature</option>
-                    <option value="19">Mathematics</option>
-                    <option value="22">Geography</option>
-                    <option value="23">History</option>
-                    <option value="10">Literature (Books)</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="quiz-difficulty">Select Difficulty:</label>
-                <select id="quiz-difficulty">
-                    <option value="">Any</option>
-                    <option value="easy">Easy</option>
-                    <option value="medium">Medium</option>
-                    <option value="hard">Hard</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="quiz-amount">Number of Questions:</label>
-                <select id="quiz-amount">
-                    <option value="5">5</option>
-                    <option value="10" selected>10</option>
-                    <option value="15">15</option>
-                </select>
-            </div>
+    <h2><i class="fas fa-robot"></i> Educational Content Generator</h2>
+    <p>Powered by Gemini AI. Create quizzes, assessments, and lesson plans in seconds.</p>
+
+    <!-- Tabs -->
+    <div class="ai-gen-tabs">
+        <button id="ai-tab-quiz" class="ai-gen-tab-btn active"><i class="fas fa-clipboard-list"></i> Quiz Generator</button>
+        <button id="ai-tab-assessment" class="ai-gen-tab-btn"><i class="fas fa-file-alt"></i> Assessment Creator</button>
+        <button id="ai-tab-lesson" class="ai-gen-tab-btn"><i class="fas fa-book-open"></i> Lesson Plan</button>
+    </div>
+
+    <div class="ai-gen-grid">
+        <!-- Input Form -->
+        <div class="tool-card">
+            <h3 id="ai-gen-form-title" class="ai-gen-form-title">Quiz Settings</h3>
+
+            <!-- Quiz Form -->
+            <form id="ai-form-quiz" class="ai-gen-form active">
+                <div class="form-group"><label for="quiz-topic">Topic *</label><input type="text" id="quiz-topic" placeholder="e.g., Photosynthesis, World War II" required></div>
+                <div class="form-group"><label for="quiz-num-questions">Number of Questions</label><input type="number" id="quiz-num-questions" min="5" max="50" value="10"></div>
+                <div class="form-group"><label for="quiz-difficulty">Difficulty Level</label><select id="quiz-difficulty"><option value="easy">Easy</option><option value="medium" selected>Medium</option><option value="hard">Hard</option></select></div>
+                <div class="form-group"><label for="quiz-question-type">Question Type</label><select id="quiz-question-type"><option value="multiple-choice">Multiple Choice</option><option value="true-false">True/False</option><option value="mixed">Mixed</option></select></div>
+                <button type="submit" class="cta-button"><i class="fas fa-cogs"></i> Generate Quiz</button>
+            </form>
+
+            <!-- Assessment Form -->
+            <form id="ai-form-assessment" class="ai-gen-form">
+                <div class="form-group"><label for="assessment-topic">Topic *</label><input type="text" id="assessment-topic" placeholder="e.g., Cell Biology, American History" required></div>
+                <div class="form-group"><label for="assessment-grade-level">Grade Level</label><select id="assessment-grade-level"><option value="elementary">Elementary (K-5)</option><option value="middle-school">Middle School (6-8)</option><option value="high-school" selected>High School (9-12)</option><option value="college">College</option></select></div>
+                <div class="form-group"><label for="assessment-type">Assessment Type</label><select id="assessment-type"><option value="comprehensive">Comprehensive Exam</option><option value="unit-test">Unit Test</option><option value="formative">Formative Assessment</option><option value="project">Project-Based</option></select></div>
+                <div class="form-group"><label for="assessment-duration">Duration (minutes)</label><input type="number" id="assessment-duration" min="15" max="180" value="60"></div>
+                <button type="submit" class="cta-button"><i class="fas fa-cogs"></i> Generate Assessment</button>
+            </form>
+
+            <!-- Lesson Plan Form -->
+            <form id="ai-form-lesson" class="ai-gen-form">
+                <div class="form-group"><label for="lesson-topic">Topic *</label><input type="text" id="lesson-topic" placeholder="e.g., Introduction to Fractions" required></div>
+                <div class="form-group"><label for="lesson-grade-level">Grade Level</label><select id="lesson-grade-level"><option value="elementary">Elementary (K-5)</option><option value="middle-school">Middle School (6-8)</option><option value="high-school" selected>High School (9-12)</option><option value="college">College</option></select></div>
+                <div class="form-group"><label for="lesson-duration">Duration (minutes)</label><input type="number" id="lesson-duration" min="30" max="120" value="45"></div>
+                <div class="form-group"><label for="lesson-objectives">Learning Objectives (optional)</label><textarea id="lesson-objectives" rows="3" placeholder="e.g., Students will be able to identify and compare fractions"></textarea></div>
+                <div class="form-group"><label for="lesson-standards">Standards (optional)</label><input type="text" id="lesson-standards" placeholder="e.g., CCSS.MATH.CONTENT.3.NF.A.1"></div>
+                <button type="submit" class="cta-button"><i class="fas fa-cogs"></i> Generate Lesson Plan</button>
+            </form>
         </div>
-        <button id="generate-quiz-link-btn" class="cta-button primary-blue" style="margin-top: 20px;"><i class="fas fa-link"></i> Generate Quiz Link</button>
-        
-        <div id="quiz-link-output-area" style="display: none; margin-top: 20px;">
-            <h4>Generated Link:</h4>
-            <p>Share this link with your learners.</p>
-            <input type="text" id="generated-quiz-link" readonly style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; background: #f9f9f9; margin-top: 5px;">
-            <button id="copy-quiz-link-btn" class="cta-button-small" style="margin-top: 10px;"><i class="fas fa-copy"></i> Copy Link</button>
+
+        <!-- Output Area -->
+        <div class="tool-card">
+            <div class="ai-gen-output-header">
+                <h3>Generated Content</h3>
+                <div class="ai-gen-actions" style="display: none;">
+                    <button id="ai-gen-pdf-btn" class="cta-button-small primary-red"><i class="fas fa-file-pdf"></i> Save as PDF</button>
+                    <button id="ai-gen-download-btn" class="cta-button-small"><i class="fas fa-file-alt"></i> Download .txt</button>
+                </div>
+            </div>
+
+            <div id="ai-gen-output-container">
+                <div id="ai-gen-placeholder" class="ai-gen-message">
+                    <i class="fas fa-magic"></i>
+                    <p>Your generated content will appear here</p>
+                </div>
+                <div id="ai-gen-loading" class="ai-gen-message" style="display: none;">
+                    <i class="fas fa-sync fa-spin"></i>
+                    <p>Generating your content...</p>
+                </div>
+                <div id="ai-gen-error" class="ai-gen-message error" style="display: none;">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <p id="ai-gen-error-text"></p>
+                </div>
+                <!-- The main result text area -->
+                <div id="ai-gen-result" class="ai-gen-result-text scroll-container"></div>
+
+                <!-- **NEW**: Hidden container for professional PDF printing -->
+                <div id="ai-gen-printable-content" style="display: none;">
+                    <img src="../../images/Logo.png" alt="School Logo" style="width: 100px; margin-bottom: 20px;">
+                    <h2 id="printable-title" style="font-size: 1.5em; margin-bottom: 20px;"></h2>
+                </div>
+            </div>
         </div>
     </div>
+
+    <!-- **NEW**: Generation History Section -->
+    <div class="tool-card" style="margin-top: 20px;">
+        <h3><i class="fas fa-history"></i> Generation History</h3>
+        <p>Your 10 most recently generated items. Click an item to view its content.</p>
+        <ul id="ai-gen-history-list" class="resource-list" style="margin-top: 15px;">
+            <p class="info-message">No history found. Generate some content to see it here!</p>
+        </ul>
+        <!-- **NEW**: Add a confirmation modal for deletion -->
+        <div id="ai-history-delete-confirm-modal" class="modal">
+            <div class="modal-content" style="max-width: 400px; text-align: center;">
+            </div>
+        </div>
+    </div>
+
    </div>
 
    <div id="portfolio" class="portal-section hidden-section">
@@ -722,7 +774,19 @@
     <a href="#"><i class="fa-brands fa-linkedin-in"></i></a>
     <a href="#"><i class="fa-brands fa-square-youtube"></i></a>
   </footer>
-
+  <script src="../../js/portals/teachers-portal/sorting-utils.js"></script>
+  <!-- Refactored Teacher Portal Scripts -->
+ <script src="../../js/portals/teachers-portal/profile.js"></script>
+ <script src="../../js/portals/teachers-portal/dashboard.js"></script>
+ <script src="../../js/portals/teachers-portal/classes.js"></script>
+ <script src="../../js/portals/teachers-portal/attendance.js"></script>
+ <script src="../../js/portals/teachers-portal/roster-management.js"></script>
+ <script src="../../js/portals/teachers-portal/grading.js"></script>
+ <script src="../../js/portals/teachers-portal/materials.js"></script>
+ <script src="../../js/portals/teachers-portal/portfolio.js"></script>
+ <script src="../../js/portals/teachers-portal/learner-profiles.js"></script>
+ <script src="../../js/portals/teachers-portal/communication.js"></script>
+ <script src="../../js/portals/teachers-portal/ai-generator.js"></script>
  <script src="../../js/portals/teachers-portal/teachers-portal.js"></script>
   <script type="module" src="../../js/auth/auth.js"></script>
   <script type="module" src="../../js/announcements/announcements.js"></script>
