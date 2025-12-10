@@ -9,6 +9,7 @@
 
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
   <link rel="stylesheet" href="../../css/portals/admins-portal/admins-portal.css">
+  <link rel="stylesheet" href="../../css/portals/admins-portal/school-calendar.css">
   <!-- **NEW**: Add SheetJS library for reading/writing Excel files -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
@@ -17,9 +18,11 @@
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
 
     <script src="../../js/portals/admins-portal/firebase-config.js"></script>
+    <script src="../../js/portals/admins-portal/report-card-generator.js"></script>
     <script src="../../js/portals/admins-portal/sorting-utils.js"></script> 	
     <script src="../../js/portals/admins-portal/data-functions.js"></script>
     <script src="../../js/portals/admins-portal/data-export-functions.js"></script>
+    <script src="../../js/portals/admins-portal/calendar-manager.js"></script>
     <script src="../../js/portals/admins-portal/ui-handlers.js"></script> 	
     <script src="../../js/portals/admins-portal/sams-data-loaders.js"></script> 	
     <script src="../../js/portals/admins-portal/lms-manager.js"></script> 	
@@ -100,6 +103,7 @@
             <li><a href="#grade-assignment"><i class="fas fa-pencil-alt"></i> Class Assignment</a></li>
             <li><a href="#grade-sections"><i class="fas fa-layer-group"></i> Grade Sections</a></li>
             <li><a href="#mark-sheets"><i class="fas fa-award"></i> Mark Sheets</a></li>
+            <li><a href="#report-cards"><i class="fas fa-file-invoice"></i> Report Cards</a></li>
             <li><a href="#sams-educators"><i class="fas fa-chalkboard-teacher"></i> Educator Management</a></li>
             <li><a href="#sams-parents"><i class="fas fa-users"></i> Parent Data</a></li>
           </ul>
@@ -590,6 +594,40 @@
           <div id="marksheet-modal-content" class="modal-content printable-area"></div>
       </div>
 
+      <section id="report-cards" class="portal-section">
+        <h2>Report Card Generation</h2>
+        <div class="tool-card">
+            <h3>Generate Learner Report Card</h3>
+            <p>Select a class, learner, and term to generate a report card. The generated report will be saved and made available to the learner and their parents.</p>
+            
+            <div class="filters-container" style="display: flex; gap: 20px; margin-bottom: 20px; flex-wrap: wrap; align-items: flex-end;">
+                <div class="form-group" style="flex: 1; min-width: 200px;">
+                    <label for="report-card-class-filter">1. Select Class</label>
+                    <select id="report-card-class-filter"><option value="">-- Select a Class --</option></select>
+                </div>
+                <div class="form-group" style="flex: 1; min-width: 200px;">
+                    <label for="report-card-learner-filter">2. Select Learner</label>
+                    <select id="report-card-learner-filter" disabled><option value="">-- Select Class First --</option></select>
+                </div>
+                <div class="form-group" style="flex: 1; min-width: 150px;">
+                    <label for="report-card-term-filter">3. Select Term</label>
+                    <select id="report-card-term-filter">
+                        <option value="1">Term 1</option>
+                        <option value="2">Term 2</option>
+                        <option value="3">Term 3</option>
+                        <option value="4">Term 4</option>
+                    </select>
+                </div>
+                 <div class="form-group" style="flex: 1; min-width: 150px;">
+                    <label for="report-card-year-filter">4. Select Year</label>
+                    <input type="number" id="report-card-year-filter" value="2024" min="2020">
+                </div>
+                <button id="generate-report-card-btn" class="cta-button primary-blue"><i class="fas fa-cogs"></i> Generate</button>
+            </div>
+            <div id="report-card-preview-container" class="printable-area"></div>
+        </div>
+      </section>
+
       <section id="sams-parents" class="portal-section">
         <h2>Parent Data Management</h2>
         <p>This section displays parent information linked to registered learners, sourced from the <code>sams_registrations</code> collection.</p>
@@ -628,8 +666,7 @@
       <section id="edit-teacher-profile" class="portal-section">
           <!-- Content will be dynamically injected by showEditTeacherForm() in ui-handlers.js -->
       </section>
-
-
+      
       <section id="finance" class="portal-section">
         <h2>Finance</h2>
         <div class="tool-card">
@@ -674,6 +711,35 @@
         </div>
       </section>
 
+      <section id="school-calendar-mgmt" class="portal-section">
+        <div class="tool-card" style="margin-top: 20px;">
+            <div class="ap-header" style="border-bottom: 1px solid #e5e7eb; padding-bottom: 1rem; margin-bottom: 1rem;">
+                <div class="ap-title">
+                    <i class="fas fa-university" style="color: var(--primary-indigo);"></i>
+                    <div>
+                        <h1>Official School Calendar Management</h1>
+                        <p>Set the term dates and holidays for the entire school. This will be visible to all teachers.</p>
+                    </div>
+                </div>
+                <button id="save-official-calendar-btn" class="cta-button primary-green">
+                    <i class="fas fa-save"></i> Save Official Calendar
+                </button>
+            </div>
+
+            <!-- Status message container for save/validation feedback -->
+            <p id="official-calendar-status" class="status-message-box" style="margin-bottom: 1rem; display: none;"></p>
+
+            <!-- Term Tabs and Details Container -->
+            <div id="official-cal-term-tabs" class="ap-tabs">
+                <!-- Tabs will be rendered here by JS -->
+                <p class="info-message">Loading calendar editor...</p>
+            </div>
+            <div id="official-cal-term-details">
+                <!-- Term details form will be rendered here by JS -->
+            </div>
+        </div>
+      </section>
+
       <section id="other-tools" class="portal-section">
         <h2>Other Administrative Tools</h2>
         <div class="grid-container">
@@ -695,6 +761,13 @@
     <div id="marksheet-modal" class="modal">
         <div id="marksheet-modal-content" class="modal-content printable-area"></div>
     </div>
+
+    <!-- Image Viewer Modal -->
+    <div id="image-viewer-modal" class="image-viewer-modal">
+        <span class="image-viewer-close">&times;</span>
+        <img class="image-viewer-content" id="modal-image-content">
+    </div>
+
   </main>
 
   <!-- Container for printing content -->

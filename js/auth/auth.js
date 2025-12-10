@@ -45,6 +45,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const forgotEmailInput = document.getElementById('forgotEmail');
   const forgotSubmitButton = document.getElementById('forgotSubmit');
 
+  // *** NEW: Get reference for learner self-registration button ***
+  const findMyDetailsBtn = document.getElementById('find-my-details-btn');
+
 
   // Get references to elements for the Register form
   const registerRoleSelect = document.getElementById('role-select');
@@ -91,6 +94,11 @@ document.addEventListener('DOMContentLoaded', () => {
     registerRoleSelect.addEventListener('change', () => showRoleFields(registerRoleSelect.value));
     // initialize if already selected
     showRoleFields(registerRoleSelect.value);
+  }
+
+  // *** NEW: Add event listener for the learner "Find Me" button ***
+  if (findMyDetailsBtn) {
+    findMyDetailsBtn.addEventListener('click', findLearnerForSelf);
   }
 
   // SMT role -> show DH-specific fields
@@ -226,14 +234,13 @@ document.addEventListener('DOMContentLoaded', () => {
   // Helper: collect user data (kept local to DOMContentLoaded)
   function collectUserData(role) {
     let userData = { role };
+    const form = document.getElementById('register-form'); // Get the form element
     try {
       if (role === 'learner') { 
-        userData.fullName = document.querySelector('input[name="learner-fullName"]')?.value || '';
-        userData.admissionNumber = document.querySelector('input[name="learner-admissionNumber"]')?.value || '';
-        userData.email = document.querySelector('input[name="learner-email"]')?.value || ''; 
-        userData.dob = document.querySelector('input[name="learner-dob"]')?.value || '';
-        userData.grade = document.querySelector('select[name="learner-grade"]')?.value || '';
-        userData.gender = document.querySelector('select[name="learner-gender"]')?.value || '';
+        // **MODIFIED**: Collect data from the new learner registration fields
+        userData.email = document.getElementById('learner-reg-email')?.value || '';
+        userData.learnerName = document.getElementById('learner-reg-name')?.value || '';
+        userData.learnerSurname = document.getElementById('learner-reg-surname')?.value || '';
       } else if (role === 'parent') {
         userData.email = document.querySelector('input[name="parent-email"]')?.value || '';
         // **FIX**: Read the admission number from the correct input field by its ID.
@@ -348,6 +355,56 @@ document.addEventListener('DOMContentLoaded', () => {
       });
   }
 
+  // *** NEW: Function to find a learner for self-registration ***
+  async function findLearnerForSelf() {
+    const admissionInput = document.getElementById('learner-admission-number-lookup');
+    const admissionNumber = admissionInput.value.trim();
+    const detailsContainer = document.getElementById('learner-details-container');
+    const passwordSection = document.getElementById('password-section');
+
+    if (!admissionNumber) {
+        alert('Please enter your admission number.');
+        return;
+    }
+
+    findMyDetailsBtn.disabled = true;
+    findMyDetailsBtn.innerHTML = '<i class="fas fa-sync fa-spin"></i>';
+
+    try {
+        const q = query(collection(db, 'sams_registrations'), where('admissionId', '==', admissionNumber), limit(1));
+        const querySnapshot = await getDocs(q);
+
+        if (querySnapshot.empty) {
+            alert('No learner found with that admission number. Please check the number and try again, or contact the school office.');
+            detailsContainer.style.display = 'none';
+            passwordSection.style.display = 'none';
+            return;
+        }
+
+        const learnerDoc = querySnapshot.docs[0];
+        const learnerData = learnerDoc.data();
+
+        // Store the found data for later use during registration
+        detailsContainer.dataset.learnerData = JSON.stringify({ id: learnerDoc.id, ...learnerData });
+
+        // Populate the editable fields
+        document.getElementById('learner-reg-name').value = learnerData.learnerName || '';
+        document.getElementById('learner-reg-surname').value = learnerData.learnerSurname || '';
+        document.getElementById('learner-reg-grade').value = learnerData.fullGradeSection || learnerData.grade || '';
+        document.getElementById('learner-reg-email').value = ''; // Clear email field for user input
+
+        detailsContainer.style.display = 'block';
+        passwordSection.style.display = 'block';
+
+    } catch (error) {
+        console.error("Error finding learner:", error);
+        alert('An error occurred while searching for your details. Please try again.');
+    } finally {
+        findMyDetailsBtn.disabled = false;
+        findMyDetailsBtn.textContent = 'Find Me';
+    }
+  }
+
   // Registration handler
   if (registerSubmitButton) {
     registerSubmitButton.addEventListener('click', async function(event) {
@@ -378,6 +435,26 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       // **NEW**: Special validation for parent registration
+      if (role === 'learner') {
+          const learnerDetailsContainer = document.getElementById('learner-details-container');
+          if (!learnerDetailsContainer.dataset.learnerData) {
+              alert("Please find and confirm your details using your admission number before registering.");
+              return;
+          }
+          const originalLearnerData = JSON.parse(learnerDetailsContainer.dataset.learnerData);
+          // Add details from the found SAMS record to the user profile
+          userData.admissionId = originalLearnerData.admissionId;
+          userData.grade = originalLearnerData.grade;
+          userData.samsRegistrationId = originalLearnerData.id; // Link to the original SAMS doc
+
+          // The user can edit their name, so we also need to update the original SAMS record
+          const updatedName = document.getElementById('learner-reg-name').value;
+          const updatedSurname = document.getElementById('learner-reg-surname').value;
+          if (updatedName !== originalLearnerData.learnerName || updatedSurname !== originalLearnerData.learnerSurname) {
+              userData.nameWasUpdated = true; // Flag to perform an update later
+          }
+      }
+
       if (role === 'parent') {
           const admissionNumber = document.getElementById('parent-admission-number-lookup').value.trim();
           if (!admissionNumber) {
@@ -420,6 +497,18 @@ document.addEventListener('DOMContentLoaded', () => {
         // to find the corresponding learner and update their record with the new parent's UID.
         if (role === 'parent' && admissionNumberForUpdate) {
             const learnerQuery = query(collection(db, 'sams_registrations'), where('admissionId', '==', admissionNumberForUpdate), limit(1));
+            const learnerSnapshot = await getDocs(learnerQuery);
+
+            if (!learnerSnapshot.empty) {
+                const learnerDocRef = learnerSnapshot.docs[0].ref;
+                await setDoc(learnerDocRef, { parentUserId: user.uid }, { merge: true });
+                console.log(`Successfully linked parent UID ${user.uid} to learner with admission ID ${admissionNumberForUpdate}.`);
+            }
+        }
+
+        // **NEW**: If a learner updated their name, update the SAMS record
+        if (role === 'learner' && userData.nameWasUpdated) {
+            const learnerQuery = query(collection(db, 'sams_registrations'), where('admissionId', '==', userData.admissionId), limit(1));
             const learnerSnapshot = await getDocs(learnerQuery);
 
             if (!learnerSnapshot.empty) {

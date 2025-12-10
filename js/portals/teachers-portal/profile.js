@@ -74,14 +74,14 @@ function setupProfileEditing(db, teacherAuthData) {
 
     if (!editBtn || !cancelBtn || !profileCard || !editFormContainer || !editForm) return;
 
-    editBtn.addEventListener('click', async (e) => {
-        e.preventDefault();
+    editBtn.addEventListener('click', async () => {
         const userDoc = await db.collection('users').doc(teacherAuthData.uid).get();
         if (userDoc.exists) {
             const data = userDoc.data();
             document.getElementById('edit-profile-preferred-name').value = data.preferredName || '';
             document.getElementById('edit-profile-surname').value = data.surname || '';
             document.getElementById('edit-profile-contact').value = data.contactNumber || '';
+            document.getElementById('edit-profile-department').value = data.department || '';
             profileCard.style.display = 'none';
             editFormContainer.style.display = 'block';
         } else {
@@ -102,6 +102,7 @@ function setupProfileEditing(db, teacherAuthData) {
             preferredName: document.getElementById('edit-profile-preferred-name').value.trim(),
             surname: document.getElementById('edit-profile-surname').value.trim(),
             contactNumber: document.getElementById('edit-profile-contact').value.trim(),
+            department: document.getElementById('edit-profile-department').value,
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         };
 

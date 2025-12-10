@@ -1,5 +1,7 @@
 // js/portals/smt-portal/smt-portal.js
 
+import { displayOfficialSchoolCalendar } from '../parents-portal/calendar-display.js';
+
 // NOTE: This script relies on the global 'db' variable from firebase-config.js
 // All JavaScript specific to the SMT portal will go here.
 
@@ -23,7 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Set up UI interactions
         setupResponsiveSidebar();
-        setupPortalNavigation();
+        setupPortalNavigation(db);
 
         // Set up Portfolio Management
         setupPortfolioManager(db, userData);
@@ -201,7 +203,7 @@ function setupResponsiveSidebar() {
 /**
  * Sets up the navigation logic for sidebar and other in-page links.
  */
-function setupPortalNavigation() {
+function setupPortalNavigation(db) {
     const navLinks = document.querySelectorAll('.sidebar a[href^="#"], a.block[href^="#"]');
     const sections = document.querySelectorAll('.portal-section');
     const sidebarLinks = document.querySelectorAll('.sidebar a[href^="#"]');
@@ -231,6 +233,11 @@ function setupPortalNavigation() {
 
             showSection(targetId);
             history.pushState(null, null, `#${targetId}`);
+
+            // Initialize calendar when navigating to its section
+            if (targetId === 'school-calendar') {
+                displayOfficialSchoolCalendar(db, 'smt-official-calendar-container');
+            }
         });
     });
 
@@ -238,6 +245,11 @@ function setupPortalNavigation() {
     showSection(initialHash);
     const initialLink = document.querySelector(`.sidebar a[href="#${initialHash}"]`);
     if (initialLink) initialLink.classList.add('active');
+
+    // Initialize calendar if the page loads on its hash
+    if (initialHash === 'school-calendar') {
+        displayOfficialSchoolCalendar(db, 'smt-official-calendar-container');
+    }
 }
 
 // =========================================================
@@ -770,3 +782,40 @@ window.saveRating = function(selectElement) {
 }
 
 window.saveAppraisal = saveAppraisal; // Expose the main save function
+
+/**
+ * Sets up the modal for viewing the profile picture.
+ * @param {string} profilePicId - The ID of the profile picture img element.
+ */
+function setupImageViewer(profilePicId) {
+    const modal = document.getElementById('image-viewer-modal');
+    const profilePic = document.getElementById(profilePicId);
+    const modalImg = document.getElementById('modal-image-content');
+    const closeBtn = document.querySelector('.image-viewer-close');
+
+    if (!modal || !profilePic || !modalImg || !closeBtn) return;
+
+    profilePic.style.cursor = 'pointer';
+    profilePic.onclick = function() {
+        modal.style.display = "block";
+        modalImg.src = this.src;
+    }
+
+    closeBtn.onclick = function() {
+        modal.style.display = "none";
+    }
+
+    modal.onclick = function(event) {
+        if (event.target === modal) { // Close if clicking on the background
+            modal.style.display = "none";
+        }
+    }
+}
+
+// Inside your main portal initialization function...
+async function initializeTeacherPortal(db, userData) {
+    // ... your existing code to load profile, etc. ...
+
+    // --- Setup Image Viewer ---
+    setupImageViewer('teacher-profile-pic'); // Use the teacher's profile pic ID
+}

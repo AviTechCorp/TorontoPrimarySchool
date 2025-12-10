@@ -1,5 +1,7 @@
 
 // js/portals/teachers-portal/teachers-portal.js
+import { setupAssessmentProgramme } from './assessment-programme.js';
+import { setupCalendarSection } from './calendar.js';
 
 /**
  * Sets up the responsive sidebar toggle for mobile view.
@@ -174,6 +176,16 @@ document.addEventListener('DOMContentLoaded', () => {
         setupLearnerProfileSection(db, userData);
       }
 
+        // **NEW**: Initialize the School Calendar section
+        if (targetId === 'calendar') {
+            setupCalendarSection(db, userData);
+        }
+
+        // **NEW**: Initialize the Assessment Programme section
+        if (targetId === 'assessment-programme-mgmt') {
+            setupAssessmentProgramme(db, userData);
+        }
+
       // Update URL hash
       // history.pushState(null, null, `#${targetId}`);
       history.pushState(null, null, `#${targetId}`);
@@ -197,5 +209,16 @@ document.addEventListener('DOMContentLoaded', () => {
   const initialLink = document.querySelector(`.sidebar a[href="#${initialSidebarTarget}"]`);
   if (initialLink) {
     initialLink.classList.add('active');
+  }
+
+  // **FIX**: Initialize sections that are loaded directly via URL hash
+  if (initialHash === 'assessment-programme-mgmt') {
+      setupAssessmentProgramme(db, userData);
+  }
+  if (initialHash === 'calendar') {
+      setupCalendarSection(db, userData);
+  }
+  if (initialHash === 'learner-profiles') {
+      setupLearnerProfileSection(db, userData);
   }
 });

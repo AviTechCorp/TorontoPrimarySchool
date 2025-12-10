@@ -1,5 +1,7 @@
 // js/portals/parents-portal/parents-portal.js
 
+import { displayOfficialSchoolCalendar } from './calendar-display.js';
+
 // This should be the same config as in your other portal files
 const firebaseConfig = {
   apiKey: "AIzaSyAJlr-6eTCCpQtWHkPics3-tbOS_X5xA84",
@@ -42,7 +44,7 @@ function initializeParentPortal() {
 
     // Set up UI interactions
     setupResponsiveSidebar();
-    setupPortalNavigation();
+    setupPortalNavigation(db);
 }
 
 /**
@@ -129,7 +131,7 @@ async function loadParentDashboard(db, parentData) {
     }
 }
 
-function setupPortalNavigation() {
+function setupPortalNavigation(db) {
     const navLinks = document.querySelectorAll('.sidebar a');
     const sections = document.querySelectorAll('.portal-section');
 
@@ -153,6 +155,11 @@ function setupPortalNavigation() {
             this.classList.add('active');
             showSection(targetId);
             history.pushState(null, null, `#${targetId}`);
+
+            // Initialize calendar when navigating to its section
+            if (targetId === 'school-calendar') {
+                displayOfficialSchoolCalendar(db, 'parent-official-calendar-container');
+            }
         });
     });
 
@@ -160,6 +167,11 @@ function setupPortalNavigation() {
     showSection(initialHash);
     const initialLink = document.querySelector(`.sidebar a[href="#${initialHash}"]`);
     if (initialLink) initialLink.classList.add('active');
+
+    // Initialize calendar if the page loads on its hash
+    if (initialHash === 'school-calendar') {
+        displayOfficialSchoolCalendar(db, 'parent-official-calendar-container');
+    }
 }
 
 // =========================================================
@@ -408,4 +420,41 @@ function goBackToParentChatList() {
     // Remove the global click listener when chat is closed
     document.removeEventListener('click', globalParentChatMenuClickListener);
     document.querySelectorAll('#parent-chat-list li').forEach(li => li.classList.remove('active'));
+}
+
+/**
+ * Sets up the modal for viewing the profile picture.
+ * @param {string} profilePicId - The ID of the profile picture img element.
+ */
+function setupImageViewer(profilePicId) {
+    const modal = document.getElementById('image-viewer-modal');
+    const profilePic = document.getElementById(profilePicId);
+    const modalImg = document.getElementById('modal-image-content');
+    const closeBtn = document.querySelector('.image-viewer-close');
+
+    if (!modal || !profilePic || !modalImg || !closeBtn) return;
+
+    profilePic.style.cursor = 'pointer';
+    profilePic.onclick = function() {
+        modal.style.display = "block";
+        modalImg.src = this.src;
+    }
+
+    closeBtn.onclick = function() {
+        modal.style.display = "none";
+    }
+
+    modal.onclick = function(event) {
+        if (event.target === modal) { // Close if clicking on the background
+            modal.style.display = "none";
+        }
+    }
+}
+
+// Inside your main portal initialization function...
+async function initializeTeacherPortal(db, userData) {
+    // ... your existing code to load profile, etc. ...
+
+    // --- Setup Image Viewer ---
+    setupImageViewer('teacher-profile-pic'); // Use the teacher's profile pic ID
 }

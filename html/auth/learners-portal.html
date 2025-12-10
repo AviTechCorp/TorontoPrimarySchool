@@ -1,257 +1,57 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
- <meta charset="UTF-8">
- <meta name="viewport" content="width=device-width, initial-scale=1.0">
- <title>Learner Portal - Toronto Primary School</title>
-
-  <script src="https://cdn.tailwindcss.com"></script>
-
- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
- <link rel="stylesheet" href="../../global.css">
- <link rel="stylesheet" href="../../css/portals/teachers-portal/teachers-portal.css">
- <link rel="shortcut icon" href="../../images/44.png" type="image/x-icon">
- <style>
-    /* School Quiz App Styles */
-    #quiz .quiz-body {
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        padding: 20px;
-    }
-
-    #quiz .quiz-container-inner {
-        background: white;
-        border-radius: 20px;
-        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
-        max-width: 700px;
-        width: 100%;
-        padding: 30px;
-        margin: 0 auto; /* Center the container */
-    }
-
-    #quiz .quiz-header {
-        text-align: center;
-        margin-bottom: 30px;
-    }
-
-    #quiz .quiz-header h1 {
-        color: #667eea;
-        font-size: 2.5em;
-        margin-bottom: 10px;
-    }
-
-    #quiz .score {
-        font-size: 1.2em;
-        color: #666;
-        margin-bottom: 20px;
-    }
-
-    #quiz .progress-bar {
-        width: 100%;
-        height: 10px;
-        background: #e0e0e0;
-        border-radius: 10px;
-        overflow: hidden;
-        margin-bottom: 30px;
-    }
-
-    #quiz .progress-fill {
-        height: 100%;
-        background: linear-gradient(90deg, #667eea, #764ba2);
-        width: 0%;
-        transition: width 0.3s ease;
-    }
-
-    #quiz .quiz-content-area {
-        display: none;
-    }
-
-    #quiz .quiz-content-area.active {
-        display: block;
-    }
-
-    #quiz .question {
-        font-size: 1.4em;
-        color: #333;
-        margin-bottom: 30px;
-        line-height: 1.6;
-    }
-
-    #quiz .category {
-        display: inline-block;
-        background: #f0f0f0;
-        padding: 5px 15px;
-        border-radius: 20px;
-        font-size: 0.9em;
-        color: #666;
-        margin-bottom: 15px;
-    }
-
-    #quiz .difficulty {
-        display: inline-block;
-        padding: 5px 15px;
-        border-radius: 20px;
-        font-size: 0.9em;
-        margin-left: 10px;
-        color: white;
-    }
-
-    #quiz .difficulty.easy { background: #4caf50; }
-    #quiz .difficulty.medium { background: #ff9800; }
-    #quiz .difficulty.hard { background: #f44336; }
-
-    #quiz .answers {
-        display: flex;
-        flex-direction: column;
-        gap: 15px;
-    }
-
-    #quiz .answer-btn {
-        background: #f8f9fa;
-        border: 2px solid #e0e0e0;
-        padding: 20px;
-        border-radius: 10px;
-        font-size: 1.1em;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        text-align: left;
-        width: 100%;
-    }
-
-    #quiz .answer-btn:hover {
-        background: #667eea;
-        color: white;
-        border-color: #667eea;
-        transform: translateX(5px);
-    }
-
-    #quiz .answer-btn.correct {
-        background: #4caf50;
-        color: white;
-        border-color: #4caf50;
-    }
-
-    #quiz .answer-btn.incorrect {
-        background: #f44336;
-        color: white;
-        border-color: #f44336;
-    }
-
-    #quiz .answer-btn:disabled {
-        cursor: not-allowed;
-    }
-
-    #quiz .next-btn {
-        margin-top: 30px;
-        padding: 15px 40px;
-        background: linear-gradient(135deg, #667eea, #764ba2);
-        color: white;
-        border: none;
-        border-radius: 10px;
-        font-size: 1.1em;
-        cursor: pointer;
-        display: none;
-        transition: transform 0.3s ease;
-    }
-
-    #quiz .next-btn:hover {
-        transform: scale(1.05);
-    }
-
-    #quiz .next-btn.show {
-        display: inline-block;
-    }
-
-    #quiz .start-screen, #quiz .result-screen {
-        text-align: center;
-    }
-
-    #quiz .start-screen.hide, #quiz .result-screen.hide {
-        display: none;
-    }
-
-    #quiz .start-btn, #quiz .restart-btn {
-        padding: 20px 50px;
-        background: linear-gradient(135deg, #667eea, #764ba2);
-        color: white;
-        border: none;
-        border-radius: 10px;
-        font-size: 1.3em;
-        cursor: pointer;
-        margin-top: 30px;
-        transition: transform 0.3s ease;
-    }
-
-    #quiz .start-btn:hover, #quiz .restart-btn:hover {
-        transform: scale(1.05);
-    }
-
-    #quiz .loading {
-        text-align: center;
-        font-size: 1.5em;
-        color: #667eea;
-        display: none;
-    }
-
-    #quiz .loading.show {
-        display: block;
-    }
-
-    #quiz .final-score {
-        font-size: 3em;
-        color: #667eea;
-        margin: 30px 0;
-    }
-
-    #quiz .result-message {
-        font-size: 1.5em;
-        color: #666;
-        margin-bottom: 20px;
-    }
-  </style>
-  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
- <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Learner Portal - Toronto Primary School</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="../../global.css">
+    <link rel="stylesheet" href="../../css/portals/learners-portal/learners-portal.css">
+    <link rel="stylesheet" href="../../css/portals/shared-components.css">
+    <link rel="shortcut icon" href="../../images/44.png" type="image/x-icon">
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-storage-compat.js"></script>
 </head>
 <body>
 
-  <header class="fixed top-0 left-0 w-full bg-indigo-700 text-white shadow-xl z-20">
-    <div class="flex items-center justify-between p-4 max-w-7xl mx-auto">
-      <div class="flex items-center space-x-4">
-        <button id="menu-toggle" class="md:hidden p-1 focus:outline-none focus:ring-2 focus:ring-white rounded-md">
-          <i class="fas fa-bars text-xl"></i>
-        </button>
-        <div class="logo font-bold text-2xl tracking-tight">
-          <a href="../../index.html" class="text-white hover:text-gray-200">TORONTO PRIMARY SCHOOL</a>
+    <header class="fixed top-0 left-0 w-full bg-indigo-700 text-white shadow-xl z-20">
+        <div class="flex items-center justify-between p-4 max-w-7xl mx-auto">
+            <div class="flex items-center space-x-4">
+                <button id="menu-toggle" class="md:hidden p-1 focus:outline-none focus:ring-2 focus:ring-white rounded-md">
+                    <i class="fas fa-bars text-xl"></i>
+                </button>
+                <div class="logo font-bold text-2xl tracking-tight">
+                    <a href="../../index.html" class="text-white hover:text-gray-200">TORONTO PRIMARY SCHOOL</a>
+                </div>
+            </div>
+            <div class="relative group">
+                <button class="flex items-center space-x-2 text-white p-2 rounded-full hover:bg-indigo-600 transition duration-150">
+                    <i class="fas fa-user-circle text-2xl"></i>
+                    <span class="hidden sm:inline">Learner</span>
+                    <i class="fas fa-chevron-down text-xs ml-1"></i>
+                </button>
+                <div class="absolute right-0 top-full mt-1 w-48 bg-white rounded-md shadow-lg py-1 z-30 invisible group-hover:visible opacity-0 group-hover:opacity-100 translate-y-1 group-hover:translate-y-0 transition-all duration-200">
+                    <a href="#profile" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Profile</a>
+                    <hr class="my-1">
+                    <a href="../auth/auth.html" class="btn-logout block px-4 py-2 text-sm text-red-600 hover:bg-red-50"><i class="fas fa-sign-out-alt mr-2"></i>Logout</a>
+                </div>
+            </div>
         </div>
-      </div>
-      
-      <div class="relative group">
-        <button class="flex items-center space-x-2 text-white p-2 rounded-full hover:bg-indigo-600 transition duration-150">
-          <i class="fas fa-user-circle text-2xl"></i>
-          <span class="hidden sm:inline">Learner</span>
-          <i class="fas fa-chevron-down text-xs ml-1"></i>
-        </button>
-
-        <div class="absolute right-0 top-full mt-1 w-48 bg-white rounded-md shadow-lg py-1 z-30 invisible group-hover:visible opacity-0 group-hover:opacity-100 translate-y-1 group-hover:translate-y-0 transition-all duration-200">
-          <a href="#profile" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Profile</a>
-          <hr class="my-1">
-          <a href="../auth/auth.html" class="btn-logout block px-4 py-2 text-sm text-red-600 hover:bg-red-50"><i class="fas fa-sign-out-alt mr-2"></i>Logout</a>
-        </div>
-      </div>
-    </div>
-  </header>
-
+      </header>
+ 
  <main class="portal-main-content">
   <aside class="sidebar">
    <h2 class="sidebar-title">Learner Menu</h2>
    <ul>
     <li><a href="#dashboard" class="active"><i class="fas fa-home"></i> Dashboard</a></li>
     <li><a href="#profile"><i class="fas fa-user-circle"></i> My Profile</a></li>
+    <li><a href="#academics"><i class="fas fa-graduation-cap"></i> Academics</a></li>
     <li><a href="#grades"><i class="fas fa-book-reader"></i> My Grades</a></li>
     <li><a href="#assignments"><i class="fas fa-clipboard-list"></i> Assignments</a></li>
     <li><a href="#attendance"><i class="fas fa-calendar-check"></i> Attendance</a></li>
-    <li><a href="#materials"><i class="fas fa-file-pdf"></i> Course Materials</a></li>
-    <li><a href="#calendar"><i class="fas fa-calendar-alt"></i> School Calendar</a></li>
-    <li><a href="#quiz"><i class="fas fa-puzzle-piece"></i> Take a Quiz</a></li>
+    <li><a href="#school-calendar"><i class="fas fa-calendar-alt"></i> School Calendar</a></li>
     <li><a href="#announcements"><i class="fas fa-bullhorn"></i> Announcements</a></li>
     <li class="sidebar-footer-item">
       <a href="#" class="btn-logout"><i class="fas fa-sign-out-alt"></i> Logout</a>
@@ -262,190 +62,149 @@
   <div class="portal-content-wrapper">
    <h1 class="portal-title">Hello, <span id="learner-name-display">Learner</span>! Ready to Learn? ✨</h1>
 
-   <div id="dashboard" class="portal-section active-section">
+   <section id="dashboard" class="portal-section active-section">
     <h2>Quick Overview</h2>
     <div class="grid-container dashboard-cards">
      <div class="tool-card accent-1">
       <h3><i class="fas fa-bell"></i> New Alerts</h3>
-      <p id="dashboard-notifications">No new notifications. Great job!</p>
+      <p id="dashboard-notifications">Loading...</p>
      </div>
      <div class="tool-card accent-2">
       <h3><i class="fas fa-clock"></i> Upcoming Due Date</h3>
-      <p id="dashboard-assignments">Maths worksheet due Friday.</p>
+      <p id="dashboard-assignments">Loading...</p>
      </div>
      <div class="tool-card accent-3">
       <h3><i class="fas fa-chart-bar"></i> Term Average</h3>
-      <p id="dashboard-latest-grade">85% (Very Good!)</p>
+      <p id="dashboard-latest-grade">Loading...</p>
      </div>
     </div>
-   </div>
+   </section>
    
-   <div id="profile" class="portal-section hidden-section">
+   <section id="profile" class="portal-section">
     <h2>My Personal Details</h2>
     <div class="profile-card">
-     <img src="../../images/placeholder-profile.png" alt="Learner Profile Picture" class="profile-pic">
-     <div class="profile-details grid-two-columns">
-      <h3>Learner Information</h3>
-      <p id="profile-name-full"><strong>Full Name:</strong></p>
-      <p id="profile-adm-num"><strong>Admission No:</strong></p>
-      <p id="profile-grade"><strong>Current Grade:</strong></p>
-      <p id="profile-email"><strong>Portal Email:</strong></p>
-      <p id="profile-dob"><strong>Date of Birth:</strong></p>
-      <p id="profile-gender"><strong>Gender:</strong></p>
+        <div class="profile-pic-container">
+            <img src="../../images/placeholder-profile.png" alt="Learner Profile Picture" class="profile-pic" id="learner-profile-pic">
+            <label for="learner-profile-pic-upload" class="profile-pic-upload-label" title="Upload new profile picture">
+                <i class="fas fa-camera"></i>
+            </label>
+            <input type="file" id="learner-profile-pic-upload" accept="image/jpeg, image/png" style="display: none;">
+            <div id="learner-profile-pic-upload-status" class="upload-status-indicator" style="display: none;"></div>
+        </div>
+        <div class="profile-details">
+            <p id="profile-surname"><strong>Surname:</strong></p>
+            <p id="profile-name"><strong>Name:</strong></p>
+            <p id="profile-email"><strong>Email:</strong></p>
+            <p id="profile-admission-no"><strong>Admission No:</strong></p>
+            <p id="profile-grade"><strong>Current Grade:</strong></p>
+        </div>
+        <a href="#" id="edit-learner-profile-btn" class="cta-button-edit"><i class="fas fa-pencil-alt"></i> Edit Details</a>
+    </div>
+
+    <!-- Edit Profile Form (hidden by default) -->
+    <div id="edit-learner-profile-form-container" class="tool-card" style="display: none; margin-top: 20px;">
+        <h3>Edit My Profile</h3>
+        <form id="edit-learner-profile-form">
+            <div class="form-group">
+                <label for="edit-learner-name">First Name</label>
+                <input type="text" id="edit-learner-name" required>
+            </div>
+            <div class="form-group">
+                <label for="edit-learner-surname">Surname</label>
+                <input type="text" id="edit-learner-surname" required>
+            </div>
+            <p id="edit-learner-profile-status" class="status-message-box" style="display: none;"></p>
+            <button type="submit" class="cta-button"><i class="fas fa-save"></i> Save Changes</button>
+            <button type="button" id="cancel-edit-learner-profile-btn" class="cta-button-secondary" style="margin-left: 10px;">Cancel</button>
+        </form>
+    </div>
+   </section>
+
+   <section id="academics" class="portal-section">
+    <h2>Academics</h2>
+    <p>Explore your subjects, find study materials, and check your timetable.</p>
+    <div class="grid-container">
+     <div class="tool-card accent-1">
+      <h3><i class="fas fa-book"></i> My Subjects</h3>
+      <p>View details and resources for the subjects you are enrolled in.</p>
+      <a href="#subjects" class="cta-button-small view-subjects-btn">View Subjects</a>
      </div>
-     <div class="profile-details grid-two-columns parent-info">
-      <h3>Parent/Guardian Contact</h3>
-      <p id="profile-parent-name"><strong>Name:</strong> N/A</p>
-      <p id="profile-parent-contact"><strong>Contact:</strong> N/A</p>
-      <p id="profile-parent-email"><strong>Email:</strong> N/A</p>
+     <div class="tool-card accent-2">
+      <h3><i class="fas fa-file-alt"></i> Study Materials</h3>
+      <p>Access notes, past papers, and other resources provided by your teachers.</p>
+      <a href="#" class="cta-button-small">Find Resources</a>
      </div>
+     <div class="tool-card accent-3">
+      <h3><i class="fas fa-calendar-day"></i> My Timetable</h3>
+      <p>Check your weekly class schedule to stay organized.</p>
+      <a href="#" class="cta-button-small">View Timetable</a>
+     </div>
+     <div class="tool-card accent-4">
+        <h3><i class="fas fa-tasks"></i> Weekly Work Output</h3>
+        <p>Log your weekly class and home activities for each subject.</p>
+        <a href="#work-output" class="cta-button-small view-work-output-btn">Update Output</a>
+       </div>
     </div>
-   </div>
+   </section>
 
-   <div id="grades" class="portal-section hidden-section">
-    <h2>My Report Card</h2>
-    <p>This table shows your current performance for Term <span id="current-term">3</span>. Keep up the great work!</p>
-    <div id="grades-container">
-     <table class="data-table">
-      <thead>
-       <tr>
-        <th>Subject</th>
-        <th>Current %</th>
-        <th>Achievement Level</th>
-       </tr>
-      </thead>
-      <tbody id="grades-table-body">
-       <tr><td>Mathematics</td><td>88%</td><td>Outstanding Achievement</td></tr>
-       <tr><td>Home Language</td><td>75%</td><td>Substantial Achievement</td></tr>
-       <tr><td>Life Skills</td><td>91%</td><td>Outstanding Achievement</td></tr>
-      </tbody>
-     </table>
-     <button class="btn primary-btn print-btn"><i class="fas fa-print"></i> Download Report Card</button>
+   <section id="subjects" class="portal-section">
+    <button id="back-to-academics-btn" class="cta-button-secondary" style="margin-bottom: 20px;"><i class="fas fa-arrow-left"></i> Back to Academics</button>
+    <h2>My Subjects</h2>
+    <div id="subjects-content">
+        <!-- Subject list or selection form will be populated here by JS -->
     </div>
-   </div>
+   </section>
 
-   <div id="assignments" class="portal-section hidden-section">
-    <h2>My Homework & Tasks</h2>
-    <p>Stay organised! Check deadlines for all your subjects below. Don't let anything become **Overdue**!</p>
-    <div id="assignments-container">
-     <ul class="assignment-list">
-      <li>
-       <span class="task-details"><i class="fas fa-exclamation-triangle"></i> **Maths:** Topic 3 worksheet</span> 
-       <span class="due-date">Due 29/10/2025</span> 
-       <span class="status overdue">Overdue</span>
-      </li>
-      <li>
-       <span class="task-details"><i class="fas fa-clipboard-list"></i> **Science:** Photosynthesis Poster</span> 
-       <span class="due-date">Due 05/11/2025</span> 
-       <span class="status upcoming">Upcoming</span>
-      </li>
-      <li>
-       <span class="task-details"><i class="fas fa-palette"></i> **Art:** Sketchbook Entry 5</span> 
-       <span class="due-date">Due 10/11/2025</span> 
-       <span class="status upcoming">Upcoming</span>
-      </li>
-      <li>
-       <span class="task-details"><i class="fas fa-check-circle"></i> **History:** Ancient Civilizations Quiz</span> 
-       <span class="due-date">Completed 20/10/2025</span> 
-       <span class="status completed">Completed</span>
-      </li>
-     </ul>
+   <section id="work-output" class="portal-section">
+    <button id="back-to-academics-from-work-output-btn" class="cta-button-secondary" style="margin-bottom: 20px;"><i class="fas fa-arrow-left"></i> Back to Academics</button>
+    <h2>Weekly Work Output</h2>
+    <div class="work-output-switcher">
+        <button id="work-output-log-btn" class="work-output-switcher-btn active">Log Output</button>
+        <button id="work-output-history-btn" class="work-output-switcher-btn">View History</button>
     </div>
-    
-   </div>
+    <div id="work-output-log-view" class="work-output-view active">
+        <!-- Work output form will be populated here by JS -->
+    </div>
+    <div id="work-output-history-view" class="work-output-view" style="display: none;">
+        <!-- Work output history table will be populated here by JS -->
+    </div>
+   </section>
 
-   <div id="attendance" class="portal-section hidden-section">
-    <h2>Attendance Record</h2>
-    <p>A strong attendance record shows commitment to learning!</p>
-    <div id="attendance-container">
-     <p>Total days attended: <strong>58</strong> / Total days in term: <strong>60</strong></p>
-     <p>Absences this term: <strong>2</strong> (All excused)</p>
-    </div>
-   </div>
-   
-   <div id="materials" class="portal-section hidden-section">
-    <h2>Study Resources</h2>
-    <p>Download study guides, lesson notes, and past papers here.</p>
-    <div id="materials-container">
-     <ul class="material-list">
-      <li><a href="#"><i class="fas fa-file-pdf"></i> Maths: Term 3 Study Guide (PDF)</a></li>
-      <li><a href="#"><i class="fas fa-file-pdf"></i> Science: Topic 4 Notes (Ecosystems)</a></li>
-      <li><a href="#"><i class="fas fa-link"></i> Online Interactive Reading List</a></li>
-      <li><a href="#"><i class="fas fa-file-pdf"></i> History: Past Exam Paper (Q4)</a></li>
-     </ul>
-    </div>
-   </div>
-   
-   <div id="calendar" class="portal-section hidden-section">
-    <h2>Important Dates</h2>
-    <p>Mark your calendars! Key events and exam dates for the term.</p>
-    <div id="calendar-container">
-     <ul class="calendar-list">
-      <li><strong>15 Nov:</strong> <span>Term 4 Exams Begin (All Grades)</span></li>
-      <li><strong>01 Dec:</strong> <span>Annual School Sports Day</span></li>
-      <li><strong>10 Dec:</strong> <span>Last Day of Term / Report Card Collection</span></li>
-     </ul>
-    </div>
-   </div>
-   
-   <div id="quiz" class="portal-section hidden-section">
-    <div class="quiz-body">
-        <div class="quiz-container-inner">
-            <div class="quiz-header">
-                <h1>🎯 School Quiz</h1>
-            </div>
-    
-            <div class="start-screen">
-                <p style="font-size: 1.2em; color: #666; margin-bottom: 20px;">Ready to test your knowledge?</p>
-                <p id="quiz-param-info" style="font-size: 1em; color: #888; margin-bottom: 30px;">Quiz settings will be loaded from the link.</p>
-                <button class="start-btn">Start Quiz</button>
-            </div>
-    
-            <div class="loading">Loading questions...</div>
-    
-            <div class="quiz-content-area">
-                <div class="score">Score: <span id="quiz-score">0</span>/<span id="quiz-total">0</span></div>
-                <div class="progress-bar">
-                    <div class="progress-fill" id="quiz-progress"></div>
-                </div>
-                <div class="category" id="quiz-question-category"></div>
-                <span class="difficulty" id="quiz-question-difficulty"></span>
-                <div class="question" id="quiz-question"></div>
-                <div class="answers" id="quiz-answers"></div>
-                <button class="next-btn">Next Question</button>
-            </div>
-    
-            <div class="result-screen hide">
-                <h2>Quiz Completed! 🎉</h2>
-                <div class="final-score" id="quiz-final-score"></div>
-                <div class="result-message" id="quiz-result-message"></div>
-                <button class="restart-btn">Take Another Quiz</button>
-            </div>
+   <!-- Placeholder sections for future features -->
+   <section id="grades" class="portal-section"><p>Grades section coming soon.</p></section>
+   <section id="assignments" class="portal-section"><p>Assignments section coming soon.</p></section>
+   <section id="attendance" class="portal-section"><p>Attendance section coming soon.</p></section>
+
+   <section id="school-calendar" class="portal-section hidden-section">
+    <h2>Official School Calendar</h2>
+    <p>View the school's official term dates and holidays.</p>
+    <div class="tool-card" style="margin-top: 20px;">
+        <div id="learner-official-calendar-container">
+            <p class="info-message">Loading official calendar...</p>
         </div>
     </div>
-   </div>
-
-      <div id="announcements" class="portal-section hidden-section">
-    <h2>School Announcements</h2>
-    <p>The latest news and updates from the school administration. Check here frequently!</p>
-    <div id="announcements-list">
-     <p>Loading announcements...</p>
-    </div>
-   </div>
+   </section>
+   <section id="announcements" class="portal-section"><p>Announcements section coming soon.</p></section>
   </div>
+
+    <!-- Image Viewer Modal -->
+    <div id="image-viewer-modal" class="image-viewer-modal">
+        <span class="image-viewer-close">&times;</span>
+        <img class="image-viewer-content" id="modal-image-content">
+    </div>
  </main>
- 
+
   <footer>
     <p>© 2023 Toronto Primary School. All rights reserved.</p>
     <a href="#"><i class="fa-brands fa-x-twitter"></i></a>
     <a href="#"><i class="fa-brands fa-facebook-f"></i></a>
     <a href="#"><i class="fa-brands fa-instagram"></i></a>
     <a href="#"><i class="fa-brands fa-linkedin-in"></i></a>
-    <a href="#"><i class="fa-brands fa-square-youtube"></i></a>
+    <a href="#"><i class="fa-brands fa-youtube"></i></a>
   </footer>
 
-  <script type="module" src="../../js/auth/auth.js"></script>
-  <script src="../../js/portals/learners-portal/learners-portal.js"></script> 
-  <script type="module" src="../../js/announcements/announcements.js"></script>
+    <script type="module" src="../../js/auth/auth.js"></script>
+    <script type="module" src="../../js/portals/learners-portal/learners-portal.js"></script>
+    <script type="module" src="../../js/portals/parents-portal/calendar-display.js"></script>
 </body>
 </html>

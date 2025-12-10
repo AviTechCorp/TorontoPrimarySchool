@@ -199,9 +199,9 @@ function setupPortfolioPrint(teacherAuthData) {
     const printBtn = document.getElementById('print-portfolio-btn');
     if (!printBtn) return;
     printBtn.addEventListener('click', () => {
-        const teacherNameEl = document.getElementById('print-cover-teacher-name');
+        const teacherNameEl = document.getElementById('print-cover-teacher-name'); // This element will display the preferred name
         const dateEl = document.getElementById('print-cover-date');
-        if (teacherNameEl) teacherNameEl.textContent = `${teacherAuthData.preferredName || ''} ${teacherAuthData.surname || ''}`;
+        if (teacherNameEl) teacherNameEl.textContent = `${teacherAuthData.preferredName || ''}`;
         if (dateEl) dateEl.textContent = `Generated on: ${new Date().toLocaleDateString()}`;
         window.print();
     });

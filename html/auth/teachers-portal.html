@@ -11,7 +11,11 @@
  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
  <link rel="stylesheet" href="../../global.css">
  <link rel="stylesheet" href="../../css/portals/teachers-portal/teachers-portal.css">
+ <link rel="stylesheet" href="../../css/portals/teachers-portal/communication.css">
+ <link rel="stylesheet" href="../../css/portals/teachers-portal/portfolio.css">
  <link rel="stylesheet" href="../../css/portals/teachers-portal/print-teacher-portfolio.css">
+ <link rel="stylesheet" href="../../css/portals/teachers-portal/assessment-programme.css">
+ <link rel="stylesheet" href="../../css/portals/shared-components.css">
  <link rel="shortcut icon" href="../../images/44.png" type="image/x-icon">
  <!-- **NEW**: Add styles for the AI Content Generator -->
  <link rel="stylesheet" href="../../css/portals/teachers-portal/ai-generator.css">
@@ -22,6 +26,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script src="../../js/portals/teachers-portal/firebase-config.js"></script>
 </head>
+
 <body class="print-container">
 
   <header class="fixed top-0 left-0 w-full bg-indigo-700 text-white shadow-xl z-20">
@@ -66,6 +71,7 @@
     <li><a href="#materials"><i class="fas fa-book-open"></i> Course Materials</a></li>
     <li><a href="#communication"><i class="fas fa-comments"></i> Communication</a></li>
     <li><a href="#parents-data"><i class="fas fa-handshake"></i> Parent Contacts</a></li>
+    <li><a href="#assessment-programme-mgmt"><i class="fas fa-tasks"></i> Assessment Programme</a></li>
     <li><a href="#reports"><i class="fas fa-chart-line"></i> Reports & Analytics</a></li>
     <li><a href="#calendar"><i class="fas fa-calendar-alt"></i> School Calendar</a></li>
         <li><a href="#announcements"><i class="fas fa-bullhorn"></i> Announcements</a></li>
@@ -116,7 +122,7 @@
       <p class="profile-preferred-name"><strong>Preferred Name:</strong> Loading...</p>
       <p class="profile-email"><strong>Email:</strong> Loading...</p>
             <p class="profile-contact"><strong>Contact:</strong> Loading...</p>
-     </div><a href="#" id="edit-profile-btn" class="cta-button-edit">Edit Profile</a>
+     </div><button id="edit-profile-btn" class="cta-button-edit">Edit Profile</button>
     </div>
 
     <!-- **NEW**: Edit Profile Form (hidden by default) -->
@@ -135,6 +141,16 @@
                 <div class="form-group">
                     <label for="edit-profile-contact">Contact Number</label>
                     <input type="tel" id="edit-profile-contact">
+                </div>
+                <div class="form-group">
+                    <label for="edit-profile-department">Department</label>
+                    <select id="edit-profile-department">
+                        <option value="">-- Select Department --</option>
+                        <option value="Science & Maths">Science & Maths</option>
+                        <option value="Languages">Languages</option>
+                        <option value="Humanities (SS, LO)">Humanities (SS, LO)</option>
+                        <option value="Foundation Phase (All)">Foundation Phase (All)</option>
+                    </select>
                 </div>
             </div>
             <p id="edit-profile-status" class="status-message-box" style="display: none;"></p>
@@ -446,6 +462,222 @@
     </div>
    </div>
 
+   <div id="assessment-programme-mgmt" class="portal-section hidden-section">
+    <h2>Assessment Programme Management</h2>
+    <p>Plan, schedule, and manage all your assessments for the academic year.</p>
+
+    <div class="tool-card">
+        <div class="ap-header">
+            <div class="ap-title">
+                <i class="fas fa-calendar-check" style="color: var(--primary-indigo);"></i>
+                <div>
+                    <h3 id="ap-assessment-title">Assessments Overview</h3>
+                    <p>Manage your assessments per term.</p>
+                </div>
+            </div>
+            <div class="ap-actions">
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label for="ap-term-filter" class="sr-only">Filter by Term</label>
+                    <select id="ap-term-filter" class="ap-select-filter">
+                        <option value="1">Term 1</option>
+                        <option value="2">Term 2</option>
+                        <option value="3">Term 3</option>
+                        <option value="4">Term 4</option>
+                    </select>
+                </div>
+                <button id="ap-auto-plan-btn" class="cta-button primary-blue"><i class="fas fa-magic"></i> Auto-Plan Assessments</button>
+                <button id="ap-show-assessment-form-btn" class="cta-button primary-green"><i class="fas fa-plus"></i> Add New Assessment</button>
+            </div>
+        </div>
+
+        <div id="ap-add-assessment-form-container" class="tool-card" style="display: none; margin-top: 1rem;">
+            <h3 id="ap-form-title">New Assessment</h3>
+            <form id="ap-add-assessment-form">
+                <div class="grid-container" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+                    <div class="form-group">
+                        <label for="ap-assessment-term">Term</label>
+                        <select id="ap-assessment-term" required>
+                            <option value="1">Term 1</option>
+                            <option value="2">Term 2</option>
+                            <option value="3">Term 3</option>
+                            <option value="4">Term 4</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="ap-assessment-type">Task Type</label>
+                        <input type="text" id="ap-assessment-type" placeholder="e.g., Test, Assignment, Project" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="ap-assessment-subject">Subject</label>
+                        <input type="text" id="ap-assessment-subject" placeholder="e.g., Mathematics" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="ap-assessment-grade">Grade</label>
+                        <input type="text" id="ap-assessment-grade" placeholder="e.g., 6 or 6A" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="ap-assessment-moderation-date">Date of Moderation</label>
+                        <input type="date" id="ap-assessment-moderation-date">
+                    </div>
+                    <div class="form-group">
+                        <label for="ap-assessment-date">Assessment Date</label>
+                        <input type="date" id="ap-assessment-date" required>
+                        <p id="ap-date-conflict-warning" class="status-message-box error" style="display: none; margin-top: 5px;"></p>
+                    </div>
+                    <div class="form-group">
+                        <label for="ap-assessment-total-marks">Total Marks</label>
+                        <input type="number" id="ap-assessment-total-marks" placeholder="e.g., 50" min="1" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="ap-assessment-target-percentage">Target (%)</label>
+                        <input type="number" id="ap-assessment-target-percentage" placeholder="e.g., 75" min="0" max="100">
+                    </div>
+                    <div class="form-group">
+                        <label for="ap-assessment-duration">Duration (min)</label>
+                        <input type="number" id="ap-assessment-duration" placeholder="e.g., 60">
+                    </div>
+                    <div class="form-group" style="grid-column: 1 / -1;">
+                        <label for="ap-assessment-topics">Topics Covered</label>
+                        <textarea id="ap-assessment-topics" rows="2" placeholder="e.g., Algebra, Geometry, Fractions"></textarea>
+                    </div>
+                </div>
+                <button type="submit" class="cta-button" style="margin-top: 1rem;"><i class="fas fa-plus-circle"></i> Add Assessment</button>
+                <button type="button" id="ap-cancel-assessment-btn" class="cta-button-secondary" style="margin-left: 10px; margin-top: 1rem;">Cancel</button>
+            </form>
+        </div>
+
+        <div class="ap-content-area" style="margin-top: 1rem;">
+            <div id="ap-summary-stats" class="grid-container dashboard-cards" style="margin-bottom: 1rem;">
+                <!-- Summary cards will be rendered here -->
+            </div>
+
+            <div class="data-table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Term</th>
+                            <th>Type</th>
+                            <th>Subject</th>
+                            <th>Grade</th>
+                            <th>Moderation Date</th>
+                            <th>Assessment Date</th>
+                            <th>Marks</th>
+                            <th>Target</th>
+                            <th>Duration</th>
+                            <th>Topics</th>
+                            <th>Action</th>
+
+                        </tr>
+                    </thead>
+                    <tbody id="ap-assessment-table-body">
+                        <!-- Assessments will be rendered here -->
+                    </tbody>
+                </table>
+                <p id="ap-no-assessments-message" class="info-message" style="display: none;">No assessments scheduled for this term.</p>
+            </div>
+            <div class="ap-export-buttons" style="margin-top: 1rem; display: flex; gap: 10px;">
+                <button id="ap-export-excel-btn" class="cta-button primary-green"><i class="fas fa-file-excel"></i> Export to Excel</button>
+                <button id="ap-export-pdf-btn" class="cta-button primary-red"><i class="fas fa-file-pdf"></i> Save as PDF</button>
+                <button id="ap-export-word-btn" class="cta-button"><i class="fas fa-file-word"></i> Export to Word</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- NEW: Modal for selecting which programme to export to PDF -->
+    <div id="ap-pdf-export-modal" class="modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <span id="ap-pdf-export-modal-close" class="modal-close-btn">&times;</span>
+            <h3><i class="fas fa-file-pdf"></i> Select Programme to Export</h3>
+            <p>Please select which assessment programme you would like to save as a PDF.</p>
+            <div class="form-group" style="margin-top: 1rem;">
+                <label for="ap-pdf-export-select">Programme:</label>
+                <select id="ap-pdf-export-select">
+                    <option value="">-- Select a Programme --</option>
+                </select>
+            </div>
+            <p id="ap-pdf-export-status" class="status-message-box" style="display: none;"></p>
+            <button id="ap-generate-selected-pdf-btn" class="cta-button primary-red" style="margin-top: 1rem;">
+                <i class="fas fa-cogs"></i> Generate PDF
+            </button>
+        </div>
+    </div>
+
+    <!-- NEW: Modal for selecting which programme to export to Word -->
+    <div id="ap-word-export-modal" class="modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <span id="ap-word-export-modal-close" class="modal-close-btn">&times;</span>
+            <h3><i class="fas fa-file-word"></i> Select Programme to Export</h3>
+            <p>Please select which assessment programme you would like to save as a Word document.</p>
+            <div class="form-group" style="margin-top: 1rem;">
+                <label for="ap-word-export-select">Programme:</label>
+                <select id="ap-word-export-select">
+                    <option value="">-- Select a Programme --</option>
+                </select>
+            </div>
+            <p id="ap-word-export-status" class="status-message-box" style="display: none;"></p>
+            <button id="ap-generate-selected-word-btn" class="cta-button" style="margin-top: 1rem;">
+                <i class="fas fa-cogs"></i> Generate Word File
+            </button>
+        </div>
+    </div>
+
+    <!-- NEW: Modal for selecting which programme to export to Excel -->
+    <div id="ap-excel-export-modal" class="modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <span id="ap-excel-export-modal-close" class="modal-close-btn">&times;</span>
+            <h3><i class="fas fa-file-excel"></i> Select Programme to Export</h3>
+            <p>Please select which assessment programme you would like to save as an Excel file.</p>
+            <div class="form-group" style="margin-top: 1rem;">
+                <label for="ap-excel-export-select">Programme:</label>
+                <select id="ap-excel-export-select">
+                    <option value="">-- Select a Programme --</option>
+                </select>
+            </div>
+            <p id="ap-excel-export-status" class="status-message-box" style="display: none;"></p>
+            <button id="ap-generate-selected-excel-btn" class="cta-button primary-green" style="margin-top: 1rem;">
+                <i class="fas fa-cogs"></i> Generate Excel File
+            </button>
+        </div>
+    </div>
+    <!-- Auto-Plan Modal -->
+    <div id="auto-plan-modal" class="modal">
+        <div class="modal-content">
+            <span id="auto-plan-modal-close" class="modal-close-btn">&times;</span>
+            <h3><i class="fas fa-magic"></i> Auto-Plan Assessments</h3>
+            <p>This tool will evenly distribute a set number of assessments across each term, avoiding weekends and holidays.</p>
+            <form id="auto-plan-form" style="margin-top: 1rem;">
+                <div class="form-group">
+                    <label for="auto-plan-class-subject">Select Subject/Class to Plan For:</label>
+                    <select id="auto-plan-class-subject" required>
+                        <option value="">-- Loading your classes... --</option>
+                    </select>
+                </div>
+                <p style="margin-top: 1rem; font-weight: 600;">Number of assessments per term:</p>
+                <div class="grid-container" style="grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label for="auto-plan-term-1">Term 1</label>
+                        <input type="number" id="auto-plan-term-1" value="4" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="auto-plan-term-2">Term 2</label>
+                        <input type="number" id="auto-plan-term-2" value="4" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="auto-plan-term-3">Term 3</label>
+                        <input type="number" id="auto-plan-term-3" value="4" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="auto-plan-term-4">Term 4</label>
+                        <input type="number" id="auto-plan-term-4" value="4" min="0">
+                    </div>
+                </div>
+                <p id="auto-plan-status" class="status-message-box" style="display: none;"></p>
+                <button type="submit" class="cta-button primary-blue" style="margin-top: 1rem;"><i class="fas fa-cogs"></i> Generate Plan</button>
+            </form>
+        </div>
+    </div>
+   </div>
+
    <div id="parents-data" class="portal-section hidden-section">
     <h2>Parent Information</h2>
     <p>View contact information for the parents of learners in your assigned classes.</p>
@@ -465,35 +697,37 @@
 
    <div id="communication" class="portal-section hidden-section">
     <h2>Communication Center</h2>
-    <p>Select a parent from the list to start or continue a conversation.</p>
-    <div class="chat-container">
-        <div class="chat-sidebar">
-            <div class="chat-sidebar-header">
-                <h3>Parent Conversations</h3>
-                <div class="form-group" style="margin-top: 10px;">
-                    <label for="chat-class-filter" style="font-size: 0.85em; opacity: 0.8;">Filter by Class:</label>
-                    <select id="chat-class-filter">
-                        <option value="all">All Classes</option>
-                        <!-- Options will be dynamically populated -->
-                    </select>
+        <p>Select a parent from the list to start or continue a conversation. You can send messages through the portal, email, or SMS.</p>
+        <div class="chat-container">
+            <div class="chat-sidebar">
+                <div class="chat-sidebar-header">
+                    <h3>Parent Conversations</h3>
+                    <div class="form-group" style="margin-top: 10px;">
+                        <label for="chat-class-filter" style="font-size: 0.85em; opacity: 0.8;">Filter by Class:</label>
+                        <select id="chat-class-filter">
+                            <option value="all">All Classes</option>
+                            <!-- Options will be dynamically populated -->
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <input type="text" id="chat-parent-search" placeholder="Search for a parent...">
+                    </div>
                 </div>
-                <div class="form-group">
-                    <input type="text" id="chat-parent-search" placeholder="Search for a parent...">
+                <ul id="chat-parent-list" class="chat-parent-list scroll-container">
+                    <p class="info-message">Loading parent contacts...</p>
+                </ul>
+            </div>
+            <div class="chat-main">
+                <div id="chat-welcome-message" class="chat-welcome">
+                    <i class="fas fa-comments"></i>
+                    <p>Select a conversation to start chatting.</p>
                 </div>
+                <div id="chat-window" class="chat-window" style="display: none;"></div>
+                <!-- Modals for Actions will be moved here from the dynamic JS build -->
+                <div id="template-modal" class="modal"><div class="modal-content"><span class="modal-close-btn">&times;</span><h2>Use a Message Template</h2><select id="message-template-select" style="width:100%; margin-top:1rem;"><option value="">-- Select a Template --</option><option value="positive-feedback">Positive Feedback</option><option value="behavior-concern">Behavior Concern</option><option value="homework-reminder">Homework Reminder</option><option value="meeting-request">Request a Meeting</option></select><button id="apply-template-btn" class="cta-button" style="margin-top:1rem;">Apply Template</button></div></div>
+                <div id="schedule-modal" class="modal"><div class="modal-content"><span class="modal-close-btn">&times;</span><h2>Schedule Message</h2><p>Select a time and communication method.</p><input type="datetime-local" id="schedule-send-time" style="width:100%; margin-top:1rem;"><div class="send-button-group" style="margin-top:1rem; justify-content: center;"><button id="send-email-btn" class="cta-button-small" title="Send as Email"><i class="fas fa-envelope"></i> Email</button><button id="send-sms-btn" class="cta-button-small" title="Send as SMS"><i class="fas fa-sms"></i> SMS</button></div></div></div>
             </div>
-            <ul id="chat-parent-list" class="chat-parent-list scroll-container">
-                <!-- Parent list will be dynamically populated here -->
-                <p class="info-message">Loading parent contacts...</p>
-            </ul>
         </div>
-        <div class="chat-main">
-            <div id="chat-welcome-message" class="chat-welcome">
-                <i class="fas fa-comments"></i>
-                <p>Select a conversation to start chatting.</p>
-            </div>
-            <div id="chat-window" class="chat-window" style="display: none;"></div>
-        </div>
-    </div>
    </div>
 
    <div id="quiz-generator" class="portal-section hidden-section">
@@ -686,9 +920,33 @@
 
    <div id="calendar" class="portal-section hidden-section">
     <h2>School Calendar</h2>
+    
     <div class="tool-card">
-     <p>The school calendar with key dates, events, and holidays will be displayed here.</p>
-     <p class="info-message">Calendar integration is currently unavailable.</p>
+        <h3>Official School Calendar</h3>
+        <p>View the school's official term dates and holidays as set by the administration.</p>
+        <div id="official-calendar-container" style="margin-top: 15px;">
+            <p class="info-message">Loading official calendar...</p>
+        </div>
+    </div>
+
+    <div class="tool-card" style="margin-top: 20px;">
+        <h3>My Personal Term Planner</h3>
+        <p>Plan your term by setting your own exam dates and personal holidays. This is for your reference only.</p>
+        
+        <!-- Term Tabs -->
+        <div id="ap-term-tabs" class="ap-tabs">
+            <p class="info-message">Loading personal calendar editor...</p>
+        </div>
+        <!-- Term Details Container -->
+        <div id="ap-term-details-container">
+            <!-- Term details form will be rendered here by JS -->
+        </div>
+        
+        <!-- File Upload (if needed, though not directly used in current setupTermPlanner logic) -->
+        <!-- <div class="form-group" style="margin-top: 1rem;">
+            <label for="ap-calendar-upload">Upload Calendar File (e.g., iCal)</label>
+            <input type="file" id="ap-calendar-upload" accept=".ics">
+        </div> -->
     </div>
    </div>
    
@@ -787,8 +1045,10 @@
  <script src="../../js/portals/teachers-portal/learner-profiles.js"></script>
  <script src="../../js/portals/teachers-portal/communication.js"></script>
  <script src="../../js/portals/teachers-portal/ai-generator.js"></script>
- <script src="../../js/portals/teachers-portal/teachers-portal.js"></script>
-  <script type="module" src="../../js/auth/auth.js"></script>
-  <script type="module" src="../../js/announcements/announcements.js"></script>
+ <script type="module" src="../../js/portals/teachers-portal/assessment-programme.js"></script>
+ <script type="module" src="../../js/portals/teachers-portal/teachers-portal.js"></script>
+ <script type="module" src="../../js/portals/teachers-portal/calendar.js"></script>
+ <script type="module" src="../../js/auth/auth.js"></script>
+ <script type="module" src="../../js/announcements/announcements.js"></script>
 </body>
 </html>

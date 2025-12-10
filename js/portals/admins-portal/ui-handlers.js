@@ -323,7 +323,7 @@ function handleNavigation() {
     // --- Data Loading and View Toggling Logic ---
     
     if (targetId === 'sams-applications') { 
-        selectedLearnerData = null; 
+        selectedLearnerData = null;
         loadSamsRegistrations(); 
     } 
     
@@ -439,6 +439,16 @@ function handleNavigation() {
     // Announcements Management View
     if (targetId === 'announcements-mgmt') {
         loadAnnouncementsForManagement();
+    }
+
+    // **NEW**: Report Card Generator
+    if (targetId === 'report-cards') {
+        setupReportCardGenerator(db);
+    }
+
+    // School Calendar Management
+    if (targetId === 'school-calendar-mgmt') {
+        setupOfficialCalendarManager(db);
     }
 }
 

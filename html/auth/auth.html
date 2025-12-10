@@ -110,32 +110,31 @@
     </div>
     
     <div id="learner-fields" class="role-fields">
-     <div class="form-group"><input type="text" name="learner-fullName" placeholder="Full Name" required></div>
-     <div class="form-group"><input type="text" name="learner-admissionNumber" placeholder="Admission Number" required></div>
-     <div class="form-group"><input type="email" name="learner-email" placeholder="Learner Email (or unique ID)" required></div>
-     <div class="form-group"><input type="date" name="learner-dob" placeholder="Date of Birth" required></div>
-     <div class="form-group">
-      <select name="learner-grade" required>
-       <option value="">-- Select Grade --</option>
-       <option value="R">Grade R</option>
-       <option value="1">Grade 1</option>
-       <option value="2">Grade 2</option>
-       <option value="3">Grade 3</option>
-       <option value="4">Grade 4</option>
-       <option value="5">Grade 5</option>
-       <option value="6">Grade 6</option>
-       <option value="7">Grade 7</option>
-      </select>
-     </div>     
-     <div class="form-group">
-      <select name="learner-gender" required>
-       <option value="">-- Select Gender --</option>
-       <option value="male">Male</option>
-       <option value="female">Female</option>
-       <option value="other">Other</option>
-      </select>
-     </div>
+      <p class="form-note" style="margin-bottom: 15px; text-align: left;">To create your portal account, please enter your unique school admission number.</p>
+      <div class="form-group" style="display: flex; gap: 10px; align-items: center;">
+        <input type="text" id="learner-admission-number-lookup" placeholder="Your Admission Number" required>
+        <button type="button" id="find-my-details-btn" class="cta-button-secondary" style="margin: 0; height: fit-content;">Find Me</button>
+      </div>
+
+      <!-- This container will be shown after a learner is found -->
+      <div id="learner-details-container" style="display: none; margin-top: 20px;">
+        <p class="form-note success" style="margin-bottom: 15px; text-align: left;">
+          <i class="fas fa-check-circle"></i> We found you! Please confirm your details, provide an email for your login, and set a password.
+        </p>
+        <fieldset>
+          <legend>Your Details (Editable)</legend>
+          <div class="form-group"><label>First Name</label><input type="text" id="learner-reg-name" required></div>
+          <div class="form-group"><label>Surname</label><input type="text" id="learner-reg-surname" required></div>
+          <div class="form-group"><label>Grade</label><input type="text" id="learner-reg-grade" readonly></div>
+        </fieldset>
+        <fieldset>
+          <legend>Account Creation</legend>
+          <p class="form-note" style="margin-top: 5px; text-align: left;">This email will be used for logging in and for password resets.</p>
+          <div class="form-group"><input type="email" name="learner-email" id="learner-reg-email" placeholder="Your Email Address" required></div>
+        </fieldset>
+      </div>
     </div>
+
     <div id="teacher-fields" class="role-fields">
      <div class="form-group"><input type="text" name="teacher-surname" placeholder="Surname" required></div>
      <div class="form-group"><input type="text" name="teacher-preferred-name" placeholder="Preferred Name" required></div>

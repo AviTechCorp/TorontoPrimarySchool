@@ -261,9 +261,9 @@ function generateMarkSheet(fullClass, subject, learners, assignments, gradesMap)
         <div class="marksheet-header">
             <span class="modal-close-btn no-print">&times;</span>
             <img src="../../images/Logo.png" alt="School Logo" class="school-logo">
-            <h1>Toronto Primary School</h1>
+            <h1>TORONTO PRIMARY SCHOOL</h1>
             <h2>Mark Sheet: ${subject} - Class ${fullClass}</h2>
-            <p><strong>Educator:</strong> ${teacherData.preferredName || ''} ${teacherData.surname || ''}</p>
+            <p><strong>Educator:</strong> ${teacherData.preferredName || ''}</p>
             <p><strong>Date Generated:</strong> ${new Date().toLocaleDateString()}</p>
         </div>
         <div class="data-table-container">
