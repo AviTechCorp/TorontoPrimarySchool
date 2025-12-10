@@ -7,6 +7,11 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
   <link rel="stylesheet" href="global.css">
   <link rel="stylesheet" href="home.css">
+  <style>
+    .hero-section {
+      transition: background-image 1s ease-in-out;
+    }
+  </style>
   <meta name="theme-color" content="#2058da">
 </head>
 <body>
@@ -124,5 +129,27 @@
       <small>&copy; 2025 Toronto Primary School. All rights reserved. Registered School No: 12345678</small>
     </div>
   </footer>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const heroSection = document.querySelector('.hero-section');
+      // Add your background image paths to this array
+      const backgroundImages = [
+        'images/1.jpg',
+        'images/4.jpg',
+        'images/5.jpg',
+        'images/6.jpg'
+      ];
+      let currentIndex = 0;
+
+      function changeBackground() {
+        currentIndex = (currentIndex + 1) % backgroundImages.length;
+        heroSection.style.backgroundImage = `url('${backgroundImages[currentIndex]}')`;
+      }
+
+      // Change image every 10 seconds (10000 milliseconds)
+      setInterval(changeBackground, 10000);
+    });
+  </script>
 </body>
 </html>

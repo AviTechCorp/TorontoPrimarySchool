@@ -17,6 +17,9 @@ section {
     justify-content: center;
     padding: 72px 24px;
     background: linear-gradient(var(--bg-overlay), var(--bg-overlay));
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
     /* uses body background image for visual */
 }
 
