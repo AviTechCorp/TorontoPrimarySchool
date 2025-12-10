@@ -447,7 +447,7 @@ function handleNavigation() {
     }
 
     // School Calendar Management
-    if (targetId === 'school-calendar-mgmt') {
+    if (targetId === 'school-calendar') {
         setupOfficialCalendarManager(db);
     }
 }
