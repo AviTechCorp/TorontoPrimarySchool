@@ -139,6 +139,17 @@
      <div class="form-group"><input type="text" name="teacher-surname" placeholder="Surname" required></div>
      <div class="form-group"><input type="text" name="teacher-preferred-name" placeholder="Preferred Name" required></div>
      <div class="form-group"><input type="email" name="teacher-email" placeholder="Email" required></div>
+     <!-- **NEW**: Department Selection Checkboxes -->
+     <div class="form-group" style="grid-column: 1 / -1;">
+        <label style="text-align: left; color: #6b7280;">Department(s) - Select all that apply</label>
+        <div class="checkbox-group">
+            <label><input type="checkbox" name="teacher-department" value="Science & Maths"> Science & Maths</label>
+            <label><input type="checkbox" name="teacher-department" value="Languages"> Languages</label>
+            <label><input type="checkbox" name="teacher-department" value="Humanities (SS, LO)"> Humanities (SS, LO)</label>
+            <label><input type="checkbox" name="teacher-department" value="Foundation Phase (All)"> Foundation Phase (All)</label>
+        </div>
+     </div>
+
      <fieldset class="role-specific-fieldset">
       <legend>Class Teacher Information</legend>
       <div class="form-group">

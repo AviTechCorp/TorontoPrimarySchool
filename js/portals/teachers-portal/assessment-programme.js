@@ -595,21 +595,21 @@ export function setupAssessmentProgramme(db, userData) {
      * @param {firebase.firestore.Firestore} db - The Firestore database instance.
      */
     async function loadAssessmentProgramme(db) {
-        const docRef = db.collection('assessment_programmes').doc(teacherUid); // This collection now holds both terms and assessments
+        const assessmentDocRef = db.collection('assessment_programmes').doc(teacherUid);
+        const calendarDocRef = db.collection('school_config').doc('main_calendar');
+
         try {
-            const doc = await docRef.get();
-            if (doc.exists) {
-                const data = doc.data();
-                // Ensure data structure is valid before updating state
-                if (data.terms && data.assessments) {
-                    state.terms = data.terms;
-                    state.assessments = data.assessments;
-                } else if (data.terms) { // For backwards compatibility if only terms were saved
-                    state.terms = data.terms;
-                    state.assessments = [];
-                } else if (data.assessments) { // Or if only assessments were saved
-                    state.assessments = data.assessments;
-                }
+            // Fetch both documents concurrently
+            const [assessmentDoc, calendarDoc] = await Promise.all([assessmentDocRef.get(), calendarDocRef.get()]);
+
+            // Load official school terms for date validation and form population
+            if (calendarDoc.exists && calendarDoc.data().terms) {
+                state.terms = calendarDoc.data().terms;
+            }
+
+            // Load the teacher's saved assessments
+            if (assessmentDoc.exists && assessmentDoc.data().assessments) {
+                state.assessments = assessmentDoc.data().assessments;
             }
             // If doc doesn't exist, the default initial state will be used.
         } catch (error) {
@@ -706,24 +706,44 @@ export function setupAssessmentProgramme(db, userData) {
      * @returns {string} The full HTML string for the document.
      */
     async function generateProgrammeHtml(userData, subject, grade) {
-        const schoolName = "TORONTO PRIMARY SCHOOL"; // Hardcoded from HTML header
+        const schoolName = "TORONTO PRIMARY SCHOOL";
         const educatorName = `${userData.preferredName || ''}`.trim();
         const currentYear = new Date().getFullYear();
         const schoolLogoPath = '../../images/Logo.png';
 
-        // --- NEW: Fetch Signatory Names ---
+        // --- Fetch Signatory Names ---
         let hodName = 'HOD Signature';
         let principalName = 'Principal Signature';
 
-        try {
-            // 1. Get the current teacher's department
-            const teacherDoc = await db.collection('users').doc(userData.uid).get();
-            const teacherData = teacherDoc.exists ? teacherDoc.data() : {};
-            const department = teacherData.department;
+        // Define the mapping from subjects to departments
+        // Ensure these subject names match those in teaching assignment dropdowns (e.g., in auth.js)
+        const subjectToDepartmentMap = {
+            // Science & Maths Department
+            'Mathematics': 'Science & Maths',
+            'NS-Tech': 'Science & Maths',
+            'N.S': 'Science & Maths', // Matches dropdown
+            'Technology': 'Science & Maths',
+            'Coding and Robotics': 'Science & Maths',
+            // Languages Department
+            'Sepedi HL': 'Languages',
+            'English FAL': 'Languages',
+            // Humanities Department
+            'EMS': 'Humanities',
+            'Social Sciences': 'Humanities',
+            'Creative Arts': 'Humanities',
+            'Life Skills': 'Humanities',
+            'L.O': 'Humanities', // Matches dropdown
+            // Foundation Phase (All) Department
+            'All Subjects (Foundation)': 'Foundation Phase'
+        };
 
-            // 2. Find the HOD for that department
-            if (department) {
-                const hodQuery = await db.collection('users').where('role', '==', 'HOD').where('department', '==', department).limit(1).get();
+        try {
+            // 1. Determine the department for the given subject
+            const assessmentDepartment = subjectToDepartmentMap[subject];
+
+            // 2. Find the HOD for that specific department
+            if (assessmentDepartment) {
+                const hodQuery = await db.collection('users').where('smtRole', '==', 'dh').where('dhDepartments', 'array-contains', assessmentDepartment).limit(1).get();
                 if (!hodQuery.empty) {
                     const hodData = hodQuery.docs[0].data();
                     hodName = `${hodData.preferredName || ''} ${hodData.surname || ''}`.trim();
@@ -731,7 +751,7 @@ export function setupAssessmentProgramme(db, userData) {
             }
 
             // 3. Find the Principal
-            const principalQuery = await db.collection('users').where('role', '==', 'Principal').limit(1).get();
+            const principalQuery = await db.collection('users').where('smtRole', '==', 'principal').limit(1).get();
             if (!principalQuery.empty) {
                 const principalData = principalQuery.docs[0].data();
                 principalName = `${principalData.preferredName || ''} ${principalData.surname || ''}`.trim();

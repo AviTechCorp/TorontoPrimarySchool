@@ -249,6 +249,9 @@ document.addEventListener('DOMContentLoaded', () => {
         userData.email = document.querySelector('input[name="teacher-email"]')?.value || '';
         userData.surname = document.querySelector('input[name="teacher-surname"]')?.value || '';
         userData.preferredName = document.querySelector('input[name="teacher-preferred-name"]')?.value || '';
+        // **NEW**: Collect selected departments for the teacher
+        userData.departments = getCheckedValues('teacher-department');
+
         // Collect new teacher data
         const isClassTeacher = document.getElementById('is-class-teacher')?.value === 'yes';
         userData.isClassTeacher = isClassTeacher;

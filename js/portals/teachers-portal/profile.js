@@ -10,6 +10,7 @@ async function loadTeacherProfile(userData) {
     const profilePreferredName = document.querySelector('.profile-preferred-name');
     const profileEmail = document.querySelector('.profile-email');
     const profileContact = document.querySelector('.profile-contact');
+    const profileDepartment = document.querySelector('.profile-department');
     const parentClassFilter = document.getElementById('teacher-parent-class-filter');
     const rosterSetupClassSelect = document.getElementById('roster-setup-class-select');
     const profileClassFilter = document.getElementById('profile-class-filter');
@@ -36,6 +37,14 @@ async function loadTeacherProfile(userData) {
             if (profilePreferredName) profilePreferredName.innerHTML = `<strong>Preferred Name:</strong> ${teacherData.preferredName || 'N/A'}`;
             if (profileEmail) profileEmail.innerHTML = `<strong>Email:</strong> ${teacherData.email || 'N/A'}`;
             if (profileContact) profileContact.innerHTML = `<strong>Contact:</strong> ${teacherData.contactNumber || 'N/A'}`;
+            if (profileDepartment) {
+                const departments = teacherData.departments;
+                if (Array.isArray(departments) && departments.length > 0) {
+                    profileDepartment.innerHTML = `<strong>Department(s):</strong> ${departments.join(', ')}`;
+                } else {
+                    profileDepartment.innerHTML = `<strong>Department(s):</strong> Not Assigned`;
+                }
+            }
 
             const assignedClasses = teacherData.teachingAssignments ? [...new Set(teacherData.teachingAssignments.map(a => a.fullClass))].sort() : [];
 
@@ -81,7 +90,17 @@ function setupProfileEditing(db, teacherAuthData) {
             document.getElementById('edit-profile-preferred-name').value = data.preferredName || '';
             document.getElementById('edit-profile-surname').value = data.surname || '';
             document.getElementById('edit-profile-contact').value = data.contactNumber || '';
-            document.getElementById('edit-profile-department').value = data.department || '';
+
+            // Uncheck all department checkboxes first
+            document.querySelectorAll('input[name="edit-department"]').forEach(checkbox => checkbox.checked = false);
+            // Check the ones that are in the user's data
+            if (Array.isArray(data.departments)) {
+                data.departments.forEach(dept => {
+                    const checkbox = document.querySelector(`input[name="edit-department"][value="${dept}"]`);
+                    if (checkbox) checkbox.checked = true;
+                });
+            }
+
             profileCard.style.display = 'none';
             editFormContainer.style.display = 'block';
         } else {
@@ -98,11 +117,15 @@ function setupProfileEditing(db, teacherAuthData) {
         e.preventDefault();
         const statusMessage = document.getElementById('edit-profile-status');
         const submitButton = editForm.querySelector('button[type="submit"]');
+
+        // Collect values from the checkboxes
+        const selectedDepartments = Array.from(document.querySelectorAll('input[name="edit-department"]:checked')).map(cb => cb.value);
+
         const updatedData = {
             preferredName: document.getElementById('edit-profile-preferred-name').value.trim(),
             surname: document.getElementById('edit-profile-surname').value.trim(),
             contactNumber: document.getElementById('edit-profile-contact').value.trim(),
-            department: document.getElementById('edit-profile-department').value,
+            departments: selectedDepartments, // Save as an array
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         };
 
