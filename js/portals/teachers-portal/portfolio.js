@@ -12,7 +12,7 @@ const PORTFOLIO_CATEGORY_ORDER = [
  * @param {firebase.firestore.Firestore} db - The Firestore database instance.
  * @param {object} teacherAuthData - The authenticated teacher's data.
  */
-function setupPortfolioManager(db, teacherAuthData) {
+export function setupPortfolioManager(db, teacherAuthData) {
     showPortfolioListView();
     document.getElementById('back-to-portfolio-list').addEventListener('click', showPortfolioListView);
     setupPortfolioPrint(teacherAuthData);

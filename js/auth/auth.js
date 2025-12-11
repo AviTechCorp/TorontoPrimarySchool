@@ -4,10 +4,10 @@
 // === FIREBASE IMPORTS, CONFIGURATION, AND INITIALIZATION ===
 // =========================================================
 
-// Import the functions you need from the SDKs you need
+// Import the functions you need from the SDKs you need. **MODIFIED**: Added updatePassword and reauthenticateWithCredential.
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
 // *** MODIFICATION: Import sendPasswordResetEmail ***
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail, updatePassword, reauthenticateWithCredential, EmailAuthProvider } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
 import { getFirestore, doc, setDoc, getDoc, collection, query, where, limit, getDocs } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
 
 
@@ -64,6 +64,9 @@ document.addEventListener('DOMContentLoaded', () => {
   // Get references to elements for the Login form
   const loginRoleSelect = document.getElementById('login-role-select');
   const loginEmailInput = document.getElementById('loginEmail');
+  // **NEW**: Get references for learner-specific login fields
+  const loginAdmissionNumberInput = document.getElementById('loginAdmissionNumber');
+  const learnerLoginNote = document.getElementById('learner-login-note');
   const loginPasswordInput = document.getElementById('loginPassword');
   const loginSubmitButton = document.getElementById('loginSubmit');
 
@@ -78,12 +81,18 @@ document.addEventListener('DOMContentLoaded', () => {
   // Role-select -> show role-specific fields (registration form)
   if (registerRoleSelect) {
     const roleFields = Array.from(document.querySelectorAll('.role-fields'));
+    const passwordSection = document.getElementById('password-section'); // Get password section
     function showRoleFields(value) {
       roleFields.forEach(el => {
         el.style.display = 'none'; // Use style for direct manipulation
         el.setAttribute('aria-hidden', 'true');
       });
-      if (!value) return;
+      // Hide or show the main password section based on the selected role
+      if (passwordSection) {
+        passwordSection.style.display = (value === 'learner') ? 'none' : 'block';
+      }
+
+      if (!value) return; // Don't try to show fields if no role is selected
       const id = `${value}-fields`;
       const target = document.getElementById(id);
       if (target) {
@@ -96,6 +105,23 @@ document.addEventListener('DOMContentLoaded', () => {
     showRoleFields(registerRoleSelect.value);
   }
 
+  // **NEW**: Role-select -> show role-specific fields (login form)
+  if (loginRoleSelect) {
+    loginRoleSelect.addEventListener('change', () => {
+      const isLearner = loginRoleSelect.value === 'learner';
+      // Toggle visibility of email vs. admission number inputs
+      loginEmailInput.style.display = isLearner ? 'none' : 'block';
+      loginAdmissionNumberInput.style.display = isLearner ? 'block' : 'none';
+      learnerLoginNote.style.display = isLearner ? 'block' : 'none';
+
+      // Clear the non-visible input to avoid confusion
+      if (isLearner) {
+        loginEmailInput.value = '';
+      } else {
+        loginAdmissionNumberInput.value = '';
+      }
+    });
+  }
   // *** NEW: Add event listener for the learner "Find Me" button ***
   if (findMyDetailsBtn) {
     findMyDetailsBtn.addEventListener('click', findLearnerForSelf);
@@ -236,11 +262,11 @@ document.addEventListener('DOMContentLoaded', () => {
     let userData = { role };
     const form = document.getElementById('register-form'); // Get the form element
     try {
-      if (role === 'learner') { 
-        // **MODIFIED**: Collect data from the new learner registration fields
-        userData.email = document.getElementById('learner-reg-email')?.value || '';
+      if (role === 'learner') {
+        // **MODIFIED**: Collect data from the new learner registration fields. Email is no longer collected here.
         userData.learnerName = document.getElementById('learner-reg-name')?.value || '';
         userData.learnerSurname = document.getElementById('learner-reg-surname')?.value || '';
+        // The admission number is retrieved from the lookup field during the final registration step.
       } else if (role === 'parent') {
         userData.email = document.querySelector('input[name="parent-email"]')?.value || '';
         // **FIX**: Read the admission number from the correct input field by its ID.
@@ -394,10 +420,11 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('learner-reg-name').value = learnerData.learnerName || '';
         document.getElementById('learner-reg-surname').value = learnerData.learnerSurname || '';
         document.getElementById('learner-reg-grade').value = learnerData.fullGradeSection || learnerData.grade || '';
-        document.getElementById('learner-reg-email').value = ''; // Clear email field for user input
+        // **CORRECTED**: Populate the ID number field using the correct 'learnerID' field from Firestore.
+        document.getElementById('learner-reg-id-number').value = learnerData.learnerID || 'ID Not Found';
 
         detailsContainer.style.display = 'block';
-        passwordSection.style.display = 'block';
+        // The main password section is controlled by the role selector, so we don't show it here.
 
     } catch (error) {
         console.error("Error finding learner:", error);
@@ -413,12 +440,37 @@ document.addEventListener('DOMContentLoaded', () => {
     registerSubmitButton.addEventListener('click', async function(event) {
       event.preventDefault();
       const role = registerRoleSelect?.value;
+      // **MODIFIED**: Handle learner email construction
+      let email, password, confirmPassword;
       const userData = collectUserData(role);
-      const email = userData.email;
-      const password = registerPasswordInput?.value || '';
-      const confirmPassword = confirmPasswordInput?.value || '';
 
-      if (!email || !password || !confirmPassword || !role) {
+      if (role === 'learner') {
+          const admissionNumber = document.getElementById('learner-admission-number-lookup').value.trim();
+          // Construct the email from the admission number. The domain can be anything, it just needs to be consistent.
+          email = `${admissionNumber}@torontops.za`;
+          userData.email = email; // Store the constructed email in the user's profile data.
+
+          // **NEW**: Get the temporary password (ID Number) from the SAMS data
+          const learnerDetailsContainer = document.getElementById('learner-details-container');
+          if (!learnerDetailsContainer.dataset.learnerData) {
+              alert("Please find and confirm your details using your admission number before registering.");
+              return;
+          }
+          const originalLearnerData = JSON.parse(learnerDetailsContainer.dataset.learnerData);
+          password = originalLearnerData.learnerID; // **CORRECTED**: Use 'learnerID' from the stored data.
+          if (!password) {
+              alert("Could not find your ID Number in the school records. Please contact the school office for assistance.");
+              return;
+          }
+          confirmPassword = String(password); // Ensure it's a string for comparison and Firebase.
+          password = String(password); // Ensure it's a string for Firebase.
+      } else {
+          email = userData.email;
+          password = registerPasswordInput?.value || '';
+          confirmPassword = confirmPasswordInput?.value || '';
+      }
+
+      if (!email || !password || !role) {
         alert('Please fill in all required fields.');
         return;
       }
@@ -450,6 +502,8 @@ document.addEventListener('DOMContentLoaded', () => {
           userData.grade = originalLearnerData.grade;
           userData.samsRegistrationId = originalLearnerData.id; // Link to the original SAMS doc
 
+          // **NEW**: Set the flag to force password change on first login
+          userData.mustChangePassword = true;
           // The user can edit their name, so we also need to update the original SAMS record
           const updatedName = document.getElementById('learner-reg-name').value;
           const updatedSurname = document.getElementById('learner-reg-surname').value;
@@ -516,12 +570,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (!learnerSnapshot.empty) {
                 const learnerDocRef = learnerSnapshot.docs[0].ref;
-                await setDoc(learnerDocRef, { parentUserId: user.uid }, { merge: true });
-                console.log(`Successfully linked parent UID ${user.uid} to learner with admission ID ${admissionNumberForUpdate}.`);
+                // Update the SAMS record with the new name and surname
+                await setDoc(learnerDocRef, { learnerName: userData.learnerName, learnerSurname: userData.learnerSurname }, { merge: true });
+                console.log(`Successfully updated learner name for admission ID ${userData.admissionId}.`);
             }
         }
 
-        alert(`Registration successful! Welcome, ${userData.name || userData.preferredName || userData.surname || userData.admissionNumber || userData.fullName}!`);
+        alert(`Registration successful! Welcome, ${userData.learnerName || userData.name || userData.preferredName || userData.surname || userData.admissionNumber || userData.fullName}!`);
         // switch to login view if available
         if (loginLink) loginLink.click();
       } catch (error) {
@@ -535,9 +590,24 @@ document.addEventListener('DOMContentLoaded', () => {
   if (loginSubmitButton) {
     loginSubmitButton.addEventListener('click', async function(event) {
       event.preventDefault();
-      const email = loginEmailInput?.value || '';
-      const password = loginPasswordInput?.value || '';
       const role = loginRoleSelect?.value || '';
+      let email;
+      const password = loginPasswordInput?.value || '';
+
+      // **MODIFIED**: Get username from the correct field based on role
+      if (role === 'learner') {
+          const admissionNumber = loginAdmissionNumberInput.value.trim();
+          if (admissionNumber && /^\d+$/.test(admissionNumber)) {
+              // The user entered an admission number. Construct the email.
+              email = `${admissionNumber}@torontops.za`;
+          } else {
+              // If the role is learner but the admission number is missing or invalid, stop and alert the user.
+              alert('Please enter your Admission Number.');
+              return;
+          }
+      } else {
+          email = loginEmailInput?.value.trim() || '';
+      }
 
       if (!email || !password || !role) {
         alert('Please enter your email, password, and select your role.');
@@ -553,21 +623,26 @@ document.addEventListener('DOMContentLoaded', () => {
         if (userDocSnap.exists()) {
           const userData = userDocSnap.data();
           if (userData.role === role) {
-            // *** FIX: Include the user UID in the session storage data ***
-            const sessionData = { ...userData, uid: user.uid };
-            sessionStorage.setItem('currentUser', JSON.stringify(sessionData));
-            alert(`Welcome back, ${userData.name || userData.preferredName || userData.surname || userData.admissionNumber || userData.fullName || 'User'}!`);
-            let portalPath = '';
-            switch(role) {
-              case 'learner': portalPath = "learners-portal.html"; break;
-              case 'parent': portalPath = "parents-portal.html"; break;
-              case 'teacher': portalPath = "teachers-portal.html"; break;
-              case 'admissions-team': portalPath = "admission-team-portal.html"; break;
-              case 'smt': portalPath = "smt-portal.html"; break;
-              case 'admin': portalPath = "admins-portal.html"; break;
-              default: portalPath = "index.html"; break;
+            // **NEW**: Check if learner needs to change password
+            if (role === 'learner' && userData.mustChangePassword) {
+              handleForcePasswordChange(user, userData);
+            } else {
+              // Proceed with normal login
+              const sessionData = { ...userData, uid: user.uid };
+              sessionStorage.setItem('currentUser', JSON.stringify(sessionData));
+              alert(`Welcome back, ${userData.learnerName || userData.name || userData.preferredName || userData.surname || userData.admissionNumber || userData.fullName || 'User'}!`);
+              let portalPath = '';
+              switch(role) {
+                case 'learner': portalPath = "learners-portal.html"; break;
+                case 'parent': portalPath = "parents-portal.html"; break;
+                case 'teacher': portalPath = "teachers-portal.html"; break;
+                case 'admissions-team': portalPath = "admission-team-portal.html"; break;
+                case 'smt': portalPath = "smt-portal.html"; break;
+                case 'admin': portalPath = "admins-portal.html"; break;
+                default: portalPath = "index.html"; break;
+              }
+              window.location.href = portalPath;
             }
-            window.location.href = portalPath;
           } else {
             alert("The role you selected does not match the role you registered as. Please try again.");
             await signOut(auth);
@@ -579,6 +654,72 @@ document.addEventListener('DOMContentLoaded', () => {
       } catch (error) {
         console.error("Login Error:", error);
         alert(`Login Error: ${error.message}`);
+      }
+    });
+  }
+
+  // **NEW**: Function to handle the forced password change flow
+  function handleForcePasswordChange(user, userData) {
+    const modal = document.getElementById('force-password-change-modal');
+    const form = document.getElementById('force-password-change-form');
+    const submitBtn = document.getElementById('update-password-submit-btn');
+
+    if (!modal || !form || !submitBtn) {
+      console.error("Password change modal elements not found!");
+      alert("An error occurred. Please contact support.");
+      return;
+    }
+
+    modal.style.display = 'flex';
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const currentPassword = document.getElementById('current-password-modal').value;
+      const newPassword = document.getElementById('new-password-modal').value;
+      const confirmNewPassword = document.getElementById('confirm-new-password-modal').value;
+
+      if (newPassword !== confirmNewPassword) {
+        alert("New passwords do not match.");
+        return;
+      }
+
+      if (newPassword.length < 6) {
+        alert("New password must be at least 6 characters long.");
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<i class="fas fa-sync fa-spin"></i> Updating...';
+
+      try {
+        // Re-authenticate the user. This is required for security-sensitive operations.
+        const credential = EmailAuthProvider.credential(user.email, currentPassword);
+        await reauthenticateWithCredential(user, credential);
+
+        // If re-authentication is successful, update the password.
+        await updatePassword(user, newPassword);
+
+        // Update the flag in Firestore so this doesn't happen again.
+        const userDocRef = doc(db, 'users', user.uid);
+        await setDoc(userDocRef, { mustChangePassword: false }, { merge: true });
+
+        // Password updated successfully. Now proceed to the portal.
+        alert("Password updated successfully! You will now be redirected to your portal.");
+
+        const sessionData = { ...userData, uid: user.uid, mustChangePassword: false };
+        sessionStorage.setItem('currentUser', JSON.stringify(sessionData));
+        window.location.href = "learners-portal.html";
+
+      } catch (error) {
+        console.error("Password update error:", error);
+        if (error.code === 'auth/wrong-password') {
+          alert("The current password (your ID number) is incorrect. Please try again.");
+        } else {
+          alert(`An error occurred: ${error.message}`);
+        }
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Update Password & Continue';
       }
     });
   }

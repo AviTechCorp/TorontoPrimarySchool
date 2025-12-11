@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
  <meta charset="UTF-8">
@@ -21,6 +22,7 @@
  <link rel="stylesheet" href="../../css/portals/teachers-portal/ai-generator.css">
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+ <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-storage-compat.js"></script>
   <!-- **NEW**: Add SheetJS library for reading/writing Excel files -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -190,6 +192,73 @@
             <p class="data-status-message">Loading learner profile...</p>
         </div>
 
+        <!-- **NEW**: Add a container for the image viewer modal -->
+        <div id="image-viewer-modal" class="image-viewer-modal">
+            <span class="image-viewer-close">&times;</span>
+            <img class="image-viewer-content" id="modal-image-content">
+        </div>
+
+        <!-- **NEW**: Edit Learner Information Form (hidden by default) -->
+        <div id="edit-learner-info-form-container" class="tool-card" style="display: none; margin-top: 20px;">
+            <h3><i class="fas fa-user-edit"></i> Edit Learner Information</h3>
+            <form id="edit-learner-info-form">
+                <div class="grid-container" style="grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));">
+                    <div class="form-group">
+                        <label for="edit-learner-info-name">First Name</label>
+                        <input type="text" id="edit-learner-info-name">
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-learner-info-othername">Other Name(s)</label>
+                        <input type="text" id="edit-learner-info-othername">
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-learner-info-surname">Surname</label>
+                        <input type="text" id="edit-learner-info-surname">
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-learner-info-id">Learner ID</label>
+                        <input type="text" id="edit-learner-info-id">
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-learner-info-dob">Date of Birth</label>
+                        <input type="date" id="edit-learner-info-dob">
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-learner-info-gender">Gender</label>
+                        <select id="edit-learner-info-gender"><option value="male">Male</option><option value="female">Female</option><option value="other">Other</option></select>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-learner-info-nationality">Nationality</label>
+                        <input type="text" id="edit-learner-info-nationality">
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-learner-info-race">Race</label>
+                        <select id="edit-learner-info-race"><option value="african">African</option><option value="english">English</option><option value="indian">Indian</option><option value="coloured">Coloured</option><option value="other">Other</option></select>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-learner-info-language">Home Language</label>
+                        <input type="text" id="edit-learner-info-language">
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-learner-info-prev-school">Previous School</label>
+                        <input type="text" id="edit-learner-info-prev-school">
+                    </div>
+                </div>
+                <fieldset style="margin-top: 20px;">
+                    <legend>Parent/Guardian Details</legend>
+                    <div class="grid-container" style="grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));">
+                        <div class="form-group"><label for="edit-parent1-name">Parent 1: Full Name</label><input type="text" id="edit-parent1-name"></div>
+                        <div class="form-group"><label for="edit-parent1-contact">Parent 1: Contact</label><input type="text" id="edit-parent1-contact"></div>
+                        <div class="form-group"><label for="edit-parent1-email">Parent 1: Email</label><input type="email" id="edit-parent1-email"></div>
+                        <div class="form-group" style="grid-column: 1 / -1;"><label for="edit-parent1-address">Parent 1: Address</label><textarea id="edit-parent1-address" rows="2"></textarea></div>
+                    </div>
+                </fieldset>
+                <p id="edit-learner-info-status" class="status-message-box" style="display: none;"></p>
+                <button type="submit" class="cta-button"><i class="fas fa-save"></i> Save Changes</button>
+                <button type="button" id="cancel-edit-learner-info-btn" class="cta-button-secondary" style="margin-left: 10px;">Cancel</button>
+            </form>
+        </div>
+
         <!-- Behavioral Comments Section -->
         <div class="tool-card" style="margin-top: 20px;">
             <h3><i class="fas fa-comments"></i> Behavioral Comments & Observations</h3>
@@ -310,8 +379,8 @@
         </div>
         <div id="roster-management-area" style="display: none; margin-top: 20px;">
           <div class="search-and-add-section">
-            <h4>Search for Learners to Add (from previous grade)</h4>
             <div class="form-group" style="display: flex; gap: 10px;">
+              <label for="roster-learner-search-input" class="sr-only">Search for Learners to Add (from previous grade)</label>
               <input type="text" id="roster-learner-search-input" placeholder="Enter learner surname...">
               <button id="learner-search-btn" class="cta-button-small"><i class="fas fa-search"></i> Search</button>
             </div>
@@ -1041,8 +1110,8 @@
  <script src="../../js/portals/teachers-portal/roster-management.js"></script>
  <script src="../../js/portals/teachers-portal/grading.js"></script>
  <script src="../../js/portals/teachers-portal/materials.js"></script>
- <script src="../../js/portals/teachers-portal/portfolio.js"></script>
- <script src="../../js/portals/teachers-portal/learner-profiles.js"></script>
+ <script type="module" src="../../js/portals/teachers-portal/portfolio.js"></script>
+ <script type="module" src="../../js/portals/teachers-portal/learner-profiles.js"></script>
  <script src="../../js/portals/teachers-portal/communication.js"></script>
  <script src="../../js/portals/teachers-portal/ai-generator.js"></script>
  <script type="module" src="../../js/portals/teachers-portal/assessment-programme.js"></script>

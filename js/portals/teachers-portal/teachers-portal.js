@@ -2,6 +2,8 @@
 // js/portals/teachers-portal/teachers-portal.js
 import { setupAssessmentProgramme } from './assessment-programme.js';
 import { setupCalendarSection } from './calendar.js';
+import { setupLearnerProfileSection } from './learner-profiles.js';
+import { setupPortfolioManager } from './portfolio.js';
 
 /**
  * Sets up the responsive sidebar toggle for mobile view.
@@ -173,7 +175,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // **NEW**: Load class filter for learner profiles when the section is viewed
       if (targetId === 'learner-profiles') {
-        setupLearnerProfileSection(db, userData);
+        setupLearnerProfileSection(db, userData); // Pass userData here
       }
 
         // **NEW**: Initialize the School Calendar section
@@ -219,6 +221,6 @@ document.addEventListener('DOMContentLoaded', () => {
       setupCalendarSection(db, userData);
   }
   if (initialHash === 'learner-profiles') {
-      setupLearnerProfileSection(db, userData);
+      setupLearnerProfileSection(db, userData); // Pass userData here as well
   }
 });
